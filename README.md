@@ -126,7 +126,7 @@ This codebase does not yet have an implementation for all the features described
 
 ## Contributing
 
-See CONTRIBUTING.md
+See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Local development
 
@@ -136,4 +136,4 @@ To build locally:
 
 To run tests locally:
 
-    go test ./cmd
+    go test ./...
