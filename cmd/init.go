@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	_ "embed"
+	"fmt"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"html/template"
 	"log"
 	"os"
 	"path/filepath"
-
-	_ "embed"
 )
 
 var (
@@ -70,6 +71,14 @@ func run(*cobra.Command, []string) {
 	applyTemplate(filepath.Join(campaignName, ".turbolift"), turboliftTemplate, data)
 	applyTemplate(filepath.Join(campaignName, "README.md"), readmeTemplate, data)
 	applyTemplate(filepath.Join(campaignName, "repos.txt"), reposTemplate, data)
+
+	green := color.New(color.FgGreen).SprintFunc()
+	cyan := color.New(color.FgCyan).SprintFunc()
+
+	fmt.Println(green("✅ turbolift init is done - next:"))
+	fmt.Println("1. Run", cyan("cd ", campaignName))
+	fmt.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
+	fmt.Println("3. Run", cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename
