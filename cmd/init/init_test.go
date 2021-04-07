@@ -1,4 +1,4 @@
-package cmd
+package init
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func setup() {
 }
 
 func runCommand() {
-	cmd := createInitCmd()
+	cmd := CreateInitCmd()
 	cmd.SetArgs([]string{"--name", "foo"})
 	err := cmd.Execute()
 

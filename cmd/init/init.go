@@ -1,4 +1,4 @@
-package cmd
+package init
 
 import (
 	_ "embed"
@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	initCmd = createInitCmd()
-
 	campaignName string
 
 	//go:embed templates/.gitignore
@@ -33,11 +31,7 @@ type TemplateVariables struct {
 	CampaignName string
 }
 
-func init() {
-	rootCmd.AddCommand(initCmd)
-}
-
-func createInitCmd() *cobra.Command {
+func CreateInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a Turbolift campaign directory",
