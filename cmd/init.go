@@ -50,17 +50,12 @@ func createInitCmd() *cobra.Command {
 }
 
 func run(*cobra.Command, []string) {
-	err := os.Mkdir(campaignName, os.ModeDir|0755)
-
-	if err != nil {
-		log.Panic("Unable to create campaign directory ", campaignName, ": ", err)
-	}
-
+	// Create a directory for both the campaign and its nested work directory
 	workDirectory := filepath.Join(campaignName, "work")
-	err = os.Mkdir(workDirectory, os.ModeDir|0755)
+	err := os.MkdirAll(workDirectory, os.ModeDir|0755)
 
 	if err != nil {
-		log.Panic("Unable to create work directory ", workDirectory, ": ", err)
+		log.Panic("Unable to create directory ", workDirectory, ": ", err)
 	}
 
 	data := TemplateVariables{
