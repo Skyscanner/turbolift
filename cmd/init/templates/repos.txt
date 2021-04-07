@@ -1,0 +1,3 @@
+# List repositories to be operated upon in this file, one repo per line. e.g.
+# org/repo1
+# org/repo2
