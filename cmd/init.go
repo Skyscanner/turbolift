@@ -29,6 +29,10 @@ var (
 	reposTemplate string
 )
 
+type TemplateVariables struct {
+	CampaignName string
+}
+
 func init() {
 	rootCmd.AddCommand(initCmd)
 }
@@ -57,10 +61,6 @@ func run(*cobra.Command, []string) {
 
 	if err != nil {
 		log.Panic("Unable to create work directory ", workDirectory, ": ", err)
-	}
-
-	type TemplateVariables struct {
-		CampaignName string
 	}
 
 	data := TemplateVariables{
