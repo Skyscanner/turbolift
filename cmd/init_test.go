@@ -12,6 +12,7 @@ var tests = map[string]func(t *testing.T){
 		runCommand()
 
 		assert.DirExistsf(t, "foo", "campaign directory should have been created")
+		assert.DirExistsf(t, "foo/work", "work directory should have been created")
 		assert.FileExists(t, "foo/.gitignore", "a .gitignore file should have been created")
 		assert.FileExists(t, "foo/.turbolift", "a .turbolift file should have been created")
 		assert.FileExists(t, "foo/README.md", "a README.md file should have been created")

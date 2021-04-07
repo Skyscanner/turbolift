@@ -48,7 +48,14 @@ func run(*cobra.Command, []string) {
 	err := os.Mkdir(campaignName, os.ModeDir|0755)
 
 	if err != nil {
-		log.Panic("Unable to create workspace directory ", campaignName, ": ", err)
+		log.Panic("Unable to create campaign directory ", campaignName, ": ", err)
+	}
+
+	workDirectory := filepath.Join(campaignName, "work")
+	err = os.Mkdir(workDirectory, os.ModeDir|0755)
+
+	if err != nil {
+		log.Panic("Unable to create work directory ", workDirectory, ": ", err)
 	}
 
 	type TemplateVariables struct {
