@@ -119,3 +119,21 @@ For example:
 ```
 turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
 ```
+
+## Status: pre-alpha
+
+This codebase does not yet have an implementation for all the features described above.
+
+## Contributing
+
+See CONTRIBUTING.md
+
+## Local development
+
+To build locally:
+
+    go build .
+
+To run tests locally:
+
+    go test ./cmd
