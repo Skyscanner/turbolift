@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/skyscanner/turbolift/internal/simplelog"
+	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/spf13/cobra"
 	"html/template"
 	"os"
@@ -61,10 +61,10 @@ func run(c *cobra.Command, _ []string) {
 	applyTemplate(filepath.Join(campaignName, "README.md"), readmeTemplate, data)
 	applyTemplate(filepath.Join(campaignName, "repos.txt"), reposTemplate, data)
 
-	c.Println(simplelog.Green("✅ turbolift init is done - next:"))
-	c.Println("1. Run", simplelog.Cyan("cd ", campaignName))
+	c.Println(colors.Green("✅ turbolift init is done - next:"))
+	c.Println("1. Run", colors.Cyan("cd ", campaignName))
 	c.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
-	c.Println("3. Run", simplelog.Cyan("turbolift clone"))
+	c.Println("3. Run", colors.Cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename

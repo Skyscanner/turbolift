@@ -1,4 +1,4 @@
-package simplelog
+package colors
 
 import (
 	"github.com/fatih/color"
