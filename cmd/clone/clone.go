@@ -32,33 +32,33 @@ func run(c *cobra.Command, _ []string) {
 	skippedCount := 0
 	errorCount := 0
 	for _, repo := range dir.Repos {
-		parentPath := path.Join("work", repo.OrgName)
+		orgDirPath := path.Join("work", repo.OrgName) // i.e. work/org
 
-		err := os.MkdirAll(parentPath, os.ModeDir|0755)
+		err := os.MkdirAll(orgDirPath, os.ModeDir|0755)
 		if err != nil {
-			c.Printf(colors.Red("Error creating parent directory: %s: %s\n"), parentPath, err)
+			c.Printf(colors.Red("Error creating parent directory: %s: %s\n"), orgDirPath, err)
 			errorCount++
 			break
 		}
 
-		workingCopyPath := path.Join(parentPath, repo.RepoName)
+		repoDirPath := path.Join(orgDirPath, repo.RepoName) // i.e. work/org/repo
 		// skip if the working copy is already cloned
-		if _, err = os.Stat(workingCopyPath); !os.IsNotExist(err) {
-			c.Printf(colors.Yellow("Not cloning %s as a directory already exists at %s\n"), repo.FullRepoName, workingCopyPath)
+		if _, err = os.Stat(repoDirPath); !os.IsNotExist(err) {
+			c.Printf(colors.Yellow("Not cloning %s as a directory already exists at %s\n"), repo.FullRepoName, repoDirPath)
 			skippedCount++
 			continue
 		}
 
-		c.Printf("Forking and cloning %s into %s/%s\n", repo.FullRepoName, parentPath, repo.RepoName)
-		err = exec.Execute(c, parentPath, "gh", "repo", "fork", "--clone=true", repo.FullRepoName)
+		c.Printf("Forking and cloning %s into %s/%s\n", repo.FullRepoName, orgDirPath, repo.RepoName)
+		err = exec.Execute(c, orgDirPath, "gh", "repo", "fork", "--clone=true", repo.FullRepoName)
 		if err != nil {
 			c.Printf(colors.Red("Error when cloning %s: %s\n"), repo.FullRepoName, err)
 			errorCount++
 			continue
 		}
 
-		c.Printf("Creating branch %s in %s/%s\n", dir.Name, parentPath, repo.RepoName)
-		err = exec.Execute(c, workingCopyPath, "git", "checkout", "-b", dir.Name)
+		c.Printf("Creating branch %s in %s/%s\n", dir.Name, orgDirPath, repo.RepoName)
+		err = exec.Execute(c, repoDirPath, "git", "checkout", "-b", dir.Name)
 		if err != nil {
 			c.Printf(colors.Red("Error when creating branch: %s\n"), err)
 			errorCount++
