@@ -1,17 +1,17 @@
 package clone
 
 import (
-	"github.com/skyscanner/turbolift/internal/fake_executor"
+	"github.com/skyscanner/turbolift/internal/executor"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"testing"
 )
 
 var tests = map[string]func(t *testing.T){
 	"it is run": func(t *testing.T) {
-		execCommand = fake_executor.NewFakeExecCommand(0)
-		defer func() { execCommand = exec.Command }()
+		exec = executor.NewFakeExecutor(func(s string, s2 ...string) error {
+			return nil
+		})
 
 		runCommand()
 	},
@@ -40,8 +40,4 @@ func TestCloneCmd(t *testing.T) {
 		setup()
 		t.Run(name, fn)
 	}
-}
-
-func TestMain(m *testing.M) {
-	fake_executor.SupportTestMain(m)
 }
