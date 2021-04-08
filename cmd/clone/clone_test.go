@@ -32,6 +32,8 @@ var tests = map[string]func(t *testing.T){
 		assert.NoError(t, err)
 		assert.Contains(t, out, "Error when cloning org/repo1")
 		assert.Contains(t, out, "Error when cloning org/repo2")
+		assert.Contains(t, out, "turbolift clone completed with errors")
+		assert.Contains(t, out, "2 repos errored")
 
 		fakeExecutor.AssertCalledWith(t, [][]string{
 			{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
@@ -44,8 +46,10 @@ var tests = map[string]func(t *testing.T){
 
 		prepareTempCampaignDirectory("org/repo1", "org/repo2")
 
-		_, err := runCommand()
+		out, err := runCommand()
 		assert.NoError(t, err)
+
+		assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 		fakeExecutor.AssertCalledWith(t, [][]string{
 			{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
