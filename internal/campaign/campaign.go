@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -16,10 +17,14 @@ type Repo struct {
 }
 
 type CampaignDirectory struct {
+	Name  string
 	Repos []Repo
 }
 
 func OpenCampaignDirectory() (*CampaignDirectory, error) {
+	dir, _ := os.Getwd()
+	dirBasename := path.Base(dir)
+
 	file, err := os.Open("repos.txt")
 	if err != nil {
 		return nil, errors.New("Unable to open repos.txt file")
@@ -60,6 +65,7 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 	}
 
 	return &CampaignDirectory{
+		Name:  dirBasename,
 		Repos: repos,
 	}, nil
 }

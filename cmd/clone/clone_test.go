@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"testing"
 )
@@ -48,7 +49,9 @@ var tests = map[string]func(t *testing.T){
 
 		fakeExecutor.AssertCalledWith(t, [][]string{
 			{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
+			{"work/org/repo1", "git", "checkout", "-b", pwd()},
 			{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo2"},
+			{"work/org/repo2", "git", "checkout", "-b", pwd()},
 		})
 	},
 	"it clones repos in multiple orgs": func(t *testing.T) {
@@ -62,7 +65,9 @@ var tests = map[string]func(t *testing.T){
 
 		fakeExecutor.AssertCalledWith(t, [][]string{
 			{"work/orgA", "gh", "repo", "fork", "--clone=true", "orgA/repo1"},
+			{"work/orgA/repo1", "git", "checkout", "-b", pwd()},
 			{"work/orgB", "gh", "repo", "fork", "--clone=true", "orgB/repo2"},
+			{"work/orgB/repo2", "git", "checkout", "-b", pwd()},
 		})
 	},
 	"it clones repos from other hosts": func(t *testing.T) {
@@ -76,9 +81,32 @@ var tests = map[string]func(t *testing.T){
 
 		fakeExecutor.AssertCalledWith(t, [][]string{
 			{"work/orgA", "gh", "repo", "fork", "--clone=true", "mygitserver.com/orgA/repo1"},
+			{"work/orgA/repo1", "git", "checkout", "-b", pwd()},
 			{"work/orgB", "gh", "repo", "fork", "--clone=true", "orgB/repo2"},
+			{"work/orgB/repo2", "git", "checkout", "-b", pwd()},
 		})
 	},
+	"it skips cloning if a working copy already exists": func(t *testing.T) {
+		fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+		exec = fakeExecutor
+
+		prepareTempCampaignDirectory("org/repo1", "org/repo2")
+		_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
+
+		out, err := runCommand()
+		assert.NoError(t, err)
+		assert.Contains(t, out, "Not cloning org/repo1")
+
+		fakeExecutor.AssertCalledWith(t, [][]string{
+			{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo2"},
+			{"work/org/repo2", "git", "checkout", "-b", pwd()},
+		})
+	},
+}
+
+func pwd() string {
+	dir, _ := os.Getwd()
+	return path.Base(dir)
 }
 
 func setup() {

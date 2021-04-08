@@ -24,7 +24,7 @@ func CreateCloneCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	dir, err := campaign.OpenCampaignDirectory()
 	if err != nil {
-		c.Printf(simplelog.Red(c, "Error when reading campaign directory: %s\n", err))
+		c.Printf(simplelog.Red("Error when reading campaign directory: %s\n"), err)
 		return
 	}
 
@@ -33,16 +33,29 @@ func run(c *cobra.Command, _ []string) {
 
 		err := os.MkdirAll(parentPath, os.ModeDir|0755)
 		if err != nil {
-			c.Printf(simplelog.Red(c, "Error creating parent directory: %s: %s\n", parentPath, err))
+			c.Printf(simplelog.Red("Error creating parent directory: %s: %s\n"), parentPath, err)
+			break
 		}
 
-		// TODO: skip if the working copy is already cloned
+		workingCopyPath := path.Join(parentPath, repo.RepoName)
+		// skip if the working copy is already cloned
+		if _, err = os.Stat(workingCopyPath); !os.IsNotExist(err) {
+			c.Printf(simplelog.Yellow("Not cloning %s as a directory already exists at %s\n"), repo.FullRepoName, workingCopyPath)
+			continue
+		}
 
-		err = exec.Execute(parentPath, "gh", "repo", "fork", "--clone=true", repo.FullRepoName)
+		c.Printf("Forking and cloning %s into %s/%s\n", repo.FullRepoName, parentPath, repo.RepoName)
+		err = exec.Execute(c, parentPath, "gh", "repo", "fork", "--clone=true", repo.FullRepoName)
 		if err != nil {
 			c.Printf(simplelog.Red("Error when cloning %s: %s\n"), repo.FullRepoName, err)
+			continue
 		}
 
-		// TODO: Implement branch creation
+		c.Printf("Creating branch %s in %s/%s\n", dir.Name, parentPath, repo.RepoName)
+		err = exec.Execute(c, workingCopyPath, "git", "checkout", "-b", dir.Name)
+		if err != nil {
+			c.Printf(simplelog.Red("Error when creating branch: %s\n"), err)
+			continue
+		}
 	}
 }
