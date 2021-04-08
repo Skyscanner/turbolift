@@ -2,11 +2,11 @@ package init
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
-	"github.com/fatih/color"
+	"github.com/skyscanner/turbolift/internal/simplelog"
 	"github.com/spf13/cobra"
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -43,13 +43,13 @@ func CreateInitCmd() *cobra.Command {
 	return cmd
 }
 
-func run(*cobra.Command, []string) {
+func run(c *cobra.Command, _ []string) {
 	// Create a directory for both the campaign and its nested work directory
 	workDirectory := filepath.Join(campaignName, "work")
 	err := os.MkdirAll(workDirectory, os.ModeDir|0755)
 
 	if err != nil {
-		log.Panic("Unable to create directory ", workDirectory, ": ", err)
+		c.Println("Unable to create directory ", workDirectory, ": ", err)
 	}
 
 	data := TemplateVariables{
@@ -61,28 +61,26 @@ func run(*cobra.Command, []string) {
 	applyTemplate(filepath.Join(campaignName, "README.md"), readmeTemplate, data)
 	applyTemplate(filepath.Join(campaignName, "repos.txt"), reposTemplate, data)
 
-	green := color.New(color.FgGreen).SprintFunc()
-	cyan := color.New(color.FgCyan).SprintFunc()
-
-	fmt.Println(green("✅ turbolift init is done - next:"))
-	fmt.Println("1. Run", cyan("cd ", campaignName))
-	fmt.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
-	fmt.Println("3. Run", cyan("turbolift clone"))
+	c.Println(simplelog.Green("✅ turbolift init is done - next:"))
+	c.Println("1. Run", simplelog.Cyan("cd ", campaignName))
+	c.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
+	c.Println("3. Run", simplelog.Cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename
-func applyTemplate(outputFilename string, templateContent string, data interface{}) {
+func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	readme, err := os.Create(outputFilename)
 
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
 	if err != nil {
-		log.Panic("Unable to parse template")
+		return errors.New("Unable to parse template")
 	}
 
 	err = parsedTemplate.Execute(readme, data)
 
 	if err != nil {
-		log.Panic("Unable to write templated file")
+		return errors.New(fmt.Sprintf("Unable to write templated file: %s", err))
 	}
+	return nil
 }

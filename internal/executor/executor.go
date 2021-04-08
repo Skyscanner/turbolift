@@ -9,14 +9,15 @@ import (
 )
 
 type Executor interface {
-	Execute(string, ...string) error
+	Execute(workingDir string, name string, args ...string) error
 }
 
 type RealExecutor struct {
 }
 
-func (e *RealExecutor) Execute(name string, args ...string) error {
+func (e *RealExecutor) Execute(workingDir string, name string, args ...string) error {
 	command := exec.Command(name, args...)
+	command.Dir = workingDir
 	tailer()(command.StdoutPipe())
 	tailer()(command.StderrPipe())
 
