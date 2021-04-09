@@ -56,10 +56,19 @@ func run(c *cobra.Command, _ []string) {
 		CampaignName: campaignName,
 	}
 
-	applyTemplate(filepath.Join(campaignName, ".gitignore"), gitignoreTemplate, data)
-	applyTemplate(filepath.Join(campaignName, ".turbolift"), turboliftTemplate, data)
-	applyTemplate(filepath.Join(campaignName, "README.md"), readmeTemplate, data)
-	applyTemplate(filepath.Join(campaignName, "repos.txt"), reposTemplate, data)
+	files := map[string]string{
+		".gitignore": gitignoreTemplate,
+		".turbolift": turboliftTemplate,
+		"README.md":  readmeTemplate,
+		"repos.txt":  reposTemplate,
+	}
+	for filename, templateFile := range files {
+		err := applyTemplate(filepath.Join(campaignName, filename), templateFile, data)
+		if err != nil {
+			c.Printf(colors.Red("Error when templating file: %s\n"), err)
+			return
+		}
+	}
 
 	c.Println(colors.Green("✅ turbolift init is done - next:"))
 	c.Println("1. Run", colors.Cyan("cd ", campaignName))
@@ -70,6 +79,9 @@ func run(c *cobra.Command, _ []string) {
 // Applies a given template and data to produce a file with the outputFilename
 func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	readme, err := os.Create(outputFilename)
+	if err != nil {
+		return fmt.Errorf("Unable to open file for output: %s", err)
+	}
 
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
@@ -80,7 +92,7 @@ func applyTemplate(outputFilename string, templateContent string, data interface
 	err = parsedTemplate.Execute(readme, data)
 
 	if err != nil {
-		return errors.New(fmt.Sprintf("Unable to write templated file: %s", err))
+		return fmt.Errorf("Unable to write templated file: %s", err)
 	}
 	return nil
 }

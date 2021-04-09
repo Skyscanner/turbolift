@@ -29,7 +29,12 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 	if err != nil {
 		return nil, errors.New("Unable to open repos.txt file")
 	}
-	defer file.Close()
+	defer func() {
+		closeErr := file.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	var repos []Repo
@@ -54,7 +59,7 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 					FullRepoName: line,
 				}
 			} else {
-				return nil, errors.New(fmt.Sprintf("Unable to parse entry in repos.txt file: %s", line))
+				return nil, fmt.Errorf("Unable to parse entry in repos.txt file: %s", line)
 			}
 			repos = append(repos, repo)
 		}
@@ -67,5 +72,5 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 	return &CampaignDirectory{
 		Name:  dirBasename,
 		Repos: repos,
-	}, nil
+	}, err
 }
