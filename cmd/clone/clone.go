@@ -14,7 +14,7 @@ var exec executor.Executor = executor.NewRealExecutor()
 func CreateCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clone",
-		Short: " ", // TODO
+		Short: "Clone all repositories",
 		Run:   run,
 	}
 
