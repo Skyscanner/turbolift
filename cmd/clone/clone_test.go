@@ -2,7 +2,8 @@ package clone
 
 import (
 	"bytes"
-	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/skyscanner/turbolift/internal/git"
+	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -11,8 +12,10 @@ import (
 )
 
 func TestItAbortsIfReposFileNotFound(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory()
 	err := os.Remove("repos.txt")
@@ -24,12 +27,15 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Error when reading campaign directory")
 
-	fakeExecutor.AssertCalledWith(t, [][]string{})
+	fakeGitHub.AssertCalledWith(t, [][]string{})
+	fakeGit.AssertCalledWith(t, [][]string{})
 }
 
 func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
 
@@ -40,15 +46,43 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed with errors")
 	assert.Contains(t, out, "2 repos errored")
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo2"},
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org", "org/repo1"},
+		{"work/org", "org/repo2"},
 	})
+	fakeGit.AssertCalledWith(t, [][]string{})
+}
+
+func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Error when creating branch")
+	assert.Contains(t, out, "turbolift clone completed with errors")
+	assert.Contains(t, out, "2 repos errored")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org", "org/repo1"},
+		{"work/org", "org/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", testsupport.Pwd()},
+		{"work/org/repo2", testsupport.Pwd()},
+	})
+
 }
 
 func TestItClonesReposFoundInReposFile(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
 
@@ -57,51 +91,63 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
-		{"work/org/repo1", "git", "checkout", "-b", testsupport.Pwd()},
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo2"},
-		{"work/org/repo2", "git", "checkout", "-b", testsupport.Pwd()},
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org", "org/repo1"},
+		{"work/org", "org/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", testsupport.Pwd()},
+		{"work/org/repo2", testsupport.Pwd()},
 	})
 }
 
 func TestItClonesReposInMultipleOrgs(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory("orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/orgA", "gh", "repo", "fork", "--clone=true", "orgA/repo1"},
-		{"work/orgA/repo1", "git", "checkout", "-b", testsupport.Pwd()},
-		{"work/orgB", "gh", "repo", "fork", "--clone=true", "orgB/repo2"},
-		{"work/orgB/repo2", "git", "checkout", "-b", testsupport.Pwd()},
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/orgA", "orgA/repo1"},
+		{"work/orgB", "orgB/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"work/orgA/repo1", testsupport.Pwd()},
+		{"work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
 func TestItClonesReposFromOtherHosts(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory("mygitserver.com/orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/orgA", "gh", "repo", "fork", "--clone=true", "mygitserver.com/orgA/repo1"},
-		{"work/orgA/repo1", "git", "checkout", "-b", testsupport.Pwd()},
-		{"work/orgB", "gh", "repo", "fork", "--clone=true", "orgB/repo2"},
-		{"work/orgB/repo2", "git", "checkout", "-b", testsupport.Pwd()},
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/orgA", "mygitserver.com/orgA/repo1"},
+		{"work/orgB", "orgB/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"work/orgA/repo1", testsupport.Pwd()},
+		{"work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
 func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
-	exec = fakeExecutor
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
 	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
@@ -110,9 +156,11 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Not cloning org/repo1")
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo2"},
-		{"work/org/repo2", "git", "checkout", "-b", testsupport.Pwd()},
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org", "org/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"work/org/repo2", testsupport.Pwd()},
 	})
 }
 

@@ -3,13 +3,15 @@ package clone
 import (
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
-	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/skyscanner/turbolift/internal/git"
+	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
 )
 
-var exec executor.Executor = executor.NewRealExecutor()
+var gh github.GitHub = github.NewRealGitHub()
+var g git.Git = git.NewRealGit()
 
 func CreateCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -50,7 +52,7 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		c.Printf("Forking and cloning %s into %s/%s\n", repo.FullRepoName, orgDirPath, repo.RepoName)
-		err = exec.Execute(c, orgDirPath, "gh", "repo", "fork", "--clone=true", repo.FullRepoName)
+		err = gh.ForkAndClone(c, orgDirPath, repo.FullRepoName)
 		if err != nil {
 			c.Printf(colors.Red("Error when cloning %s: %s\n"), repo.FullRepoName, err)
 			errorCount++
@@ -58,7 +60,7 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		c.Printf("Creating branch %s in %s/%s\n", dir.Name, orgDirPath, repo.RepoName)
-		err = exec.Execute(c, repoDirPath, "git", "checkout", "-b", dir.Name)
+		err = g.Checkout(c, repoDirPath, dir.Name)
 		if err != nil {
 			c.Printf(colors.Red("Error when creating branch: %s\n"), err)
 			errorCount++
