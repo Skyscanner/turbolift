@@ -92,7 +92,7 @@ func applyTemplate(outputFilename string, templateContent string, data interface
 	err = parsedTemplate.Execute(readme, data)
 
 	if err != nil {
-		return fmt.Errorf("Unable to write templated file: %s", err)
+		return fmt.Errorf("Unable to write templated file: %w", err)
 	}
 	return nil
 }
