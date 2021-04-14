@@ -30,7 +30,7 @@ type TemplateVariables struct {
 	CampaignName string
 }
 
-func CreateInitCmd() *cobra.Command {
+func NewInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a Turbolift campaign directory",

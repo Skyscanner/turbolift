@@ -13,7 +13,7 @@ import (
 var gh github.GitHub = github.NewRealGitHub()
 var g git.Git = git.NewRealGit()
 
-func CreateCloneCmd() *cobra.Command {
+func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clone",
 		Short: "Clone all repositories",

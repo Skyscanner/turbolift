@@ -165,7 +165,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 }
 
 func runCommand() (string, error) {
-	cmd := CreateCloneCmd()
+	cmd := NewCloneCmd()
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()

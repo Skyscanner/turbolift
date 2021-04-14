@@ -33,7 +33,7 @@ func TestTemplatedFilesHaveExpectedContent(t *testing.T) {
 }
 
 func runCommand() {
-	cmd := CreateInitCmd()
+	cmd := NewInitCmd()
 	cmd.SetArgs([]string{"--name", "foo"})
 	err := cmd.Execute()
 
