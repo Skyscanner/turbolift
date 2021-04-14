@@ -14,13 +14,13 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 
 	assert.Equal(t, campaign.Name, testsupport.Pwd())
 	assert.Equal(t, campaign.Repos, []Repo{
-		Repo{
+		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
 		},
-		Repo{
+		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo2",
@@ -37,13 +37,13 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 
 	assert.Equal(t, campaign.Name, testsupport.Pwd())
 	assert.Equal(t, campaign.Repos, []Repo{
-		Repo{
+		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
 		},
-		Repo{
+		{
 			Host:         "mygitserver.com",
 			OrgName:      "org",
 			RepoName:     "repo2",
@@ -60,7 +60,7 @@ func TestItIgnoresCommentedLines(t *testing.T) {
 
 	assert.Equal(t, campaign.Name, testsupport.Pwd())
 	assert.Equal(t, campaign.Repos, []Repo{
-		Repo{
+		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
