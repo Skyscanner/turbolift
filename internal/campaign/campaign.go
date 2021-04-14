@@ -16,12 +16,12 @@ type Repo struct {
 	FullRepoName string
 }
 
-type CampaignDirectory struct {
+type Campaign struct {
 	Name  string
 	Repos []Repo
 }
 
-func OpenCampaignDirectory() (*CampaignDirectory, error) {
+func OpenCampaign() (*Campaign, error) {
 	dir, _ := os.Getwd()
 	dirBasename := path.Base(dir)
 
@@ -69,7 +69,7 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 		return nil, fmt.Errorf("Unable to open repos.txt file: %w", err)
 	}
 
-	return &CampaignDirectory{
+	return &Campaign{
 		Name:  dirBasename,
 		Repos: repos,
 	}, err

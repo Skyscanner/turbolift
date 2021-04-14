@@ -24,7 +24,7 @@ func CreateCloneCmd() *cobra.Command {
 }
 
 func run(c *cobra.Command, _ []string) {
-	dir, err := campaign.OpenCampaignDirectory()
+	dir, err := campaign.OpenCampaign()
 	if err != nil {
 		c.Printf(colors.Red("Error when reading campaign directory: %s\n"), err)
 		return

@@ -9,11 +9,11 @@ import (
 func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
 
-	campaignDirectory, err := OpenCampaignDirectory()
+	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaignDirectory.Name, testsupport.Pwd())
-	assert.Equal(t, campaignDirectory.Repos, []Repo{
+	assert.Equal(t, campaign.Name, testsupport.Pwd())
+	assert.Equal(t, campaign.Repos, []Repo{
 		Repo{
 			Host:         "",
 			OrgName:      "org",
@@ -32,11 +32,11 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "mygitserver.com/org/repo2")
 
-	campaignDirectory, err := OpenCampaignDirectory()
+	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaignDirectory.Name, testsupport.Pwd())
-	assert.Equal(t, campaignDirectory.Repos, []Repo{
+	assert.Equal(t, campaign.Name, testsupport.Pwd())
+	assert.Equal(t, campaign.Repos, []Repo{
 		Repo{
 			Host:         "",
 			OrgName:      "org",
@@ -55,11 +55,11 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 func TestItIgnoresCommentedLines(t *testing.T) {
 	testsupport.PrepareTempCampaignDirectory("org/repo1", "#org/repo2")
 
-	campaignDirectory, err := OpenCampaignDirectory()
+	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaignDirectory.Name, testsupport.Pwd())
-	assert.Equal(t, campaignDirectory.Repos, []Repo{
+	assert.Equal(t, campaign.Name, testsupport.Pwd())
+	assert.Equal(t, campaign.Repos, []Repo{
 		Repo{
 			Host:         "",
 			OrgName:      "org",
