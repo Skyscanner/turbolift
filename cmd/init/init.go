@@ -2,7 +2,6 @@ package init
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/spf13/cobra"
@@ -80,13 +79,13 @@ func run(c *cobra.Command, _ []string) {
 func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	readme, err := os.Create(outputFilename)
 	if err != nil {
-		return fmt.Errorf("Unable to open file for output: %s", err)
+		return fmt.Errorf("Unable to open file for output: %w", err)
 	}
 
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
 	if err != nil {
-		return errors.New("Unable to parse template")
+		return fmt.Errorf("Unable to parse template: %w", err)
 	}
 
 	err = parsedTemplate.Execute(readme, data)

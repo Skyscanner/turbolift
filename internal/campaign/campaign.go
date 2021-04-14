@@ -66,7 +66,7 @@ func OpenCampaignDirectory() (*CampaignDirectory, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, errors.New("Unable to open repos.txt file")
+		return nil, fmt.Errorf("Unable to open repos.txt file: %w", err)
 	}
 
 	return &CampaignDirectory{
