@@ -52,7 +52,7 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		c.Printf("Forking and cloning %s into %s/%s\n", repo.FullRepoName, orgDirPath, repo.RepoName)
-		err = gh.ForkAndClone(c, orgDirPath, repo.FullRepoName)
+		err = gh.ForkAndClone(c.OutOrStdout(), orgDirPath, repo.FullRepoName)
 		if err != nil {
 			c.Printf(colors.Red("Error when cloning %s: %s\n"), repo.FullRepoName, err)
 			errorCount++
@@ -60,7 +60,7 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		c.Printf("Creating branch %s in %s/%s\n", dir.Name, orgDirPath, repo.RepoName)
-		err = g.Checkout(c, repoDirPath, dir.Name)
+		err = g.Checkout(c.OutOrStdout(), repoDirPath, dir.Name)
 		if err != nil {
 			c.Printf(colors.Red("Error when creating branch: %s\n"), err)
 			errorCount++

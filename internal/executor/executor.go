@@ -2,31 +2,35 @@ package executor
 
 import (
 	"bufio"
-	"github.com/spf13/cobra"
+	"fmt"
 	"io"
 	"log"
 	"os/exec"
 )
 
 type Executor interface {
-	Execute(c *cobra.Command, workingDir string, name string, args ...string) error
+	Execute(output io.Writer, workingDir string, name string, args ...string) error
 }
 
 type RealExecutor struct {
 }
 
-func (e *RealExecutor) Execute(c *cobra.Command, workingDir string, name string, args ...string) error {
+func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
-	tailer(c)(command.StdoutPipe())
-	tailer(c)(command.StderrPipe())
+	tailer(output)(command.StdoutPipe())
+	tailer(output)(command.StderrPipe())
 
-	c.Println("Executing:", name, args)
+	_, err := fmt.Fprintln(output, "Executing:", name, args)
+	if err != nil {
+		return err
+	}
+
 	if err := command.Start(); err != nil {
 		return err
 	}
 
-	err := command.Wait()
+	err = command.Wait()
 	if err != nil {
 		return err
 	}
@@ -38,7 +42,7 @@ func NewRealExecutor() *RealExecutor {
 	return &RealExecutor{}
 }
 
-func tailer(c *cobra.Command) func(io.ReadCloser, error) {
+func tailer(output io.Writer) func(io.ReadCloser, error) {
 	return func(pipe io.ReadCloser, err error) {
 		if err != nil {
 			log.Fatal(err)
@@ -47,7 +51,10 @@ func tailer(c *cobra.Command) func(io.ReadCloser, error) {
 		scanner := bufio.NewScanner(pipe)
 		go func() {
 			for scanner.Scan() {
-				c.Printf("    %s\n", scanner.Text())
+				_, err := fmt.Fprintf(output, "    %s\n", scanner.Text())
+				if err != nil {
+					return
+				}
 			}
 		}()
 	}

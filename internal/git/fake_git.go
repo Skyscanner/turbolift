@@ -2,31 +2,31 @@ package git
 
 import (
 	"errors"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"testing"
 )
 
 type FakeGit struct {
-	handler func(c *cobra.Command, workingDir string, branchName string) error
+	handler func(output io.Writer, workingDir string, branchName string) error
 	calls   [][]string
 }
 
-func (f *FakeGit) Checkout(c *cobra.Command, workingDir string, branch string) error {
+func (f *FakeGit) Checkout(output io.Writer, workingDir string, branch string) error {
 	f.calls = append(f.calls, []string{workingDir, branch})
-	return f.handler(c, workingDir, branch)
+	return f.handler(output, workingDir, branch)
 }
 
-func (f *FakeGit) ForkAndClone(c *cobra.Command, workingDir string, branchName string) error {
+func (f *FakeGit) ForkAndClone(output io.Writer, workingDir string, branchName string) error {
 	f.calls = append(f.calls, []string{workingDir, branchName})
-	return f.handler(c, workingDir, branchName)
+	return f.handler(output, workingDir, branchName)
 }
 
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGit(h func(c *cobra.Command, workingDir string, branchName string) error) *FakeGit {
+func NewFakeGit(h func(output io.Writer, workingDir string, branchName string) error) *FakeGit {
 	return &FakeGit{
 		handler: h,
 		calls:   [][]string{},
@@ -34,13 +34,13 @@ func NewFakeGit(h func(c *cobra.Command, workingDir string, branchName string) e
 }
 
 func NewAlwaysSucceedsFakeGit() *FakeGit {
-	return NewFakeGit(func(c *cobra.Command, workingDir string, branchName string) error {
+	return NewFakeGit(func(output io.Writer, workingDir string, branchName string) error {
 		return nil
 	})
 }
 
 func NewAlwaysFailsFakeGit() *FakeGit {
-	return NewFakeGit(func(c *cobra.Command, workingDir string, branchName string) error {
+	return NewFakeGit(func(output io.Writer, workingDir string, branchName string) error {
 		return errors.New("synthetic error")
 	})
 }

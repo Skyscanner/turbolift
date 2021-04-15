@@ -1,10 +1,9 @@
 package github
 
 import (
-	"bytes"
 	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -33,13 +32,11 @@ func TestItReturnsNilErrorOnSuccess(t *testing.T) {
 }
 
 func runAndCaptureOutput() (string, error) {
-	c := &cobra.Command{}
-	outBuffer := bytes.NewBufferString("")
-	c.SetOut(outBuffer)
-	err := NewRealGitHub().ForkAndClone(c, "work/org", "org/repo1")
+	sb := strings.Builder{}
+	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1")
 
 	if err != nil {
-		return outBuffer.String(), err
+		return sb.String(), err
 	}
-	return outBuffer.String(), nil
+	return sb.String(), nil
 }

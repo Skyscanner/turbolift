@@ -2,8 +2,8 @@ package executor
 
 import (
 	"errors"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ type FakeExecutor struct {
 	calls   [][]string
 }
 
-func (e *FakeExecutor) Execute(c *cobra.Command, workingDir string, name string, args ...string) error {
+func (e *FakeExecutor) Execute(_ io.Writer, workingDir string, name string, args ...string) error {
 	allArgs := append([]string{workingDir, name}, args...)
 	e.calls = append(e.calls, allArgs)
 	return e.Handler(workingDir, name, args...)

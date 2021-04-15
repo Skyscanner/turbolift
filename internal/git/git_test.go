@@ -1,10 +1,9 @@
 package git
 
 import (
-	"bytes"
 	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -33,13 +32,11 @@ func TestItReturnsNilErrorOnSuccess(t *testing.T) {
 }
 
 func runAndCaptureOutput() (string, error) {
-	c := &cobra.Command{}
-	outBuffer := bytes.NewBufferString("")
-	c.SetOut(outBuffer)
-	err := NewRealGit().Checkout(c, "work/org/repo1", "some_branch")
+	sb := strings.Builder{}
+	err := NewRealGit().Checkout(&sb, "work/org/repo1", "some_branch")
 
 	if err != nil {
-		return outBuffer.String(), err
+		return sb.String(), err
 	}
-	return outBuffer.String(), nil
+	return sb.String(), nil
 }
