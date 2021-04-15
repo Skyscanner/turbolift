@@ -1,2 +1,6 @@
-/turbolift
-dist/
+turbolift
+/bin
+/dist
+coverage.txt
+.vscode
+.idea
