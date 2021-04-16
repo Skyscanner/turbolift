@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	"github.com/spf13/cobra"
 	"log"
@@ -13,7 +14,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd.CreateInitCmd())
+	rootCmd.AddCommand(cloneCmd.NewCloneCmd())
+	rootCmd.AddCommand(initCmd.NewInitCmd())
 }
 
 func Execute() {
