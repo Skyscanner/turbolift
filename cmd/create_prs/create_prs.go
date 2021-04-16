@@ -13,7 +13,7 @@ import (
 var gh github.GitHub = github.NewRealGitHub()
 var g git.Git = git.NewRealGit()
 
-func CreatePRsCmd() *cobra.Command {
+func NewCreatePRsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-prs",
 		Short: "Create pull requests for all repositories with changes",
@@ -24,7 +24,7 @@ func CreatePRsCmd() *cobra.Command {
 }
 
 func run(c *cobra.Command, args []string) {
-	dir, err := campaign.OpenCampaignDirectory()
+	dir, err := campaign.OpenCampaign()
 	if err != nil {
 		c.Printf(colors.Red("Error when reading campaign directory: %s\n"), err)
 		return
@@ -45,8 +45,21 @@ func run(c *cobra.Command, args []string) {
 
 		c.Println(repo.FullRepoName)
 
-		pullRequest := github.PullRequest{}
-		didCreate, err := gh.CreatePullRequest(c, repoDirPath, pullRequest)
+		c.Printf("Pushing changes in %s to origin\n", repoDirPath)
+		err := g.Push(c.OutOrStdout(), repoDirPath, "origin", dir.Name)
+		if err != nil {
+			c.Printf(colors.Red("Error when pushing to upstream for %s: %s\n"), repo.FullRepoName, err)
+			errorCount++
+			continue
+		}
+
+		pullRequest := github.PullRequest{
+			Title:        dir.PrTitle,
+			Body:         dir.PrBody,
+			UpstreamRepo: repo.FullRepoName,
+		}
+		c.Println("Creating PR")
+		didCreate, err := gh.CreatePullRequest(c.OutOrStdout(), repoDirPath, pullRequest)
 
 		if err != nil {
 			c.Printf(colors.Red("Error when creating PR in %s: %s\n"), repo.FullRepoName, err)

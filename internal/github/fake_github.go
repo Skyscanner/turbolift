@@ -13,7 +13,7 @@ type FakeGitHub struct {
 }
 
 func (f *FakeGitHub) CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
-	f.calls = append(f.calls, []string{workingDir, metadata.title})
+	f.calls = append(f.calls, []string{workingDir, metadata.Title})
 	return f.handler(output, workingDir, "")
 }
 

@@ -8,8 +8,9 @@ import (
 var execInstance executor.Executor = executor.NewRealExecutor()
 
 type PullRequest struct {
-	title string
-	body  string
+	Title        string
+	Body         string
+	UpstreamRepo string
 }
 
 type GitHub interface {
@@ -20,8 +21,9 @@ type GitHub interface {
 type RealGitHub struct {
 }
 
-func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
-	panic("implement me")
+func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
+	err = execInstance.Execute(output, workingDir, "gh", "pr", "create", "--title", pr.Title, "--body", pr.Body, "--repo", pr.UpstreamRepo)
+	return err != nil, err
 }
 
 func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {

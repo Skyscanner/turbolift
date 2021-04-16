@@ -2,6 +2,7 @@ package cmd
 
 import (
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
+	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	"github.com/spf13/cobra"
 	"log"
@@ -15,6 +16,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(cloneCmd.NewCloneCmd())
+	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())
 	rootCmd.AddCommand(initCmd.NewInitCmd())
 }
 
