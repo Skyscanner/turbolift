@@ -21,12 +21,22 @@ func CreateAndEnterTempDirectory() {
 	}
 }
 
-func PrepareTempCampaignDirectory(repos ...string) {
+func PrepareTempCampaignDirectory(createDirs bool, repos ...string) {
 	CreateAndEnterTempDirectory()
 
 	delimitedList := strings.Join(repos, "\n")
 	err := ioutil.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0644)
 	if err != nil {
 		panic(err)
+	}
+
+	if createDirs {
+		for _, name := range repos {
+			dirToCreate := path.Join("work", name)
+			err := os.MkdirAll(dirToCreate, os.ModeDir|0755)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }

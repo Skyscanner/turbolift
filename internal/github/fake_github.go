@@ -27,7 +27,7 @@ func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName string) (bool, error)) *FakeGitHub {
+func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName string) error) *FakeGitHub {
 	return &FakeGitHub{
 		handler: h,
 		calls:   [][]string{},

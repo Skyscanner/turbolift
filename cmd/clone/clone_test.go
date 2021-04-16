@@ -17,7 +17,7 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory()
+	testsupport.PrepareTempCampaignDirectory(false)
 	err := os.Remove("repos.txt")
 	if err != nil {
 		panic(err)
@@ -37,7 +37,7 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -59,7 +59,7 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -72,8 +72,8 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", testsupport.Pwd()},
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 
 }
@@ -84,7 +84,7 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -96,8 +96,8 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", testsupport.Pwd()},
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -107,7 +107,7 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("orgA/repo1", "orgB/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
@@ -117,8 +117,8 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1", testsupport.Pwd()},
-		{"work/orgB/repo2", testsupport.Pwd()},
+		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
+		{"checkout", "work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -128,7 +128,7 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("mygitserver.com/orgA/repo1", "orgB/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "mygitserver.com/orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
@@ -138,8 +138,8 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1", testsupport.Pwd()},
-		{"work/orgB/repo2", testsupport.Pwd()},
+		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
+		{"checkout", "work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -149,7 +149,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
 
 	out, err := runCommand()
@@ -160,7 +160,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 }
 
