@@ -17,7 +17,7 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory()
+	testsupport.PrepareTempCampaignDirectory(false)
 	err := os.Remove("repos.txt")
 	if err != nil {
 		panic(err)
@@ -37,7 +37,7 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -59,7 +59,7 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -84,7 +84,7 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -107,7 +107,7 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("orgA/repo1", "orgB/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
@@ -128,7 +128,7 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("mygitserver.com/orgA/repo1", "orgB/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "mygitserver.com/orgA/repo1", "orgB/repo2")
 
 	_, err := runCommand()
 	assert.NoError(t, err)
@@ -149,7 +149,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaignDirectory(false, "org/repo1", "org/repo2")
 	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
 
 	out, err := runCommand()
