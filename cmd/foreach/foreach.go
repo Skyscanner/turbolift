@@ -45,6 +45,7 @@ func run(c *cobra.Command, args []string) {
 
 		c.Println(repo.FullRepoName)
 
+		// Execute within a shell so that piping, redirection, etc are possible
 		shellCommand := os.Getenv("SHELL")
 		if shellCommand == "" {
 			shellCommand = "sh"
