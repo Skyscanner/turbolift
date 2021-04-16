@@ -47,7 +47,7 @@ Next, please run:
 
 ```cd CAMPAIGN_NAME```
 
-Update .env with your GitHub server address and personal access token, or ensure that the `GH_TOKEN` and `GH_HOST` environment variables are already set in your shell.
+Ensure that the `GH_TOKEN` and `GH_HOST` environment variables are already set in your shell.
 
 ## Identifying the repos to operate upon
 
@@ -64,11 +64,11 @@ $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 
 ```turbolift clone```
 
-This clones all repositories listed in the `repos.txt` file into the `CAMPAIGN_NAME/work` directory.
+This clones all repositories listed in the `repos.txt` file into the `work` directory.
 
 ## Making changes
 
-Now, make changes to the checked-out repos under `CAMPAIGN_NAME/work`. 
+Now, make changes to the checked-out repos under the `work` directory. 
 You can do this manually using an editor, using `sed` and similar commands, or using [`codemod`](https://github.com/facebook/codemod)/[`comby`](https://comby.dev/), etc. 
 
 **You are free to use any tools that help get the job done.**
@@ -102,7 +102,7 @@ Repeat if you want to make multiple commits.
 
 ## Creating PRs
 
-Edit the PR title and description in `CAMPAIGN_NAME/README.md`.
+Edit the PR title and description in `README.md`.
 
 Next, to push and raise PRs against changed repos, run:
 

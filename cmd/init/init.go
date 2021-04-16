@@ -3,10 +3,9 @@ package init
 import (
 	_ "embed"
 	"fmt"
-	"github.com/fatih/color"
+	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/spf13/cobra"
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -31,7 +30,7 @@ type TemplateVariables struct {
 	CampaignName string
 }
 
-func CreateInitCmd() *cobra.Command {
+func NewInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize a Turbolift campaign directory",
@@ -43,46 +42,56 @@ func CreateInitCmd() *cobra.Command {
 	return cmd
 }
 
-func run(*cobra.Command, []string) {
+func run(c *cobra.Command, _ []string) {
 	// Create a directory for both the campaign and its nested work directory
 	workDirectory := filepath.Join(campaignName, "work")
 	err := os.MkdirAll(workDirectory, os.ModeDir|0755)
 
 	if err != nil {
-		log.Panic("Unable to create directory ", workDirectory, ": ", err)
+		c.Println("Unable to create directory ", workDirectory, ": ", err)
 	}
 
 	data := TemplateVariables{
 		CampaignName: campaignName,
 	}
 
-	applyTemplate(filepath.Join(campaignName, ".gitignore"), gitignoreTemplate, data)
-	applyTemplate(filepath.Join(campaignName, ".turbolift"), turboliftTemplate, data)
-	applyTemplate(filepath.Join(campaignName, "README.md"), readmeTemplate, data)
-	applyTemplate(filepath.Join(campaignName, "repos.txt"), reposTemplate, data)
+	files := map[string]string{
+		".gitignore": gitignoreTemplate,
+		".turbolift": turboliftTemplate,
+		"README.md":  readmeTemplate,
+		"repos.txt":  reposTemplate,
+	}
+	for filename, templateFile := range files {
+		err := applyTemplate(filepath.Join(campaignName, filename), templateFile, data)
+		if err != nil {
+			c.Printf(colors.Red("Error when templating file: %s\n"), err)
+			return
+		}
+	}
 
-	green := color.New(color.FgGreen).SprintFunc()
-	cyan := color.New(color.FgCyan).SprintFunc()
-
-	fmt.Println(green("✅ turbolift init is done - next:"))
-	fmt.Println("1. Run", cyan("cd ", campaignName))
-	fmt.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
-	fmt.Println("3. Run", cyan("turbolift clone"))
+	c.Println(colors.Green("✅ turbolift init is done - next:"))
+	c.Println("1. Run", colors.Cyan("cd ", campaignName))
+	c.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
+	c.Println("3. Run", colors.Cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename
-func applyTemplate(outputFilename string, templateContent string, data interface{}) {
+func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	readme, err := os.Create(outputFilename)
+	if err != nil {
+		return fmt.Errorf("Unable to open file for output: %w", err)
+	}
 
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
 	if err != nil {
-		log.Panic("Unable to parse template")
+		return fmt.Errorf("Unable to parse template: %w", err)
 	}
 
 	err = parsedTemplate.Execute(readme, data)
 
 	if err != nil {
-		log.Panic("Unable to write templated file")
+		return fmt.Errorf("Unable to write templated file: %w", err)
 	}
+	return nil
 }
