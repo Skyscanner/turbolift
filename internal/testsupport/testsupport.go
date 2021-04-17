@@ -39,4 +39,11 @@ func PrepareTempCampaignDirectory(createDirs bool, repos ...string) {
 			}
 		}
 	}
+
+	dummyPrDescription := `# PR title
+	PR body`
+	err = ioutil.WriteFile("README.md", []byte(dummyPrDescription), os.ModePerm|0644)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -33,6 +33,13 @@ func (f *FakeGit) IsRepoChanged(output io.Writer, workingDir string) (bool, erro
 	return result, err
 }
 
+func (f *FakeGit) Push(output io.Writer, workingDir string, _ string, branchName string) error {
+	call := []string{"push", workingDir, branchName}
+	f.calls = append(f.calls, call)
+	_, err := f.handler(output, call)
+	return err
+}
+
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }

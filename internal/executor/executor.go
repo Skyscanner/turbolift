@@ -22,7 +22,7 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 	tailer(output)(command.StdoutPipe())
 	tailer(output)(command.StderrPipe())
 
-	_, err := fmt.Fprintln(output, "Executing:", name, args)
+	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args))
 	if err != nil {
 		return err
 	}
@@ -43,17 +43,33 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
 
-	_, err := fmt.Fprintln(output, "Executing:", name, args)
+	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args))
 	if err != nil {
 		return "", err
 	}
 
 	commandOutput, err := command.Output()
 	if err != nil {
+		if exitErr, _ := err.(*exec.ExitError); exitErr != nil {
+			stdErr := string(exitErr.Stderr)
+			return stdErr, fmt.Errorf("Error: %w. Stderr: %s", exitErr, stdErr)
+		}
 		return string(commandOutput), err
 	}
 
 	return string(commandOutput), nil
+}
+
+func summarizedArgs(args []string) []string {
+	result := []string{}
+	for _, arg := range args {
+		if len(arg) > 30 {
+			result = append(result, "...")
+		} else {
+			result = append(result, arg)
+		}
+	}
+	return result
 }
 
 func NewRealExecutor() *RealExecutor {

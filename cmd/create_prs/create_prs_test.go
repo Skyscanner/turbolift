@@ -2,6 +2,7 @@ package create_prs
 
 import (
 	"bytes"
+	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,8 @@ import (
 func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
 
@@ -22,14 +25,16 @@ func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", ""},
-		{"work/org/repo2", ""},
+		{"work/org/repo1", "PR title"},
+		{"work/org/repo2", "PR title"},
 	})
 }
 
 func TestItLogsCreatePrSkippedButContinuesToTryAll(t *testing.T) {
 	fakeGitHub := github.NewAlwaysReturnsFalseFakeGitHub()
 	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
 
@@ -41,14 +46,16 @@ func TestItLogsCreatePrSkippedButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "0 OK, 2 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", ""},
-		{"work/org/repo2", ""},
+		{"work/org/repo1", "PR title"},
+		{"work/org/repo2", "PR title"},
 	})
 }
 
 func TestItLogsCreatePrsSucceeds(t *testing.T) {
 	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
 
 	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
 
@@ -58,8 +65,8 @@ func TestItLogsCreatePrsSucceeds(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", ""},
-		{"work/org/repo2", ""},
+		{"work/org/repo1", "PR title"},
+		{"work/org/repo2", "PR title"},
 	})
 }
 
