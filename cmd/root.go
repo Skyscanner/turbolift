@@ -2,8 +2,8 @@ package cmd
 
 import (
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
-	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
 	commitCmd "github.com/skyscanner/turbolift/cmd/commit"
+	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
 	foreachCmd "github.com/skyscanner/turbolift/cmd/foreach"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	"github.com/spf13/cobra"
