@@ -41,7 +41,7 @@ func run(c *cobra.Command, args []string) {
 			continue
 		}
 
-		c.Println(repo.FullRepoName)
+		c.Printf(colors.Cyan("== %s =>\n"), repo.FullRepoName)
 
 		// Execute within a shell so that piping, redirection, etc are possible
 		shellCommand := os.Getenv("SHELL")
