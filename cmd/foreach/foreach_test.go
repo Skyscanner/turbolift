@@ -44,7 +44,7 @@ func TestItSkipsMissingWorkingCopies(t *testing.T) {
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	os.Remove("work/org/repo2")
+	_ = os.Remove("work/org/repo2")
 
 	out, err := runCommand("some", "command")
 	assert.NoError(t, err)
@@ -77,9 +77,8 @@ func userShell() string {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		return "sh"
-	} else {
-		return shell
 	}
+	return shell
 }
 
 func runCommand(args ...string) (string, error) {

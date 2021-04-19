@@ -30,9 +30,7 @@ func run(c *cobra.Command, args []string) {
 		return
 	}
 
-	doneCount := 0
-	skippedCount := 0
-	errorCount := 0
+	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
