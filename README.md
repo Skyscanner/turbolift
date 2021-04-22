@@ -137,5 +137,5 @@ make build
 
 To run tests locally:
 ```
-    make test
+make test
 ```
