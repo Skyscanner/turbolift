@@ -43,7 +43,7 @@ func TestItSkipsReposWithoutChanges(t *testing.T) {
 
 	out, err := runCommand("some test message", []string{}...)
 	assert.NoError(t, err)
-	assert.Contains(t, out, "No changes in org/repo1 - skipping commit")
+	assert.Contains(t, out, "⚠️  Committing changes in org/repo1: No changes - skipping commit")
 	assert.Contains(t, out, "1 OK, 1 skipped")
 
 	fakeGit.AssertCalledWith(t, [][]string{
@@ -67,7 +67,7 @@ func TestItSkipsReposWhichErrorOnStatusChekc(t *testing.T) {
 
 	out, err := runCommand("some test message", []string{}...)
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error when checking for changes in org/repo1")
+	assert.Contains(t, out, "❌ Committing changes in org/repo1")
 	assert.Contains(t, out, "1 OK, 0 skipped, 1 errored")
 
 	fakeGit.AssertCalledWith(t, [][]string{

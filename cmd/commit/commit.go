@@ -2,8 +2,8 @@ package commit
 
 import (
 	"github.com/skyscanner/turbolift/internal/campaign"
-	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
+	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
@@ -30,11 +30,15 @@ func NewCommitCmd() *cobra.Command {
 }
 
 func run(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data")
 	dir, err := campaign.OpenCampaign()
 	if err != nil {
-		c.Printf(colors.Red("Error when reading campaign directory: %s\n"), err)
+		readCampaignActivity.EndWithFailure(err)
 		return
 	}
+	readCampaignActivity.EndWithSuccess()
 
 	doneCount := 0
 	skippedCount := 0
@@ -42,42 +46,41 @@ func run(c *cobra.Command, _ []string) {
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
+		commitActivity := logger.StartActivity("Committing changes in %s", repo.FullRepoName)
+
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
-			c.Printf(colors.Yellow("Not running against %s as the directory %s does not exist - has it been cloned?\n"), repo.FullRepoName, repoDirPath)
+			commitActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
 			skippedCount++
 			continue
 		}
 
-		c.Println(repo.FullRepoName)
-
-		isChanged, err := g.IsRepoChanged(c.OutOrStdout(), repoDirPath)
+		isChanged, err := g.IsRepoChanged(commitActivity.Writer(), repoDirPath)
 		if err != nil {
-			c.Printf(colors.Red("Error when checking for changes in %s: %s\n"), repo.FullRepoName, err)
+			commitActivity.EndWithFailure(err)
 			errorCount++
 			continue
 		}
 
 		if !isChanged {
-			c.Printf(colors.Yellow("No changes in %s - skipping commit\n"), repo.FullRepoName)
+			commitActivity.EndWithWarning("No changes - skipping commit")
 			skippedCount++
 			continue
 		}
 
-		c.Printf("Committing changes in %s\n", repo.FullRepoName)
-
-		err = g.Commit(c.OutOrStdout(), repoDirPath, message)
+		err = g.Commit(commitActivity.Writer(), repoDirPath, message)
 		if err != nil {
-			c.Printf(colors.Red("Error when committing changes in %s: %s\n"), repo.FullRepoName, err)
+			commitActivity.EndWithFailure(err)
 			errorCount++
 		} else {
+			commitActivity.EndWithSuccess()
 			doneCount++
 		}
 	}
 
 	if errorCount == 0 {
-		c.Printf(colors.Green("✅ turbolift commit completed (%d OK, %d skipped)\n"), doneCount, skippedCount)
+		logger.Successf("✅ turbolift commit completed (%d OK, %d skipped)\n", doneCount, skippedCount)
 	} else {
-		c.Printf(colors.Yellow("⚠️ turbolift commit completed with errors (%d OK, %d skipped, %d errored)\n"), doneCount, skippedCount, errorCount)
+		logger.Warnf("⚠️ turbolift commit completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
 	}
 }

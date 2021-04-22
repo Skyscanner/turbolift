@@ -19,8 +19,8 @@ func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error when creating PR in org/repo1")
-	assert.Contains(t, out, "Error when creating PR in org/repo2")
+	assert.Contains(t, out, "❌ Creating PR in org/repo1")
+	assert.Contains(t, out, "❌ Creating PR in org/repo2")
 	assert.Contains(t, out, "turbolift create-prs completed with errors")
 	assert.Contains(t, out, "2 errored")
 

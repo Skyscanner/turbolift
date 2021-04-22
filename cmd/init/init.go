@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/skyscanner/turbolift/internal/colors"
+	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
 	"html/template"
 	"os"
@@ -43,14 +44,21 @@ func NewInitCmd() *cobra.Command {
 }
 
 func run(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	createDirActivity := logger.StartActivity("Creating work directory")
 	// Create a directory for both the campaign and its nested work directory
 	workDirectory := filepath.Join(campaignName, "work")
 	err := os.MkdirAll(workDirectory, os.ModeDir|0755)
 
 	if err != nil {
-		c.Println("Unable to create directory ", workDirectory, ": ", err)
+		createDirActivity.EndWithFailure(err)
+		return
+	} else {
+		createDirActivity.EndWithSuccess()
 	}
 
+	createFilesActivity := logger.StartActivity("Creating initial files")
 	data := TemplateVariables{
 		CampaignName: campaignName,
 	}
@@ -64,15 +72,16 @@ func run(c *cobra.Command, _ []string) {
 	for filename, templateFile := range files {
 		err := applyTemplate(filepath.Join(campaignName, filename), templateFile, data)
 		if err != nil {
-			c.Printf(colors.Red("Error when templating file: %s\n"), err)
+			createFilesActivity.EndWithFailure(err)
 			return
 		}
 	}
+	createFilesActivity.EndWithSuccess()
 
-	c.Println(colors.Green("✅ turbolift init is done - next:"))
-	c.Println("1. Run", colors.Cyan("cd ", campaignName))
-	c.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
-	c.Println("3. Run", colors.Cyan("turbolift clone"))
+	logger.Successf("✅ turbolift init is done - next:\n")
+	logger.Println("1. Run", colors.Cyan("cd ", campaignName))
+	logger.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
+	logger.Println("3. Run", colors.Cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename

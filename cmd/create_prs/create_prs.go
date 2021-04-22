@@ -2,9 +2,9 @@ package create_prs
 
 import (
 	"github.com/skyscanner/turbolift/internal/campaign"
-	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
+	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
@@ -23,12 +23,16 @@ func NewCreatePRsCmd() *cobra.Command {
 	return cmd
 }
 
-func run(c *cobra.Command, args []string) {
+func run(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data")
 	dir, err := campaign.OpenCampaign()
 	if err != nil {
-		c.Printf(colors.Red("Error when reading campaign directory: %s\n"), err)
+		readCampaignActivity.EndWithFailure(err)
 		return
 	}
+	readCampaignActivity.EndWithSuccess()
 
 	doneCount := 0
 	skippedCount := 0
@@ -36,45 +40,46 @@ func run(c *cobra.Command, args []string) {
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
+		pushActivity := logger.StartActivity("Pushing changes in %s to origin", repo.FullRepoName)
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
-			c.Printf(colors.Yellow("Not running against %s as the directory %s does not exist - has it been cloned?\n"), repo.FullRepoName, repoDirPath)
+			pushActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
 			skippedCount++
 			continue
 		}
 
-		c.Println(repo.FullRepoName)
-
-		c.Printf("Pushing changes in %s to origin\n", repoDirPath)
-		err := g.Push(c.OutOrStdout(), repoDirPath, "origin", dir.Name)
+		err := g.Push(pushActivity.Writer(), repoDirPath, "origin", dir.Name)
 		if err != nil {
-			c.Printf(colors.Red("Error when pushing to upstream for %s: %s\n"), repo.FullRepoName, err)
+			pushActivity.EndWithFailure(err)
 			errorCount++
 			continue
 		}
+		pushActivity.EndWithSuccess()
+
+		createPrActivity := logger.StartActivity("Creating PR in %s", repo.FullRepoName)
 
 		pullRequest := github.PullRequest{
 			Title:        dir.PrTitle,
 			Body:         dir.PrBody,
 			UpstreamRepo: repo.FullRepoName,
 		}
-		c.Println("Creating PR")
-		didCreate, err := gh.CreatePullRequest(c.OutOrStdout(), repoDirPath, pullRequest)
+		didCreate, err := gh.CreatePullRequest(createPrActivity.Writer(), repoDirPath, pullRequest)
 
 		if err != nil {
-			c.Printf(colors.Red("Error when creating PR in %s: %s\n"), repo.FullRepoName, err)
+			createPrActivity.EndWithFailure(err)
 			errorCount++
 		} else if !didCreate {
-			c.Printf(colors.Yellow("No PR created in %s\n"), repo.FullRepoName)
+			createPrActivity.EndWithWarningf("No PR created in %s", repo.FullRepoName)
 			skippedCount++
 		} else {
+			createPrActivity.EndWithSuccess()
 			doneCount++
 		}
 	}
 
 	if errorCount == 0 {
-		c.Printf(colors.Green("✅ turbolift create-prs completed (%d OK, %d skipped)\n"), doneCount, skippedCount)
+		logger.Successf("✅ turbolift create-prs completed (%d OK, %d skipped)\n", doneCount, skippedCount)
 	} else {
-		c.Printf(colors.Yellow("⚠️ turbolift create-prs completed with errors (%d OK, %d skipped, %d errored)\n"), doneCount, skippedCount, errorCount)
+		logger.Warnf("⚠️ turbolift create-prs completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
 	}
 }
