@@ -7,7 +7,7 @@ import (
 )
 
 func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
@@ -30,7 +30,7 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 }
 
 func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "mygitserver.com/org/repo2")
+	testsupport.PrepareTempCampaign(false, "org/repo1", "mygitserver.com/org/repo2")
 
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 }
 
 func TestItIgnoresCommentedLines(t *testing.T) {
-	testsupport.PrepareTempCampaignDirectory("org/repo1", "#org/repo2")
+	testsupport.PrepareTempCampaign(false, "org/repo1", "#org/repo2")
 
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
