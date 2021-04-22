@@ -15,7 +15,7 @@ func TestItCommitsAllWithChanges(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some test message", []string{}...)
 	assert.NoError(t, err)
@@ -39,7 +39,7 @@ func TestItSkipsReposWithoutChanges(t *testing.T) {
 	})
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some test message", []string{}...)
 	assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestItSkipsReposWhichErrorOnStatusChekc(t *testing.T) {
 	})
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some test message", []string{}...)
 	assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestItSkipsMissingRepos(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 	err := os.RemoveAll("work/org/repo1")
 	if err != nil {
 		panic(err)

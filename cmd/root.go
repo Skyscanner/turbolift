@@ -17,11 +17,11 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(commitCmd.NewCommitCmd())
 	rootCmd.AddCommand(cloneCmd.NewCloneCmd())
+	rootCmd.AddCommand(commitCmd.NewCommitCmd())
+	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())
 	rootCmd.AddCommand(initCmd.NewInitCmd())
 	rootCmd.AddCommand(foreachCmd.NewForeachCmd())
-	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())
 }
 
 func Execute() {

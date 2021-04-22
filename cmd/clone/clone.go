@@ -30,9 +30,7 @@ func run(c *cobra.Command, _ []string) {
 		return
 	}
 
-	doneCount := 0
-	skippedCount := 0
-	errorCount := 0
+	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		orgDirPath := path.Join("work", repo.OrgName) // i.e. work/org
 
@@ -42,6 +40,8 @@ func run(c *cobra.Command, _ []string) {
 			errorCount++
 			break
 		}
+
+		c.Printf(colors.Cyan("== %s =>\n"), repo.FullRepoName)
 
 		repoDirPath := path.Join(orgDirPath, repo.RepoName) // i.e. work/org/repo
 		// skip if the working copy is already cloned

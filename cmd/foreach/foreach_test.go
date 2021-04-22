@@ -13,7 +13,7 @@ func TestItRejectsEmptyArgs(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand([]string{}...)
 	assert.Errorf(t, err, "requires at least 1 arg(s), only received 0")
@@ -26,7 +26,7 @@ func TestItRunsCommandInShellAgainstWorkingCopies(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some", "command")
 	assert.NoError(t, err)
@@ -43,8 +43,8 @@ func TestItSkipsMissingWorkingCopies(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
-	os.Remove("work/org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	_ = os.Remove("work/org/repo2")
 
 	out, err := runCommand("some", "command")
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestItContinuesOnAndRecordsFailures(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
 	exec = fakeExecutor
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some", "command")
 	assert.NoError(t, err)
@@ -77,9 +77,8 @@ func userShell() string {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		return "sh"
-	} else {
-		return shell
 	}
+	return shell
 }
 
 func runCommand(args ...string) (string, error) {

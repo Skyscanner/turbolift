@@ -21,7 +21,7 @@ func CreateAndEnterTempDirectory() {
 	}
 }
 
-func PrepareTempCampaignDirectory(createDirs bool, repos ...string) {
+func PrepareTempCampaign(createDirs bool, repos ...string) {
 	CreateAndEnterTempDirectory()
 
 	delimitedList := strings.Join(repos, "\n")

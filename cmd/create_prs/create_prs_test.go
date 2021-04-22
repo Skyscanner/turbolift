@@ -15,7 +15,7 @@ func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -36,7 +36,7 @@ func TestItLogsCreatePrSkippedButContinuesToTryAll(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -57,7 +57,7 @@ func TestItLogsCreatePrsSucceeds(t *testing.T) {
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaignDirectory(true, "org/repo1", "org/repo2")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand()
 	assert.NoError(t, err)
