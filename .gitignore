@@ -1,3 +1,7 @@
-.idea/
 /turbolift
 dist/
+/bin
+/dist
+coverage.txt
+.vscode
+.idea

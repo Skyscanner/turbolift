@@ -131,9 +131,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md)
 ## Local development
 
 To build locally:
-
-    go build .
+```
+make build
+```
 
 To run tests locally:
-
-    go test ./...
+```
+make test
+```

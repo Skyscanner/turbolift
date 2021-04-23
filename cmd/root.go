@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(commitCmd.NewCommitCmd())
 	rootCmd.AddCommand(cloneCmd.NewCloneCmd())
 	rootCmd.AddCommand(commitCmd.NewCommitCmd())
 	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())
