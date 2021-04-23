@@ -10,6 +10,7 @@ import (
 
 type Executor interface {
 	Execute(output io.Writer, workingDir string, name string, args ...string) error
+	ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error)
 }
 
 type RealExecutor struct {
@@ -36,6 +37,23 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 	}
 
 	return nil
+}
+
+func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error) {
+	command := exec.Command(name, args...)
+	command.Dir = workingDir
+
+	_, err := fmt.Fprintln(output, "Executing:", name, args)
+	if err != nil {
+		return "", err
+	}
+
+	commandOutput, err := command.Output()
+	if err != nil {
+		return string(commandOutput), err
+	}
+
+	return string(commandOutput), nil
 }
 
 func NewRealExecutor() *RealExecutor {

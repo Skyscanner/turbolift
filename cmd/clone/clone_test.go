@@ -72,8 +72,8 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", testsupport.Pwd()},
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 
 }
@@ -96,8 +96,8 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", testsupport.Pwd()},
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -117,8 +117,8 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1", testsupport.Pwd()},
-		{"work/orgB/repo2", testsupport.Pwd()},
+		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
+		{"checkout", "work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -138,8 +138,8 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1", testsupport.Pwd()},
-		{"work/orgB/repo2", testsupport.Pwd()},
+		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
+		{"checkout", "work/orgB/repo2", testsupport.Pwd()},
 	})
 }
 
@@ -160,7 +160,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
-		{"work/org/repo2", testsupport.Pwd()},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
 }
 
