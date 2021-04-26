@@ -23,10 +23,13 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"path"
+	"time"
 )
 
 var gh github.GitHub = github.NewRealGitHub()
 var g git.Git = git.NewRealGit()
+
+var sleep time.Duration
 
 func NewCreatePRsCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -34,6 +37,8 @@ func NewCreatePRsCmd() *cobra.Command {
 		Short: "Create pull requests for all repositories with changes",
 		Run:   run,
 	}
+
+	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")
 
 	return cmd
 }
@@ -53,6 +58,11 @@ func run(c *cobra.Command, _ []string) {
 	skippedCount := 0
 	errorCount := 0
 	for _, repo := range dir.Repos {
+		if sleep > 0 {
+			logger.Successf("Sleeping for %s", sleep)
+			time.Sleep(sleep)
+		}
+
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
 		pushActivity := logger.StartActivity("Pushing changes in %s to origin", repo.FullRepoName)
