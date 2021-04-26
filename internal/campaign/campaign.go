@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"unicode"
 )
 
 type Repo struct {
@@ -113,9 +112,7 @@ func readPrDescriptionFile() (string, string, error) {
 		line := scanner.Text()
 
 		if prTitle == "" {
-			trimmedFirstLine := strings.TrimLeftFunc(line, func(r rune) bool {
-				return unicode.IsSpace(r) || r == rune('#')
-			})
+			trimmedFirstLine := strings.TrimLeft(line, "# ")
 			prTitle = trimmedFirstLine
 		} else {
 			prBodyLines = append(prBodyLines, line)

@@ -60,6 +60,8 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	return string(commandOutput), nil
 }
 
+// summarizedArgs transforms a list of command arguments where any long value is replaced by "...". Used to ensure
+// that logging of long arguments doesn't take excessive screen space.
 func summarizedArgs(args []string) []string {
 	result := []string{}
 	for _, arg := range args {
