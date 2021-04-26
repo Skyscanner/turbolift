@@ -32,14 +32,35 @@ type Repo struct {
 }
 
 type Campaign struct {
-	Name  string
-	Repos []Repo
+	Name    string
+	Repos   []Repo
+	PrTitle string
+	PrBody  string
 }
 
 func OpenCampaign() (*Campaign, error) {
 	dir, _ := os.Getwd()
 	dirBasename := path.Base(dir)
 
+	repos, err := readReposTxtFile()
+	if err != nil {
+		return nil, err
+	}
+
+	prTitle, prBody, err := readPrDescriptionFile()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Campaign{
+		Name:    dirBasename,
+		Repos:   repos,
+		PrTitle: prTitle,
+		PrBody:  prBody,
+	}, nil
+}
+
+func readReposTxtFile() ([]Repo, error) {
 	file, err := os.Open("repos.txt")
 	if err != nil {
 		return nil, errors.New("Unable to open repos.txt file")
@@ -84,8 +105,38 @@ func OpenCampaign() (*Campaign, error) {
 		return nil, fmt.Errorf("Unable to open repos.txt file: %w", err)
 	}
 
-	return &Campaign{
-		Name:  dirBasename,
-		Repos: repos,
-	}, err
+	return repos, nil
+}
+
+func readPrDescriptionFile() (string, string, error) {
+	file, err := os.Open("README.md")
+	if err != nil {
+		return "", "", errors.New("Unable to open README.md file")
+	}
+	defer func() {
+		closeErr := file.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
+
+	scanner := bufio.NewScanner(file)
+	prTitle := ""
+	prBodyLines := []string{}
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if prTitle == "" {
+			trimmedFirstLine := strings.TrimLeft(line, "# ")
+			prTitle = trimmedFirstLine
+		} else {
+			prBodyLines = append(prBodyLines, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", "", errors.New("Unable to read README.md file")
+	}
+
+	return prTitle, strings.Join(prBodyLines, "\n"), nil
 }
