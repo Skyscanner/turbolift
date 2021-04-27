@@ -13,14 +13,8 @@
  *
  */
 
-package colors
+package flags
 
-import (
-	"github.com/fatih/color"
+var (
+	Verbose bool
 )
-
-var Green = color.New(color.FgGreen).SprintFunc()
-var Cyan = color.New(color.FgCyan).SprintFunc()
-var White = color.New(color.FgWhite).SprintFunc()
-var Red = color.New(color.FgRed).SprintFunc()
-var Yellow = color.New(color.FgYellow).SprintFunc()
