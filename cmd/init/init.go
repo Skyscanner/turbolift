@@ -93,7 +93,7 @@ func run(c *cobra.Command, _ []string) {
 	}
 	createFilesActivity.EndWithSuccess()
 
-	logger.Successf("✅ turbolift init is done - next:\n")
+	logger.Successf("turbolift init is done - next:\n")
 	logger.Println("1. Run", colors.Cyan("cd ", campaignName))
 	logger.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
 	logger.Println("3. Run", colors.Cyan("turbolift clone"))
