@@ -94,8 +94,8 @@ func run(c *cobra.Command, _ []string) {
 	}
 
 	if errorCount == 0 {
-		logger.Successf("✅ turbolift commit completed (%d OK, %d skipped)\n", doneCount, skippedCount)
+		logger.Successf("turbolift commit completed (%d OK, %d skipped)\n", doneCount, skippedCount)
 	} else {
-		logger.Warnf("⚠️ turbolift commit completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
+		logger.Warnf("turbolift commit completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
 	}
 }

@@ -93,9 +93,9 @@ func run(c *cobra.Command, _ []string) {
 	}
 
 	if errorCount == 0 {
-		logger.Successf("✅ turbolift clone completed (%d repos cloned, %d repos skipped)\n", doneCount, skippedCount)
+		logger.Successf("turbolift clone completed (%d repos cloned, %d repos skipped)\n", doneCount, skippedCount)
 	} else {
-		logger.Warnf("⚠️ turbolift clone completed with errors (%d repos cloned, %d repos skipped, %d repos errored)\n", doneCount, skippedCount, errorCount)
+		logger.Warnf("turbolift clone completed with errors (%d repos cloned, %d repos skipped, %d repos errored)\n", doneCount, skippedCount, errorCount)
 		logger.Println("Please check errors above and fix if necessary")
 	}
 	logger.Println("To continue:")

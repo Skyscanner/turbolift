@@ -81,8 +81,8 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if errorCount == 0 {
-		logger.Successf("✅ turbolift foreach completed (%d OK, %d skipped)\n", doneCount, skippedCount)
+		logger.Successf("turbolift foreach completed (%d OK, %d skipped)\n", doneCount, skippedCount)
 	} else {
-		logger.Warnf("⚠️ turbolift foreach completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
+		logger.Warnf("turbolift foreach completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
 	}
 }
