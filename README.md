@@ -35,8 +35,20 @@ It is expected that you'll go through these phases in series.
 
 The turbolift tool automates as much of the Git/GitHub heavy lifting as possible, but leaves you to use whichever tools are appropriate for making the actual changes.
 
+## Caveats
 
-## `init` - getting set up
+With great power comes great responsibility. We encourage Turbolift users to consider the following guidelines:
+
+* Don't use Turbolift to raise pointless PRs. If a reviewer might think the change is trivial or unimportant, think about whether it's actually needed.
+* If you need to make a change to a large number of repositories, we've found that it's generally better to raise PRs to a small subset at first and collect feedback. Simply comment out repositories in `repos.txt` to make Turbolift temporarily ignore them.
+* For complicated or potentially contentious changes, think about ways to validate them before raising PRs. This could range from working in a pair, through writing a peer-reviewed script, all the way to preparing a design document for the planned changes.
+* If you can run automated tests locally, then do (e.g. `turbolift foreach ` to run linting and tests for each repository).
+* Raising draft PRs can be a good way to collect feedback, especially CI test results, with less pressure on reviewers (TODO: relies on https://github.com/Skyscanner/turbolift/issues/11 being implemented)
+* In an organisation with shared infrastructure (e.g. CI), raising many PRs in a short timeframe can cause a lot of load. Consider spacing out PR creation using the `--sleep` option or by commenting out chunks of repositories in `repos.txt`.
+
+## Detailed usage
+
+### `init` - getting set up
 
 ```turbolift init --name CAMPAIGN_NAME```
 
@@ -60,13 +72,13 @@ e.g.
 $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 ```
 
-## Running a mass `clone`
+### Running a mass `clone`
 
 ```turbolift clone```
 
 This clones all repositories listed in the `repos.txt` file into the `work` directory.
 
-## Making changes
+### Making changes
 
 Now, make changes to the checked-out repos under the `work` directory. 
 You can do this manually using an editor, using `sed` and similar commands, or using [`codemod`](https://github.com/facebook/codemod)/[`comby`](https://comby.dev/), etc. 
@@ -86,13 +98,11 @@ At any time, if you need to update your working copy branches from the upstream,
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
 
-## Committing changes
+### Committing changes
 
 When ready to commit changes across all repos, run:
 
 ```turbolift commit --message "Your commit message"```
-
-Turbolift will show a diff in changed repos and ask whether you want to proceed with creating a commit. You can skip this prompt by setting the environment variable `NO_PROMPT=1`.
 
 This command is a no-op on any repos that do not have any changes. 
 Note that the commit will be run with the `--all` flag set, meaning that it is not necessary to stage changes using `git add/rm` for changed files. 
@@ -100,7 +110,7 @@ Newly created files _will_ still need to be staged using `git add`.
 
 Repeat if you want to make multiple commits.
 
-## Creating PRs
+### Creating PRs
 
 Edit the PR title and description in `README.md`.
 
@@ -108,9 +118,7 @@ Next, to push and raise PRs against changed repos, run:
 
 ```turbolift create-prs```
 
-You can optionally view all opened PRs using:
-
-```turbolift view-prs```
+Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause between creation of each PR. This can be helpful in reducing load on shared infrastructure.
 
 If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
 
@@ -120,9 +128,9 @@ For example:
 turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
 ```
 
-## Status: pre-alpha
+## Status: Preview
 
-This codebase does not yet have an implementation for all the features described above.
+This tool is fully functional, but we have improvements that we'd like to make, and would appreciate feedback.
 
 ## Contributing
 
