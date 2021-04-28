@@ -12,7 +12,7 @@ Turbolift essentially automates the boring parts and stays out of the way when i
 
 ## Demo
 
-This demo shows a simple PR being created in two repositories:
+This demo shows Turbolift in action, creating a simple PR in two repositories:
 
 <img src="docs/demo.gif" alt="Screencast demo of turbolift in use" />
 
