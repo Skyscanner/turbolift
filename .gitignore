@@ -1,6 +1,6 @@
 /turbolift
-/bin
 /dist
+/bin
 coverage.txt
 .vscode
 .idea

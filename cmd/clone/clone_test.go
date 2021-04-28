@@ -40,7 +40,7 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error when reading campaign directory")
+	assert.Contains(t, out, "❌ Reading campaign data")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{})
 	fakeGit.AssertCalledWith(t, [][]string{})
@@ -56,8 +56,8 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error when cloning org/repo1")
-	assert.Contains(t, out, "Error when cloning org/repo2")
+	assert.Contains(t, out, "❌ Forking and cloning org/repo1")
+	assert.Contains(t, out, "❌ Forking and cloning org/repo2")
 	assert.Contains(t, out, "turbolift clone completed with errors")
 	assert.Contains(t, out, "2 repos errored")
 
@@ -78,7 +78,7 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error when creating branch")
+	assert.Contains(t, out, "❌ Creating branch")
 	assert.Contains(t, out, "turbolift clone completed with errors")
 	assert.Contains(t, out, "2 repos errored")
 
@@ -169,7 +169,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Not cloning org/repo1")
+	assert.Contains(t, out, "⚠️  Forking and cloning org/repo1")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
 		{"work/org", "org/repo2"},

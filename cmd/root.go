@@ -19,6 +19,7 @@ import (
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
 	commitCmd "github.com/skyscanner/turbolift/cmd/commit"
 	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
+	"github.com/skyscanner/turbolift/cmd/flags"
 	foreachCmd "github.com/skyscanner/turbolift/cmd/foreach"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	"github.com/spf13/cobra"
@@ -32,7 +33,8 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(commitCmd.NewCommitCmd())
+	rootCmd.PersistentFlags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
+
 	rootCmd.AddCommand(cloneCmd.NewCloneCmd())
 	rootCmd.AddCommand(commitCmd.NewCommitCmd())
 	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())

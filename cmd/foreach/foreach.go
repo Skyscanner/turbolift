@@ -17,8 +17,8 @@ package foreach
 
 import (
 	"github.com/skyscanner/turbolift/internal/campaign"
-	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
 	"os"
 	"path"
@@ -39,44 +39,50 @@ func NewForeachCmd() *cobra.Command {
 }
 
 func run(c *cobra.Command, args []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data")
 	dir, err := campaign.OpenCampaign()
 	if err != nil {
-		c.Printf(colors.Red("Error when reading campaign directory: %s\n"), err)
+		readCampaignActivity.EndWithFailure(err)
 		return
 	}
+	readCampaignActivity.EndWithSuccess()
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
+		command := strings.Join(args, " ")
+
+		execActivity := logger.StartActivity("Executing %s in %s", command, repoDirPath)
 
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
-			c.Printf(colors.Yellow("Not running against %s as the directory %s does not exist - has it been cloned?\n"), repo.FullRepoName, repoDirPath)
+			execActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
 			skippedCount++
 			continue
 		}
-
-		c.Printf(colors.Cyan("== %s =>\n"), repo.FullRepoName)
 
 		// Execute within a shell so that piping, redirection, etc are possible
 		shellCommand := os.Getenv("SHELL")
 		if shellCommand == "" {
 			shellCommand = "sh"
 		}
-		shellArgs := []string{"-c", strings.Join(args, " ")}
-		err := exec.Execute(c.OutOrStdout(), repoDirPath, shellCommand, shellArgs...)
+		shellArgs := []string{"-c", command}
+		err := exec.Execute(execActivity.Writer(), repoDirPath, shellCommand, shellArgs...)
 
 		if err != nil {
-			c.Printf(colors.Red("Error when executing command in %s: %s\n"), repo.FullRepoName, err)
+			execActivity.EndWithFailure(err)
 			errorCount++
 		} else {
+			execActivity.EndWithSuccessAndEmitLogs()
 			doneCount++
 		}
 	}
 
 	if errorCount == 0 {
-		c.Printf(colors.Green("✅ turbolift foreach completed (%d OK, %d skipped)\n"), doneCount, skippedCount)
+		logger.Successf("turbolift foreach completed (%d OK, %d skipped)\n", doneCount, skippedCount)
 	} else {
-		c.Printf(colors.Yellow("⚠️ turbolift foreach completed with errors (%d OK, %d skipped, %d errored)\n"), doneCount, skippedCount, errorCount)
+		logger.Warnf("turbolift foreach completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
 	}
 }
