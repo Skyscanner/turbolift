@@ -18,13 +18,17 @@ This demo shows Turbolift in action, creating a simple PR in two repositories:
 
 ## Installation
 
-TODO: needs to be actually made usable
+### Downloading binaries
 
-Git clone and place scripts on the `PATH`.
+Pre-built binary archives can be downloaded from the [Releases](https://github.com/Skyscanner/turbolift/releases) page.
 
-You must have the GitHub CLI, `gh`, installed (use brew to install).
+* Download, extract the archive, and move it onto your `PATH`. 
+* Note that the binaries are not currently notarized for MacOS Gatekeeper. If errors are displayed, use `spctl --add PATH_TO_TURBOLIFT_BINARY`.
 
-Before using Turbolift, run `gh auth login` once and follow the prompts.
+You must also have the GitHub CLI, `gh`, installed:
+
+* Install using `brew install gh`
+* Before using Turbolift, run `gh auth login` once and follow the prompts, to authenticate against github.com and/or your GitHub Enterprise server.
 
 ## Basic usage:
 
@@ -56,6 +60,12 @@ With great power comes great responsibility. We encourage Turbolift users to con
 
 ### `init` - getting set up
 
+As per the installation instructions above, make sure `gh` is installed and authenticated before starting.
+
+If working with repositories on a GitHub Enterprise server, ensure that you have the environment variable `GH_HOST` set to point to that server.
+
+To begin working with Turbolift and create a 'campaign' to hold settings and working copies of repositories:
+
 ```turbolift init --name CAMPAIGN_NAME```
 
 This creates a new turbolift 'campaign' directory ready for you to work in.
@@ -64,8 +74,6 @@ Note that `CAMPAIGN_NAME` will be used as the branch name for any changes that a
 Next, please run:
 
 ```cd CAMPAIGN_NAME```
-
-Ensure that the `GH_TOKEN` and `GH_HOST` environment variables are already set in your shell.
 
 ## Identifying the repos to operate upon
 
