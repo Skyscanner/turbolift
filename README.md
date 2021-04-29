@@ -14,7 +14,7 @@ Turbolift essentially automates the boring parts and stays out of the way when i
 
 This demo shows Turbolift in action, creating a simple PR in two repositories:
 
-<img src="docs/demo.gif" alt="Screencast demo of turbolift in use" />
+![Screencast demo of turbolift in use](docs/demo.gif "Screencast demo of turbolift in use")
 
 ## Installation
 
