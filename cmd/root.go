@@ -16,6 +16,7 @@
 package cmd
 
 import (
+	"fmt"
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
 	commitCmd "github.com/skyscanner/turbolift/cmd/commit"
 	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
@@ -26,10 +27,15 @@ import (
 	"log"
 )
 
+var version = "version-dev"
+var commit = "commit-dev"
+var date = "date-dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "turbolift",
-	Short: "Turbolift",
-	Long:  `Mass refactoring tool for repositories in GitHub`,
+	Use:     "turbolift",
+	Short:   "Turbolift",
+	Long:    `Mass refactoring tool for repositories in GitHub`,
+	Version: fmt.Sprintf("%s (%s, built %s)", version, commit, date),
 }
 
 func init() {
