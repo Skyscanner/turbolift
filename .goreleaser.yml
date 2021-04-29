@@ -10,6 +10,8 @@ builds:
       - linux
       - windows
       - darwin
+    ldflags:
+      - -s -w -X github.com/skyscanner/turbolift/cmd.version={{.Version}} -X github.com/skyscanner/turbolift/cmd.commit={{.Commit}} -X github.com/skyscanner/turbolift/cmd.date={{.Date}}
 archives:
   - replacements:
       darwin: Darwin
