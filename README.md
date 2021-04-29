@@ -10,6 +10,12 @@ Turbolift essentially automates the boring parts and stays out of the way when i
 
 > Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice. 
 
+## Demo
+
+This demo shows Turbolift in action, creating a simple PR in two repositories:
+
+![Screencast demo of turbolift in use](docs/demo.gif "Screencast demo of turbolift in use")
+
 ## Installation
 
 TODO: needs to be actually made usable
