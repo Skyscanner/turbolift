@@ -10,6 +10,12 @@ Turbolift essentially automates the boring parts and stays out of the way when i
 
 > Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice. 
 
+## Demo
+
+This demo shows Turbolift in action, creating a simple PR in two repositories:
+
+![Screencast demo of turbolift in use](docs/demo.gif "Screencast demo of turbolift in use")
+
 ## Installation
 
 TODO: needs to be actually made usable
@@ -119,6 +125,10 @@ Next, to push and raise PRs against changed repos, run:
 ```turbolift create-prs```
 
 Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause between creation of each PR. This can be helpful in reducing load on shared infrastructure.
+
+> Important: if raising many PRs, you may generate load on shared infrastucture such as CI. It is *highly* recommended that you:
+> * slow the rate of PR creation by making Turbolift sleep in between PRs
+> * create PRs in batches, for example by commenting out repositories in `repos.txt`
 
 If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
 
