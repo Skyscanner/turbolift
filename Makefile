@@ -28,11 +28,15 @@ fix: $(BIN_DIR)/golangci-lint
 	@$(BIN_DIR)/golangci-lint run --fix ./...
 .PHONY: lint-fix
 
-fmt: lint-fix
+fmt: fix
 
 build:
 	@go build .
 .PHONY: build
+
+install:
+	@go install .
+.PHONY: install
 
 clean:
 	@rm -fr ./dist

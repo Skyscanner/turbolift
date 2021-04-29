@@ -114,9 +114,9 @@ Next, to push and raise PRs against changed repos, run:
 
 ```turbolift create-prs```
 
-You can optionally view all opened PRs using:
-
-```turbolift view-prs```
+> Important: if raising many PRs, you may generate load on shared infrastucture such as CI. It is *highly* recommended that you:
+> * slow the rate of PR creation by making Turbolift sleep in between PRs, e.g. `turbolift create-prs --sleep 30s`
+> * create PRs in batches, for example by commenting out repositories in `repos.txt`
 
 If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
 
