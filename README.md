@@ -25,7 +25,7 @@ This demo shows Turbolift in action, creating a simple PR in two repositories:
 Pre-built binary archives can be downloaded from the [Releases](https://github.com/Skyscanner/turbolift/releases) page.
 
 * Download, extract the archive, and move it onto your `PATH`. 
-* Note that the binaries are not currently notarized for MacOS Gatekeeper. If errors are displayed, use `spctl --add PATH_TO_TURBOLIFT_BINARY` or right-click on the binary in Finder and choose 'Open' once to allow future execution. Distribution will be improved under https://github.com/Skyscanner/turbolift/issues/43.
+* Note that the binaries are not currently notarized for MacOS Gatekeeper. If errors are displayed, use `xattr -c PATH_TO_TURBOLIFT_BINARY` to un-quarantine the binary, or right-click on the binary in Finder and choose 'Open' once to allow future execution. Distribution will be improved under https://github.com/Skyscanner/turbolift/issues/43.
 
 You must also have the GitHub CLI, `gh`, installed:
 
