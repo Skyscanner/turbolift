@@ -1,5 +1,7 @@
 # turbolift
 
+A simple tool to help apply changes across many GitHub repositories simultaneously.
+
 ## Philosophy
 
 Anyone who has had to manually make changes to many GitHub repositories knows that it's hard to beat the simplicity of just cloning the repositories and updating them locally. You can use any tools necessary to make the change, and there's a degree of immediacy in having local files to inspect, tweak or run validation.
