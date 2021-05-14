@@ -76,7 +76,7 @@ func readReposTxtFile() ([]Repo, error) {
 	var repos []Repo
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.HasPrefix(line, "#") {
+		if !strings.HasPrefix(line, "#") && len(line) > 0 {
 			splitLine := strings.Split(line, "/")
 			numParts := len(splitLine)
 
