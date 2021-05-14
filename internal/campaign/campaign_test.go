@@ -108,3 +108,22 @@ func TestItIgnoresEmptyLines(t *testing.T) {
 	assert.Equal(t, campaign.PrTitle, "PR title")
 	assert.Equal(t, campaign.PrBody, "PR body")
 }
+
+func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
+	testsupport.PrepareTempCampaign(false, "#Comment", "org/repo1", "")
+
+	campaign, err := OpenCampaign()
+	assert.NoError(t, err)
+
+	assert.Equal(t, campaign.Name, testsupport.Pwd())
+	assert.Equal(t, campaign.Repos, []Repo{
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo1",
+			FullRepoName: "org/repo1",
+		},
+	})
+	assert.Equal(t, campaign.PrTitle, "PR title")
+	assert.Equal(t, campaign.PrBody, "PR body")
+}
