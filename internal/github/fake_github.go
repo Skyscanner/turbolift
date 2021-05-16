@@ -38,6 +38,12 @@ func (f *FakeGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoN
 	return err
 }
 
+func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
+	f.calls = append(f.calls, []string{workingDir, fullRepoName})
+	_, err := f.handler(output, workingDir, fullRepoName)
+	return err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
