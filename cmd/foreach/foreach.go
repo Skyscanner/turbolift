@@ -29,10 +29,11 @@ var exec executor.Executor = executor.NewRealExecutor()
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "foreach -- SHELL_COMMAND",
-		Short: "Run a shell command against each working copy",
-		Run:   run,
-		Args:  cobra.MinimumNArgs(1),
+		Use:                "foreach -- SHELL_COMMAND",
+		Short:              "Run a shell command against each working copy",
+		Run:                run,
+		Args:               cobra.MinimumNArgs(1),
+		DisableFlagParsing: true,
 	}
 
 	return cmd
