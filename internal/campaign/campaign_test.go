@@ -27,8 +27,8 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaign.Name, testsupport.Pwd())
-	assert.Equal(t, campaign.Repos, []Repo{
+	assert.Equal(t, testsupport.Pwd(), campaign.Name)
+	assert.Equal(t, []Repo{
 		{
 			Host:         "",
 			OrgName:      "org",
@@ -41,9 +41,9 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 			RepoName:     "repo2",
 			FullRepoName: "org/repo2",
 		},
-	})
-	assert.Equal(t, campaign.PrTitle, "PR title")
-	assert.Equal(t, campaign.PrBody, "PR body")
+	}, campaign.Repos)
+	assert.Equal(t, "PR title", campaign.PrTitle)
+	assert.Equal(t, "PR body", campaign.PrBody)
 }
 
 func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
@@ -52,8 +52,8 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaign.Name, testsupport.Pwd())
-	assert.Equal(t, campaign.Repos, []Repo{
+	assert.Equal(t, testsupport.Pwd(), campaign.Name)
+	assert.Equal(t, []Repo{
 		{
 			Host:         "",
 			OrgName:      "org",
@@ -66,9 +66,9 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 			RepoName:     "repo2",
 			FullRepoName: "mygitserver.com/org/repo2",
 		},
-	})
-	assert.Equal(t, campaign.PrTitle, "PR title")
-	assert.Equal(t, campaign.PrBody, "PR body")
+	}, campaign.Repos)
+	assert.Equal(t, "PR title", campaign.PrTitle)
+	assert.Equal(t, "PR body", campaign.PrBody)
 }
 
 func TestItIgnoresCommentedLines(t *testing.T) {
@@ -77,17 +77,17 @@ func TestItIgnoresCommentedLines(t *testing.T) {
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaign.Name, testsupport.Pwd())
-	assert.Equal(t, campaign.Repos, []Repo{
+	assert.Equal(t, testsupport.Pwd(), campaign.Name)
+	assert.Equal(t, []Repo{
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
 		},
-	})
-	assert.Equal(t, campaign.PrTitle, "PR title")
-	assert.Equal(t, campaign.PrBody, "PR body")
+	}, campaign.Repos)
+	assert.Equal(t, "PR title", campaign.PrTitle)
+	assert.Equal(t, "PR body", campaign.PrBody)
 }
 
 func TestItIgnoresEmptyLines(t *testing.T) {
@@ -96,17 +96,17 @@ func TestItIgnoresEmptyLines(t *testing.T) {
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaign.Name, testsupport.Pwd())
-	assert.Equal(t, campaign.Repos, []Repo{
+	assert.Equal(t, testsupport.Pwd(), campaign.Name)
+	assert.Equal(t, []Repo{
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
 		},
-	})
-	assert.Equal(t, campaign.PrTitle, "PR title")
-	assert.Equal(t, campaign.PrBody, "PR body")
+	}, campaign.Repos)
+	assert.Equal(t, "PR title", campaign.PrTitle)
+	assert.Equal(t, "PR body", campaign.PrBody)
 }
 
 func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
@@ -115,17 +115,17 @@ func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
 	campaign, err := OpenCampaign()
 	assert.NoError(t, err)
 
-	assert.Equal(t, campaign.Name, testsupport.Pwd())
-	assert.Equal(t, campaign.Repos, []Repo{
+	assert.Equal(t, testsupport.Pwd(), campaign.Name)
+	assert.Equal(t, []Repo{
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
 		},
-	})
-	assert.Equal(t, campaign.PrTitle, "PR title")
-	assert.Equal(t, campaign.PrBody, "PR body")
+	}, campaign.Repos)
+	assert.Equal(t, "PR title", campaign.PrTitle)
+	assert.Equal(t, "PR body", campaign.PrBody)
 }
 
 func TestItIgnoresDuplicatedLines(t *testing.T) {
