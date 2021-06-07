@@ -52,7 +52,7 @@ func (a *Activity) emitLogs(colourTransform func(...interface{}) string) {
 }
 
 func (a *Activity) EndWithSuccess() {
-	a.spinner.FinalMSG = fmt.Sprintf("✅ %s", a.name)
+	a.spinner.FinalMSG = fmt.Sprintf("%s %s", colors.Pass("  OK  "), a.name)
 	a.spinner.Stop()
 	_, _ = fmt.Fprintln(a.writer)
 
@@ -62,7 +62,7 @@ func (a *Activity) EndWithSuccess() {
 }
 
 func (a *Activity) EndWithSuccessAndEmitLogs() {
-	a.spinner.FinalMSG = fmt.Sprintf("✅ %s", a.name)
+	a.spinner.FinalMSG = fmt.Sprintf("%s %s", colors.Pass("  OK  "), a.name)
 	a.spinner.Stop()
 	_, _ = fmt.Fprintln(a.writer)
 
@@ -70,7 +70,7 @@ func (a *Activity) EndWithSuccessAndEmitLogs() {
 }
 
 func (a *Activity) EndWithWarning(message interface{}) {
-	a.spinner.FinalMSG = fmt.Sprintf(colors.Yellow("⚠️  %s: %s"), a.name, message)
+	a.spinner.FinalMSG = fmt.Sprintf(colors.Warn(" WARN ")+colors.Yellow(" %s: %s"), a.name, message)
 	a.spinner.Stop()
 	_, _ = fmt.Fprintln(a.writer)
 
@@ -82,7 +82,7 @@ func (a *Activity) EndWithWarningf(format string, args ...interface{}) {
 }
 
 func (a *Activity) EndWithFailure(message interface{}) {
-	a.spinner.FinalMSG = fmt.Sprintf(colors.Red("❌ %s: %s"), a.name, message)
+	a.spinner.FinalMSG = fmt.Sprintf(colors.Fail(" FAIL ")+colors.Red(" %s: %s"), a.name, message)
 	a.spinner.Stop()
 	_, _ = fmt.Fprintln(a.writer)
 
