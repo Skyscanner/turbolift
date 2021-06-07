@@ -127,3 +127,41 @@ func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
 	assert.Equal(t, campaign.PrTitle, "PR title")
 	assert.Equal(t, campaign.PrBody, "PR body")
 }
+
+func TestItIgnoresDuplicatedLines(t *testing.T) {
+	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo1")
+
+	campaign, err := OpenCampaign()
+	assert.NoError(t, err)
+
+	assert.Equal(t, []Repo{
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo1",
+			FullRepoName: "org/repo1",
+		},
+	}, campaign.Repos)
+}
+
+func TestItIgnoresDuplicatedNonSequentialLines(t *testing.T) {
+	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2", "org/repo1")
+
+	campaign, err := OpenCampaign()
+	assert.NoError(t, err)
+
+	assert.Equal(t, []Repo{
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo1",
+			FullRepoName: "org/repo1",
+		},
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo2",
+			FullRepoName: "org/repo2",
+		},
+	}, campaign.Repos)
+}
