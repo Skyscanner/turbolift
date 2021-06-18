@@ -37,7 +37,7 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 	tailer(output)(command.StdoutPipe())
 	tailer(output)(command.StderrPipe())
 
-	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args))
+	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir)
 	if err != nil {
 		return err
 	}

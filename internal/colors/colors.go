@@ -24,3 +24,8 @@ var Cyan = color.New(color.FgCyan).SprintFunc()
 var White = color.New(color.FgWhite).SprintFunc()
 var Red = color.New(color.FgRed).SprintFunc()
 var Yellow = color.New(color.FgYellow).SprintFunc()
+
+var Normal = color.New(color.Reset).SprintFunc()
+var Pass = color.New(color.BgGreen, color.FgBlack).SprintFunc()
+var Warn = color.New(color.BgYellow, color.FgBlack).SprintFunc()
+var Fail = color.New(color.BgRed, color.FgBlack).SprintFunc()
