@@ -73,10 +73,16 @@ func readReposTxtFile() ([]Repo, error) {
 	}()
 
 	scanner := bufio.NewScanner(file)
+	uniq := map[string]interface{}{}
 	var repos []Repo
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "#") && len(line) > 0 {
+			if _, seen := uniq[line]; seen {
+				continue
+			}
+			uniq[line] = struct{}{}
+
 			splitLine := strings.Split(line, "/")
 			numParts := len(splitLine)
 
