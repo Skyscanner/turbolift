@@ -77,6 +77,19 @@ func TestItReturnsFalseAndNilErrorOnNoOpCreatePr(t *testing.T) {
 	})
 }
 
+func TestItSuccessfulCreatesADraftPr(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	didCreatePr, _, err := runCreateDraftPrAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, didCreatePr)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--draft"},
+	})
+}
+
 func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	execInstance = fakeExecutor
@@ -103,6 +116,18 @@ func runCreatePrAndCaptureOutput() (bool, string, error) {
 		Title:        "some title",
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
+	})
+
+	return didCreatePr, sb.String(), err
+}
+
+func runCreateDraftPrAndCaptureOutput() (bool, string, error) {
+	sb := strings.Builder{}
+	didCreatePr, err := NewRealGitHub().CreatePullRequest(&sb, "work/org/repo1", PullRequest{
+		Title:        "some title",
+		Body:         "some body",
+		UpstreamRepo: "org/repo1",
+		IsDraft:      true,
 	})
 
 	return didCreatePr, sb.String(), err
