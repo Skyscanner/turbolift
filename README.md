@@ -8,7 +8,7 @@ Anyone who has had to manually make changes to many GitHub repositories knows th
 
 It's dumb but it works. It doesn't scale well, though. Manually cloning and raising PRs against tens/hundreds of repositories is painful and boring.
 
-Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates forking, cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
+Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
 
 > Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice. 
 
@@ -38,7 +38,7 @@ Making changes with turbolift is split into six main phases:
 
 1. `init` - getting set up
 2. Identifying the repos to operate upon
-3. Running a mass `clone` of the repos (which automatically creates a fork in your user space)
+3. Running a mass `clone` of the repos (which creates a fork in your user space if you don't have permissions on the repository)
 4. Making changes to every repo
 5. Committing changes to every repo
 6. Creating a PR for every repo

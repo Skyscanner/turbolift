@@ -29,12 +29,16 @@ import (
 var gh github.GitHub = github.NewRealGitHub()
 var g git.Git = git.NewRealGit()
 
+var fork bool
+
 func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clone",
 		Short: "Clone all repositories",
 		Run:   run,
 	}
+
+	cmd.Flags().BoolVar(&fork, "fork", false, "Force forking even if the user has push rights on the repository.")
 
 	return cmd
 }
@@ -54,11 +58,16 @@ func run(c *cobra.Command, _ []string) {
 	for _, repo := range dir.Repos {
 		orgDirPath := path.Join("work", repo.OrgName) // i.e. work/org
 
-		forkCloneActivity := logger.StartActivity("Forking and cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+		var cloneActivity *logging.Activity
+		if fork {
+			cloneActivity = logger.StartActivity("Forking and cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+		} else {
+			cloneActivity = logger.StartActivity("Cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+		}
 
 		err := os.MkdirAll(orgDirPath, os.ModeDir|0755)
 		if err != nil {
-			forkCloneActivity.EndWithFailuref("Unable to create org directory: %s", err)
+			cloneActivity.EndWithFailuref("Unable to create org directory: %s", err)
 			errorCount++
 			break
 		}
@@ -66,19 +75,24 @@ func run(c *cobra.Command, _ []string) {
 		repoDirPath := path.Join(orgDirPath, repo.RepoName) // i.e. work/org/repo
 		// skip if the working copy is already cloned
 		if _, err = os.Stat(repoDirPath); !os.IsNotExist(err) {
-			forkCloneActivity.EndWithWarningf("Directory already exists")
+			cloneActivity.EndWithWarningf("Directory already exists")
 			skippedCount++
 			continue
 		}
 
-		err = gh.ForkAndClone(forkCloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+		if fork {
+			err = gh.ForkAndClone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+		} else {
+			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+		}
+
 		if err != nil {
-			forkCloneActivity.EndWithFailure(err)
+			cloneActivity.EndWithFailure(err)
 			errorCount++
 			continue
 		}
 
-		forkCloneActivity.EndWithSuccess()
+		cloneActivity.EndWithSuccess()
 
 		createBranchActivity := logger.StartActivity("Creating branch %s in %s", dir.Name, repo.FullRepoName)
 
