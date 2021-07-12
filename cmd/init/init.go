@@ -94,9 +94,9 @@ func run(c *cobra.Command, _ []string) {
 	createFilesActivity.EndWithSuccess()
 
 	logger.Successf("turbolift init is done - next:\n")
-	logger.Println("1. Run", colors.Cyan("cd ", campaignName))
-	logger.Println("2. Update repos.txt with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
-	logger.Println("3. Run", colors.Cyan("turbolift clone"))
+	logger.Println("\t1. Run", colors.Cyan("cd ", campaignName))
+	logger.Println("\t2. Update", colors.Cyan("repos.txt"), "with the names of the repos that need changing (either manually or using a tool to generate a list of repos)")
+	logger.Println("\t3. Run", colors.Cyan("turbolift clone"))
 }
 
 // Applies a given template and data to produce a file with the outputFilename
