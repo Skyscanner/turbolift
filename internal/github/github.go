@@ -27,6 +27,7 @@ type PullRequest struct {
 	Title        string
 	Body         string
 	UpstreamRepo string
+	IsDraft      bool
 }
 
 type GitHub interface {
@@ -39,8 +40,22 @@ type RealGitHub struct {
 }
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
-	execOutput, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "pr", "create", "--title", pr.Title, "--body", pr.Body, "--repo", pr.UpstreamRepo)
+	gh_args := []string{
+		"pr",
+		"create",
+		"--title",
+		pr.Title,
+		"--body",
+		pr.Body,
+		"--repo",
+		pr.UpstreamRepo,
+	}
 
+	if pr.IsDraft {
+		gh_args = append(gh_args, "--draft")
+	}
+
+	execOutput, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", gh_args...)
 	if strings.Contains(execOutput, "GraphQL error: No commits between") {
 		// no PR was created because there are no differences between remotes
 		return false, nil
