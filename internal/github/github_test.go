@@ -47,6 +47,30 @@ func TestItReturnsNilErrorOnSuccessfulFork(t *testing.T) {
 	})
 }
 
+func TestItReturnsErrorOnFailedClone(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runCloneAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org", "gh", "repo", "clone", "org/repo1"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulClone(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runCloneAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org", "gh", "repo", "clone", "org/repo1"},
+	})
+}
+
 func TestItReturnsErrorOnFailedCreatePr(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
 	execInstance = fakeExecutor
@@ -106,6 +130,13 @@ func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 func runForkAndCloneAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1")
+
+	return sb.String(), err
+}
+
+func runCloneAndCaptureOutput() (string, error) {
+	sb := strings.Builder{}
+	err := NewRealGitHub().Clone(&sb, "work/org", "org/repo1")
 
 	return sb.String(), err
 }

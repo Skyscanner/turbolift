@@ -32,6 +32,7 @@ type PullRequest struct {
 
 type GitHub interface {
 	ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error
+	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 }
 
@@ -67,6 +68,10 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 
 func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
 	return execInstance.Execute(output, workingDir, "gh", "repo", "fork", "--clone=true", fullRepoName)
+}
+
+func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
+	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName)
 }
 
 func NewRealGitHub() *RealGitHub {
