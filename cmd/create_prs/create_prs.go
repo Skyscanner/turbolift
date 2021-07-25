@@ -31,6 +31,7 @@ var gh github.GitHub = github.NewRealGitHub()
 var g git.Git = git.NewRealGit()
 
 var sleep time.Duration
+var isDraft bool
 
 func NewCreatePRsCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -40,6 +41,7 @@ func NewCreatePRsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")
+	cmd.Flags().BoolVar(&isDraft, "draft", false, "Creates the Pull Request as Draft PR")
 
 	return cmd
 }
@@ -82,13 +84,20 @@ func run(c *cobra.Command, _ []string) {
 		}
 		pushActivity.EndWithSuccess()
 
-		createPrActivity := logger.StartActivity("Creating PR in %s", repo.FullRepoName)
+		var createPrActivity *logging.Activity
+		if isDraft {
+			createPrActivity = logger.StartActivity("Creating Draft PR in %s", repo.FullRepoName)
+		} else {
+			createPrActivity = logger.StartActivity("Creating PR in %s", repo.FullRepoName)
+		}
 
 		pullRequest := github.PullRequest{
 			Title:        dir.PrTitle,
 			Body:         dir.PrBody,
 			UpstreamRepo: repo.FullRepoName,
+			IsDraft:      isDraft,
 		}
+
 		didCreate, err := gh.CreatePullRequest(createPrActivity.Writer(), repoDirPath, pullRequest)
 
 		if err != nil {
