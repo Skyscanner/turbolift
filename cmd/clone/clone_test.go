@@ -17,13 +17,14 @@ package clone
 
 import (
 	"bytes"
+	"os"
+	"path"
+	"testing"
+
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"path"
-	"testing"
 )
 
 func TestItAbortsIfReposFileNotFound(t *testing.T) {
@@ -38,7 +39,7 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 		panic(err)
 	}
 
-	out, err := runCommandWithFork()
+	out, err := runCloneCommandWithFork()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Reading campaign data")
 
@@ -54,7 +55,7 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
-	out, err := runCommand()
+	out, err := runCloneCommand()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Cloning org/repo1")
 	assert.Contains(t, out, "Cloning org/repo2")
@@ -76,7 +77,7 @@ func TestItLogsForkAndCloneErrorsButContinuesToTryAll(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
-	out, err := runCommandWithFork()
+	out, err := runCloneCommandWithFork()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Forking and cloning org/repo1")
 	assert.Contains(t, out, "Forking and cloning org/repo2")
@@ -98,7 +99,7 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
-	out, err := runCommandWithFork()
+	out, err := runCloneCommandWithFork()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Creating branch")
 	assert.Contains(t, out, "turbolift clone completed with errors")
@@ -123,7 +124,7 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
-	out, err := runCommand()
+	out, err := runCloneCommand()
 	assert.NoError(t, err)
 
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
@@ -146,7 +147,7 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "orgA/repo1", "orgB/repo2")
 
-	_, err := runCommand()
+	_, err := runCloneCommand()
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
@@ -167,7 +168,7 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(false, "mygitserver.com/orgA/repo1", "orgB/repo2")
 
-	_, err := runCommand()
+	_, err := runCloneCommand()
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
@@ -189,7 +190,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
 
-	out, err := runCommandWithFork()
+	out, err := runCloneCommandWithFork()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Forking and cloning org/repo1")
 
@@ -201,23 +202,23 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	})
 }
 
-func runCommand() (string, error) {
+func runCloneCommand() (string, error) {
 	cmd := NewCloneCmd()
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
+	nofork = true
 	err := cmd.Execute()
-
 	if err != nil {
 		return outBuffer.String(), err
 	}
 	return outBuffer.String(), nil
 }
 
-func runCommandWithFork() (string, error) {
+func runCloneCommandWithFork() (string, error) {
 	cmd := NewCloneCmd()
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
-	fork = true
+	nofork = false
 	err := cmd.Execute()
 
 	if err != nil {

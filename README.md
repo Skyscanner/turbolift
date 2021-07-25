@@ -38,7 +38,7 @@ Making changes with turbolift is split into six main phases:
 
 1. `init` - getting set up
 2. Identifying the repos to operate upon
-3. Running a mass `clone` of the repos (which creates a fork in your user space if you don't have permissions on the repository)
+3. Running a mass `clone` of the repos (by default, it will create a fork in your user space)
 4. Making changes to every repo
 5. Committing changes to every repo
 6. Creating a PR for every repo
@@ -92,7 +92,10 @@ $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 
 ```turbolift clone```
 
-This clones all repositories listed in the `repos.txt` file into the `work` directory.
+This creates a fork and clones all repositories listed in the `repos.txt` file into the `work` directory.
+You may wish to skip the fork and work on the upstream repository branch directly with the flag `--no-fork`.
+
+> NTLD: if one of the repositories in the list requires a fork to create a PR, omit the `--no-fork` flag and let all the repositories be forked. For now it's a all-or-nothing scenario.
 
 ### Making changes
 
