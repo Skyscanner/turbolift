@@ -16,9 +16,10 @@
 package github
 
 import (
-	"github.com/skyscanner/turbolift/internal/executor"
 	"io"
 	"strings"
+
+	"github.com/skyscanner/turbolift/internal/executor"
 )
 
 var execInstance executor.Executor = executor.NewRealExecutor()
