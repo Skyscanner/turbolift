@@ -50,13 +50,13 @@ func (log *Logger) Println(s ...interface{}) {
 }
 
 func (log *Logger) Successf(format string, args ...interface{}) {
-	prefixedFormat := fmt.Sprintf("✅ %s", format)
-	log.Printf(colors.Green(prefixedFormat), args...)
+	prefixedFormat := fmt.Sprint(colors.Pass("  OK  "), " ", colors.Green(format))
+	log.Printf(prefixedFormat, args...)
 }
 
 func (log *Logger) Warnf(format string, args ...interface{}) {
-	prefixedFormat := fmt.Sprintf("⚠️ %s", format)
-	log.Printf(colors.Yellow(prefixedFormat), args...)
+	prefixedFormat := fmt.Sprint(colors.Warn(" WARN "), " ", colors.Yellow(format))
+	log.Printf(prefixedFormat, args...)
 }
 
 // StartActivity creates and starts an *Activity with an associated spinner.

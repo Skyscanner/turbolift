@@ -8,7 +8,7 @@ Anyone who has had to manually make changes to many GitHub repositories knows th
 
 It's dumb but it works. It doesn't scale well, though. Manually cloning and raising PRs against tens/hundreds of repositories is painful and boring.
 
-Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates forking, cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
+Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
 
 > Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice. 
 
@@ -38,7 +38,7 @@ Making changes with turbolift is split into six main phases:
 
 1. `init` - getting set up
 2. Identifying the repos to operate upon
-3. Running a mass `clone` of the repos (which automatically creates a fork in your user space)
+3. Running a mass `clone` of the repos (by default, it will create a fork in your user space)
 4. Making changes to every repo
 5. Committing changes to every repo
 6. Creating a PR for every repo
@@ -92,7 +92,10 @@ $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 
 ```turbolift clone```
 
-This clones all repositories listed in the `repos.txt` file into the `work` directory.
+This creates a fork and clones all repositories listed in the `repos.txt` file into the `work` directory.
+You may wish to skip the fork and work on the upstream repository branch directly with the flag `--no-fork`.
+
+> NTLD: if one of the repositories in the list requires a fork to create a PR, omit the `--no-fork` flag and let all the repositories be forked. For now it's a all-or-nothing scenario.
 
 ### Making changes
 
@@ -139,6 +142,7 @@ Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause betwee
 > Important: if raising many PRs, you may generate load on shared infrastucture such as CI. It is *highly* recommended that you:
 > * slow the rate of PR creation by making Turbolift sleep in between PRs
 > * create PRs in batches, for example by commenting out repositories in `repos.txt`
+> * Use the `--draft` flag to create the PRs as Draft
 
 If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
 

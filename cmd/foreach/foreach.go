@@ -17,6 +17,7 @@ package foreach
 
 import (
 	"github.com/skyscanner/turbolift/internal/campaign"
+	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
@@ -82,8 +83,8 @@ func run(c *cobra.Command, args []string) {
 	}
 
 	if errorCount == 0 {
-		logger.Successf("turbolift foreach completed (%d OK, %d skipped)\n", doneCount, skippedCount)
+		logger.Successf("turbolift foreach completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
 	} else {
-		logger.Warnf("turbolift foreach completed with errors (%d OK, %d skipped, %d errored)\n", doneCount, skippedCount, errorCount)
+		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 }

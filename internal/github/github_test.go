@@ -47,6 +47,30 @@ func TestItReturnsNilErrorOnSuccessfulFork(t *testing.T) {
 	})
 }
 
+func TestItReturnsErrorOnFailedClone(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runCloneAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org", "gh", "repo", "clone", "org/repo1"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulClone(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runCloneAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org", "gh", "repo", "clone", "org/repo1"},
+	})
+}
+
 func TestItReturnsErrorOnFailedCreatePr(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
 	execInstance = fakeExecutor
@@ -77,6 +101,19 @@ func TestItReturnsFalseAndNilErrorOnNoOpCreatePr(t *testing.T) {
 	})
 }
 
+func TestItSuccessfulCreatesADraftPr(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	didCreatePr, _, err := runCreateDraftPrAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, didCreatePr)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--draft"},
+	})
+}
+
 func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	execInstance = fakeExecutor
@@ -97,12 +134,31 @@ func runForkAndCloneAndCaptureOutput() (string, error) {
 	return sb.String(), err
 }
 
+func runCloneAndCaptureOutput() (string, error) {
+	sb := strings.Builder{}
+	err := NewRealGitHub().Clone(&sb, "work/org", "org/repo1")
+
+	return sb.String(), err
+}
+
 func runCreatePrAndCaptureOutput() (bool, string, error) {
 	sb := strings.Builder{}
 	didCreatePr, err := NewRealGitHub().CreatePullRequest(&sb, "work/org/repo1", PullRequest{
 		Title:        "some title",
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
+	})
+
+	return didCreatePr, sb.String(), err
+}
+
+func runCreateDraftPrAndCaptureOutput() (bool, string, error) {
+	sb := strings.Builder{}
+	didCreatePr, err := NewRealGitHub().CreatePullRequest(&sb, "work/org/repo1", PullRequest{
+		Title:        "some title",
+		Body:         "some body",
+		UpstreamRepo: "org/repo1",
+		IsDraft:      true,
 	})
 
 	return didCreatePr, sb.String(), err

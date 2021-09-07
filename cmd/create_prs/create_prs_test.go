@@ -34,8 +34,8 @@ func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "❌ Creating PR in org/repo1")
-	assert.Contains(t, out, "❌ Creating PR in org/repo2")
+	assert.Contains(t, out, "Creating PR in org/repo1")
+	assert.Contains(t, out, "Creating PR in org/repo2")
 	assert.Contains(t, out, "turbolift create-prs completed with errors")
 	assert.Contains(t, out, "2 errored")
 
@@ -85,8 +85,42 @@ func TestItLogsCreatePrsSucceeds(t *testing.T) {
 	})
 }
 
+func TestItLogsCreateDraftPr(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommandDraft()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Creating Draft PR in org/repo1")
+	assert.Contains(t, out, "Creating Draft PR in org/repo2")
+	assert.Contains(t, out, "turbolift create-prs completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "PR title"},
+		{"work/org/repo2", "PR title"},
+	})
+}
+
 func runCommand() (string, error) {
 	cmd := NewCreatePRsCmd()
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	err := cmd.Execute()
+
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandDraft() (string, error) {
+	cmd := NewCreatePRsCmd()
+	isDraft = true
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
