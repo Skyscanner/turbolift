@@ -32,10 +32,11 @@ var commit = "commit-dev"
 var date = "date-dev"
 
 var rootCmd = &cobra.Command{
-	Use:     "turbolift",
-	Short:   "Turbolift",
-	Long:    `Mass refactoring tool for repositories in GitHub`,
-	Version: fmt.Sprintf("%s (%s, built %s)", version, commit, date),
+	Use:              "turbolift",
+	Short:            "Turbolift",
+	Long:             `Mass refactoring tool for repositories in GitHub`,
+	Version:          fmt.Sprintf("%s (%s, built %s)", version, commit, date),
+	TraverseChildren: true,
 }
 
 func init() {
