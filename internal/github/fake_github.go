@@ -17,14 +17,16 @@ package github
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type FakeGitHub struct {
-	handler func(output io.Writer, workingDir string, fullRepoName string) (bool, error)
-	calls   [][]string
+	handler          func(output io.Writer, workingDir string, fullRepoName string) (bool, error)
+	returningHandler func(output io.Writer, workingDir string) (interface{}, error)
+	calls            [][]string
 }
 
 func (f *FakeGitHub) CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
@@ -44,31 +46,47 @@ func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName str
 	return err
 }
 
+func (f *FakeGitHub) GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error) {
+	f.calls = append(f.calls, []string{workingDir})
+	result, err := f.returningHandler(output, workingDir)
+	if result == nil {
+		return nil, err
+	}
+	return result.(*PrStatus), err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName string) (bool, error)) *FakeGitHub {
+func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName string) (bool, error), r func(output io.Writer, workingDir string) (interface{}, error)) *FakeGitHub {
 	return &FakeGitHub{
-		handler: h,
-		calls:   [][]string{},
+		handler:          h,
+		returningHandler: r,
+		calls:            [][]string{},
 	}
 }
 
 func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
 		return true, nil
+	}, func(output io.Writer, workingDir string) (interface{}, error) {
+		return PrStatus{}, nil
 	})
 }
 
 func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
 		return false, errors.New("synthetic error")
+	}, func(output io.Writer, workingDir string) (interface{}, error) {
+		return nil, errors.New("synthetic error")
 	})
 }
 
 func NewAlwaysReturnsFalseFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
 		return false, nil
+	}, func(output io.Writer, workingDir string) (interface{}, error) {
+		return PrStatus{}, nil
 	})
 }

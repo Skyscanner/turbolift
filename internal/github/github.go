@@ -16,6 +16,8 @@
 package github
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 
@@ -25,16 +27,35 @@ import (
 var execInstance executor.Executor = executor.NewRealExecutor()
 
 type PullRequest struct {
-	Title        string
-	Body         string
-	UpstreamRepo string
-	IsDraft      bool
+	Title          string
+	Body           string
+	UpstreamRepo   string
+	IsDraft        bool
+	ReviewDecision string
+}
+
+type ReactionGroupUsers struct {
+	TotalCount int
+}
+
+type ReactionGroup struct {
+	Content string
+	Users   ReactionGroupUsers
+}
+
+type PrStatus struct {
+	Mergeable      string
+	ReviewDecision string
+	State          string
+	ReactionGroups []ReactionGroup
+	Url            string
 }
 
 type GitHub interface {
 	ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error
 	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
+	GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error)
 }
 
 type RealGitHub struct {
@@ -73,6 +94,19 @@ func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoN
 
 func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
 	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName)
+}
+
+func (r *RealGitHub) GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error) {
+	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "pr", "view", "--json", "title,state,mergeable,statusCheckRollup,reviewDecision,reactionGroups,url")
+	if err != nil {
+		return nil, err
+	}
+
+	var status PrStatus
+	if err := json.Unmarshal([]byte(s), &status); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal JSON for PR status: %w", err)
+	}
+	return &status, nil
 }
 
 func NewRealGitHub() *RealGitHub {

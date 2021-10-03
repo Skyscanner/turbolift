@@ -17,12 +17,13 @@ package logging
 
 import (
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/briandowns/spinner"
 	"github.com/skyscanner/turbolift/cmd/flags"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/spf13/cobra"
-	"io"
-	"time"
 )
 
 // Logger is a facade for CLI logging.
@@ -77,4 +78,8 @@ func (log *Logger) StartActivity(format string, args ...interface{}) *Activity {
 		writer:  log.writer,
 		verbose: log.verbose,
 	}
+}
+
+func (log *Logger) Writer() io.Writer {
+	return log.writer
 }
