@@ -3,7 +3,7 @@ ARCH=$(shell uname -m)
 VERSION=0.0.1
 ITERATION := 1
 
-GOLANGCI_VERSION = 1.32.0
+GOLANGCI_VERSION = 1.42.1
 
 BIN_DIR := $(CURDIR)/bin
 
