@@ -45,7 +45,7 @@ type ReactionGroup struct {
 
 type PrStatus struct {
 	Mergeable      string
-	ReviewDecision string
+	ReviewDecision string // https://docs.github.com/en/graphql/reference/enums#pullrequestreviewdecision
 	State          string
 	ReactionGroups []ReactionGroup
 	Url            string

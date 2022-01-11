@@ -64,8 +64,8 @@ func TestItLogsDetailedInformation(t *testing.T) {
 	assert.Regexp(t, "Open\\s+1", out)
 	assert.Regexp(t, "👍\\s+4", out)
 
-	assert.Regexp(t, "org/repo1\\s+OPEN", out)
-	assert.Regexp(t, "org/repo2\\s+MERGED", out)
+	assert.Regexp(t, "org/repo1\\s+OPEN\\s+REVIEW_REQUIRED", out)
+	assert.Regexp(t, "org/repo2\\s+MERGED\\s+APPROVED", out)
 	assert.Regexp(t, "org/repo3\\s+CLOSED", out)
 }
 
@@ -134,6 +134,7 @@ func prepareFakeResponses() {
 					},
 				},
 			},
+			ReviewDecision: "REVIEW_REQUIRED",
 		},
 		"work/org/repo2": {
 			State: "MERGED",
@@ -145,6 +146,7 @@ func prepareFakeResponses() {
 					},
 				},
 			},
+			ReviewDecision: "APPROVED",
 		},
 		"work/org/repo3": {
 			State: "CLOSED",
