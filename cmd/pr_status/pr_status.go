@@ -16,16 +16,28 @@
 package pr_status
 
 import (
-	"os"
-	"path"
-
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
+	"os"
+	"path"
+	"strings"
 )
+
+var reactionsOrder = []string{
+	"THUMBS_UP",
+	"THUMBS_DOWN",
+	"LAUGH",
+	"HOORAY",
+	"CONFUSED",
+	"HEART",
+	"ROCKET",
+	"EYES",
+}
 
 var reactionsMapping = map[string]string{
 	"THUMBS_UP":   "👍",
@@ -139,12 +151,15 @@ func run(c *cobra.Command, _ []string) {
 
 	logger.Println()
 
-	reactionsTable := table.New("Reaction", "Count")
-	reactionsTable.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
-	reactionsTable.WithFirstColumnFormatter(color.New(color.FgCyan).SprintfFunc())
-	reactionsTable.WithWriter(logger.Writer())
-	for k, v := range reactions {
-		reactionsTable.AddRow(reactionsMapping[k], v)
+	anyReactionsToShow := false
+	reactionsOutput := []string{"Reactions:"}
+	for _, key := range reactionsOrder {
+		if reactions[key] > 0 {
+			reactionsOutput = append(reactionsOutput, fmt.Sprintf("%s %d", reactionsMapping[key], reactions[key]))
+			anyReactionsToShow = true
+		}
 	}
-	reactionsTable.Print()
+	if anyReactionsToShow {
+		logger.Println(strings.Join(reactionsOutput, " "))
+	}
 }

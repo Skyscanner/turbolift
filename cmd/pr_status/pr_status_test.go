@@ -27,6 +27,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	// disable output colouring so that strings we want to do 'Contains' checks on do not have ANSI escape sequences in IDEs
+	_ = os.Setenv("NO_COLOR", "1")
+}
+
 func TestItLogsSummaryInformation(t *testing.T) {
 	prepareFakeResponses()
 
@@ -41,9 +46,7 @@ func TestItLogsSummaryInformation(t *testing.T) {
 	assert.Regexp(t, "Merged\\s+1", out)
 	assert.Regexp(t, "Closed\\s+1", out)
 
-	assert.Regexp(t, "👍\\s+4", out)
-	assert.Regexp(t, "👎\\s+3", out)
-	assert.Regexp(t, "🚀\\s+1", out)
+	assert.Regexp(t, "Reactions: 👍\\s+4\\s+👎\\s+3\\s+🚀\\s+1", out)
 
 	// Shouldn't show 'list' detailed info
 	assert.NotRegexp(t, "org/repo1\\s+OPEN", out)
