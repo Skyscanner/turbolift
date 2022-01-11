@@ -104,7 +104,7 @@ func run(c *cobra.Command, _ []string) {
 
 		status, err := gh.GetPrStatus(checkStatusActivity.Writer(), repoDirPath)
 		if err != nil {
-			checkStatusActivity.EndWithFailuref("Unable to fetch status: %v", err)
+			checkStatusActivity.EndWithFailuref("No PR found: %v", err)
 			noPrCount++
 			continue
 		}
