@@ -55,7 +55,7 @@ With great power comes great responsibility. We encourage Turbolift users to con
 * If you need to make a change to a large number of repositories, we've found that it's generally better to raise PRs to a small subset at first and collect feedback. Simply comment out repositories in `repos.txt` to make Turbolift temporarily ignore them.
 * For complicated or potentially contentious changes, think about ways to validate them before raising PRs. This could range from working in a pair, through writing a peer-reviewed script, all the way to preparing a design document for the planned changes.
 * If you can run automated tests locally, then do (e.g. `turbolift foreach ` to run linting and tests for each repository).
-* Raising draft PRs can be a good way to collect feedback, especially CI test results, with less pressure on reviewers (TODO: relies on https://github.com/Skyscanner/turbolift/issues/11 being implemented)
+* Raising draft PRs can be a good way to collect feedback, especially CI test results, with less pressure on reviewers. Use `turbolift create-prs --draft`
 * In an organisation with shared infrastructure (e.g. CI), raising many PRs in a short timeframe can cause a lot of load. Consider spacing out PR creation using the `--sleep` option or by commenting out chunks of repositories in `repos.txt`.
 
 ## Detailed usage
