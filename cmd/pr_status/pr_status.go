@@ -152,7 +152,7 @@ func run(c *cobra.Command, _ []string) {
 	logger.Println()
 
 	anyReactionsToShow := false
-	reactionsOutput := []string{"Reactions:"}
+	var reactionsOutput []string
 	for _, key := range reactionsOrder {
 		if reactions[key] > 0 {
 			reactionsOutput = append(reactionsOutput, fmt.Sprintf("%s %d", reactionsMapping[key], reactions[key]))
@@ -160,6 +160,6 @@ func run(c *cobra.Command, _ []string) {
 		}
 	}
 	if anyReactionsToShow {
-		logger.Println(strings.Join(reactionsOutput, " "))
+		logger.Println("Reactions:", strings.Join(reactionsOutput, "   "))
 	}
 }

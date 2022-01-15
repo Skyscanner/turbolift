@@ -46,7 +46,7 @@ func TestItLogsSummaryInformation(t *testing.T) {
 	assert.Regexp(t, "Merged\\s+1", out)
 	assert.Regexp(t, "Closed\\s+1", out)
 
-	assert.Regexp(t, "Reactions: 👍\\s+4\\s+👎\\s+3\\s+🚀\\s+1", out)
+	assert.Regexp(t, "Reactions: 👍 4   👎 3   🚀 1", out)
 
 	// Shouldn't show 'list' detailed info
 	assert.NotRegexp(t, "org/repo1\\s+OPEN", out)
