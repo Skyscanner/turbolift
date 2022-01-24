@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -40,7 +40,7 @@ type Campaign struct {
 
 func OpenCampaign() (*Campaign, error) {
 	dir, _ := os.Getwd()
-	dirBasename := path.Base(dir)
+	dirBasename := filepath.Base(dir)
 
 	repos, err := readReposTxtFile()
 	if err != nil {
@@ -63,7 +63,7 @@ func OpenCampaign() (*Campaign, error) {
 func readReposTxtFile() ([]Repo, error) {
 	file, err := os.Open("repos.txt")
 	if err != nil {
-		return nil, errors.New("Unable to open repos.txt file")
+		return nil, errors.New("unable to open repos.txt file")
 	}
 	defer func() {
 		closeErr := file.Close()
@@ -101,14 +101,14 @@ func readReposTxtFile() ([]Repo, error) {
 					FullRepoName: line,
 				}
 			} else {
-				return nil, fmt.Errorf("Unable to parse entry in repos.txt file: %s", line)
+				return nil, fmt.Errorf("unable to parse entry in repos.txt file: %s", line)
 			}
 			repos = append(repos, repo)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("Unable to open repos.txt file: %w", err)
+		return nil, fmt.Errorf("unable to open repos.txt file: %w", err)
 	}
 
 	return repos, nil
@@ -117,7 +117,7 @@ func readReposTxtFile() ([]Repo, error) {
 func readPrDescriptionFile() (string, string, error) {
 	file, err := os.Open("README.md")
 	if err != nil {
-		return "", "", errors.New("Unable to open README.md file")
+		return "", "", errors.New("unable to open README.md file")
 	}
 	defer func() {
 		closeErr := file.Close()
@@ -141,7 +141,7 @@ func readPrDescriptionFile() (string, string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", "", errors.New("Unable to read README.md file")
+		return "", "", errors.New("unable to read README.md file")
 	}
 
 	return prTitle, strings.Join(prBodyLines, "\n"), nil

@@ -67,7 +67,7 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	if err != nil {
 		if exitErr, _ := err.(*exec.ExitError); exitErr != nil {
 			stdErr := string(exitErr.Stderr)
-			return stdErr, fmt.Errorf("Error: %w. Stderr: %s", exitErr, stdErr)
+			return stdErr, fmt.Errorf("error: %w. Stderr: %s", exitErr, stdErr)
 		}
 		return string(commandOutput), err
 	}

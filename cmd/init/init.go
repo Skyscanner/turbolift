@@ -18,12 +18,13 @@ package init
 import (
 	_ "embed"
 	"fmt"
-	"github.com/skyscanner/turbolift/internal/colors"
-	"github.com/skyscanner/turbolift/internal/logging"
-	"github.com/spf13/cobra"
 	"html/template"
 	"os"
 	"path/filepath"
+
+	"github.com/skyscanner/turbolift/internal/colors"
+	"github.com/skyscanner/turbolift/internal/logging"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -103,19 +104,19 @@ func run(c *cobra.Command, _ []string) {
 func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	readme, err := os.Create(outputFilename)
 	if err != nil {
-		return fmt.Errorf("Unable to open file for output: %w", err)
+		return fmt.Errorf("unable to open file for output: %w", err)
 	}
 
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
 	if err != nil {
-		return fmt.Errorf("Unable to parse template: %w", err)
+		return fmt.Errorf("unable to parse template: %w", err)
 	}
 
 	err = parsedTemplate.Execute(readme, data)
 
 	if err != nil {
-		return fmt.Errorf("Unable to write templated file: %w", err)
+		return fmt.Errorf("unable to write templated file: %w", err)
 	}
 	return nil
 }

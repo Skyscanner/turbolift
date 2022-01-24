@@ -19,12 +19,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
 func Pwd() string {
 	dir, _ := os.Getwd()
-	return path.Base(dir)
+	return filepath.Base(dir)
 }
 
 func CreateAndEnterTempDirectory() {
