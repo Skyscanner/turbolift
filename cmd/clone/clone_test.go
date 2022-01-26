@@ -33,7 +33,7 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
 
-	testsupport.PrepareTempCampaign(false)
+	_ = testsupport.PrepareTempCampaign(false)
 	err := os.Remove("repos.txt")
 	if err != nil {
 		panic(err)
@@ -113,7 +113,6 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 		{"checkout", "work/org/repo1", testsupport.Pwd()},
 		{"checkout", "work/org/repo2", testsupport.Pwd()},
 	})
-
 }
 
 func TestItClonesReposFoundInReposFile(t *testing.T) {
@@ -220,7 +219,6 @@ func runCloneCommandWithFork() (string, error) {
 	cmd.SetOut(outBuffer)
 	nofork = false
 	err := cmd.Execute()
-
 	if err != nil {
 		return outBuffer.String(), err
 	}

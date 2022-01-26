@@ -17,9 +17,10 @@ package github
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type FakeGitHub struct {
@@ -44,6 +45,14 @@ func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName str
 	return err
 }
 
+func (f *FakeGitHub) ClosePullRequest(output io.Writer, workingDir string, branchName string) error {
+	// TODO: handle this differently; branchName here is replacing fullRepoName
+	// This is OK for now because fullRepoName is used nowhere in the github mocks
+	f.calls = append(f.calls, []string{workingDir, branchName})
+	_, err := f.handler(output, workingDir, branchName)
+	return err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
@@ -64,6 +73,12 @@ func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
 func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
 		return false, errors.New("synthetic error")
+	})
+}
+
+func NewAlwaysThrowNoPRFound() *FakeGitHub {
+	return NewFakeGitHub(func(output io.Writer, workingDir string, branchName string) (bool, error) {
+		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 	})
 }
 

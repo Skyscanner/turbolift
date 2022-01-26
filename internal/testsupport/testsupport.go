@@ -28,17 +28,17 @@ func Pwd() string {
 	return filepath.Base(dir)
 }
 
-func CreateAndEnterTempDirectory() {
+func CreateAndEnterTempDirectory() string {
 	tempDir, _ := ioutil.TempDir("", "turbolift-test-*")
 	err := os.Chdir(tempDir)
-
 	if err != nil {
 		panic(err)
 	}
+	return tempDir
 }
 
-func PrepareTempCampaign(createDirs bool, repos ...string) {
-	CreateAndEnterTempDirectory()
+func PrepareTempCampaign(createDirs bool, repos ...string) string {
+	tempDir := CreateAndEnterTempDirectory()
 
 	delimitedList := strings.Join(repos, "\n")
 	err := ioutil.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0644)
@@ -61,4 +61,6 @@ func PrepareTempCampaign(createDirs bool, repos ...string) {
 	if err != nil {
 		panic(err)
 	}
+
+	return tempDir
 }

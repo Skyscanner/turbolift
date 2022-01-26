@@ -17,19 +17,23 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
 	commitCmd "github.com/skyscanner/turbolift/cmd/commit"
 	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
 	"github.com/skyscanner/turbolift/cmd/flags"
 	foreachCmd "github.com/skyscanner/turbolift/cmd/foreach"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
+	updatePrsCmd "github.com/skyscanner/turbolift/cmd/update_prs"
 	"github.com/spf13/cobra"
-	"log"
 )
 
-var version = "version-dev"
-var commit = "commit-dev"
-var date = "date-dev"
+var (
+	version = "version-dev"
+	commit  = "commit-dev"
+	date    = "date-dev"
+)
 
 var rootCmd = &cobra.Command{
 	Use:              "turbolift",
@@ -47,6 +51,7 @@ func init() {
 	rootCmd.AddCommand(createPrsCmd.NewCreatePRsCmd())
 	rootCmd.AddCommand(initCmd.NewInitCmd())
 	rootCmd.AddCommand(foreachCmd.NewForeachCmd())
+	rootCmd.AddCommand(updatePrsCmd.NewUpdatePRsCmd())
 }
 
 func Execute() {

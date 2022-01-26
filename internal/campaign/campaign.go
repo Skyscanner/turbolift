@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -36,6 +37,10 @@ type Campaign struct {
 	Repos   []Repo
 	PrTitle string
 	PrBody  string
+}
+
+func (r Repo) FullRepoPath() string {
+	return path.Join("work", r.OrgName, r.RepoName) // i.e. work/org/repo
 }
 
 func OpenCampaign() (*Campaign, error) {
