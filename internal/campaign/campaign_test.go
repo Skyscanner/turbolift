@@ -217,7 +217,7 @@ func TestItShouldAcceptADifferentRepoFileNotExist(t *testing.T) {
 func TestItShouldErrorWhenRepoFileIsEmpty(t *testing.T) {
 	testsupport.PrepareTempCampaign(false)
 
-	options := &CampainOptions{}
+	options := &CampaignOptions{}
 	_, err := OpenCampaign(options)
 	assert.Error(t, err)
 }
