@@ -57,9 +57,9 @@ func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	defaultOptions := campaign.NewCampaignOptions()
-	defaultOptions.RepoFilename = repoFile
-	dir, err := campaign.OpenCampaign(defaultOptions)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
