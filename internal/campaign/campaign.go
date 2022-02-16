@@ -43,11 +43,19 @@ func (r Repo) FullRepoPath() string {
 	return path.Join("work", r.OrgName, r.RepoName) // i.e. work/org/repo
 }
 
-func OpenCampaign() (*Campaign, error) {
+type CampainOptions struct {
+	RepoFilename string
+}
+
+func NewCampaignOptions() *CampainOptions {
+	return &CampainOptions{RepoFilename: "repos.txt"}
+}
+
+func OpenCampaign(options *CampainOptions) (*Campaign, error) {
 	dir, _ := os.Getwd()
 	dirBasename := filepath.Base(dir)
 
-	repos, err := readReposTxtFile()
+	repos, err := readReposTxtFile(options.RepoFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +73,13 @@ func OpenCampaign() (*Campaign, error) {
 	}, nil
 }
 
-func readReposTxtFile() ([]Repo, error) {
-	file, err := os.Open("repos.txt")
+func readReposTxtFile(filename string) ([]Repo, error) {
+	if filename == "" {
+		return nil, errors.New("no repos filename to open")
+	}
+	file, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.New("unable to open repos.txt file")
+		return nil, fmt.Errorf("unable to open %s file", filename)
 	}
 	defer func() {
 		closeErr := file.Close()
@@ -92,28 +103,29 @@ func readReposTxtFile() ([]Repo, error) {
 			numParts := len(splitLine)
 
 			var repo Repo
-			if numParts == 2 {
+			switch numParts {
+			case 2:
 				repo = Repo{
 					OrgName:      splitLine[0],
 					RepoName:     splitLine[1],
 					FullRepoName: line,
 				}
-			} else if numParts == 3 {
+			case 3:
 				repo = Repo{
 					Host:         splitLine[0],
 					OrgName:      splitLine[1],
 					RepoName:     splitLine[2],
 					FullRepoName: line,
 				}
-			} else {
-				return nil, fmt.Errorf("unable to parse entry in repos.txt file: %s", line)
+			default:
+				return nil, fmt.Errorf("unable to parse entry in %s file: %s", filename, line)
 			}
 			repos = append(repos, repo)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("unable to open repos.txt file: %w", err)
+		return nil, fmt.Errorf("unable to open %s file: %w", filename, err)
 	}
 
 	return repos, nil

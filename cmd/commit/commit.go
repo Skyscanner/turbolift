@@ -16,18 +16,22 @@
 package commit
 
 import (
+	"os"
+	"path"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
 )
 
 var g git.Git = git.NewRealGit()
 
-var message string
+var (
+	message  string
+	repoFile string
+)
 
 func NewCommitCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,6 +41,8 @@ func NewCommitCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message to apply")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+
 	err := cmd.MarkFlagRequired("message")
 	if err != nil {
 		panic(err)
@@ -49,7 +55,9 @@ func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	defaultOptions := campaign.NewCampaignOptions()
+	defaultOptions.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(defaultOptions)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return

@@ -27,10 +27,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var gh github.GitHub = github.NewRealGitHub()
-var g git.Git = git.NewRealGit()
+var (
+	gh github.GitHub = github.NewRealGitHub()
+	g  git.Git       = git.NewRealGit()
+)
 
-var nofork bool
+var (
+	nofork   bool
+	repoFile string
+)
 
 func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -40,6 +45,7 @@ func NewCloneCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&nofork, "no-fork", false, "Will not fork, just clone and create a branch.")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
@@ -48,7 +54,9 @@ func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	defaultOptions := campaign.NewCampaignOptions()
+	defaultOptions.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(defaultOptions)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
