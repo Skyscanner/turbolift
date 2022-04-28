@@ -79,7 +79,7 @@ func readReposTxtFile(filename string) ([]Repo, error) {
 	}
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open %s file", filename)
+		return nil, fmt.Errorf("unable to open repo file: %s", filename)
 	}
 	defer func() {
 		closeErr := file.Close()
