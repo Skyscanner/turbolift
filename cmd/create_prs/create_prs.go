@@ -16,22 +16,27 @@
 package create_prs
 
 import (
+	"os"
+	"path"
+	"time"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"time"
 )
 
-var gh github.GitHub = github.NewRealGitHub()
-var g git.Git = git.NewRealGit()
+var (
+	gh github.GitHub = github.NewRealGitHub()
+	g  git.Git       = git.NewRealGit()
+)
 
-var sleep time.Duration
-var isDraft bool
+var (
+	sleep   time.Duration
+	isDraft bool
+)
 
 func NewCreatePRsCmd() *cobra.Command {
 	cmd := &cobra.Command{

@@ -17,12 +17,13 @@ package logging
 
 import (
 	"fmt"
+	"io"
+	"time"
+
 	"github.com/briandowns/spinner"
 	"github.com/skyscanner/turbolift/cmd/flags"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/spf13/cobra"
-	"io"
-	"time"
 )
 
 // Logger is a facade for CLI logging.
@@ -56,6 +57,11 @@ func (log *Logger) Successf(format string, args ...interface{}) {
 
 func (log *Logger) Warnf(format string, args ...interface{}) {
 	prefixedFormat := fmt.Sprint(colors.Warn(" WARN "), " ", colors.Yellow(format))
+	log.Printf(prefixedFormat, args...)
+}
+
+func (log *Logger) Errorf(format string, args ...interface{}) {
+	prefixedFormat := fmt.Sprint(colors.Warn("  ERR "), " ", colors.Red(format))
 	log.Printf(prefixedFormat, args...)
 }
 
