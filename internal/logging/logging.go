@@ -60,6 +60,11 @@ func (log *Logger) Warnf(format string, args ...interface{}) {
 	log.Printf(prefixedFormat, args...)
 }
 
+func (log *Logger) Errorf(format string, args ...interface{}) {
+	prefixedFormat := fmt.Sprint(colors.Warn("  ERR "), " ", colors.Red(format))
+	log.Printf(prefixedFormat, args...)
+}
+
 // StartActivity creates and starts an *Activity with an associated spinner.
 // Only once Activity should be active at any given time, and the Activity should be completed before any other logging
 // is performed using this Logger.

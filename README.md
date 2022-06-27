@@ -10,7 +10,7 @@ It's dumb but it works. It doesn't scale well, though. Manually cloning and rais
 
 Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
 
-> Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice. 
+> Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice.
 
 ## Demo
 
@@ -24,7 +24,7 @@ This demo shows Turbolift in action, creating a simple PR in two repositories:
 
 Pre-built binary archives can be downloaded from the [Releases](https://github.com/Skyscanner/turbolift/releases) page.
 
-* Download, extract the archive, and move it onto your `PATH`. 
+* Download, extract the archive, and move it onto your `PATH`.
 * Note that the binaries are not currently notarized for MacOS Gatekeeper. If errors are displayed, use `xattr -c PATH_TO_TURBOLIFT_BINARY` to un-quarantine the binary, or right-click on the binary in Finder and choose 'Open' once to allow future execution. Distribution will be improved under https://github.com/Skyscanner/turbolift/issues/43.
 
 You must also have the GitHub CLI, `gh`, installed:
@@ -99,8 +99,8 @@ You may wish to skip the fork and work on the upstream repository branch directl
 
 ### Making changes
 
-Now, make changes to the checked-out repos under the `work` directory. 
-You can do this manually using an editor, using `sed` and similar commands, or using [`codemod`](https://github.com/facebook/codemod)/[`comby`](https://comby.dev/), etc. 
+Now, make changes to the checked-out repos under the `work` directory.
+You can do this manually using an editor, using `sed` and similar commands, or using [`codemod`](https://github.com/facebook/codemod)/[`comby`](https://comby.dev/), etc.
 
 **You are free to use any tools that help get the job done.**
 
@@ -123,8 +123,8 @@ When ready to commit changes across all repos, run:
 
 ```turbolift commit --message "Your commit message"```
 
-This command is a no-op on any repos that do not have any changes. 
-Note that the commit will be run with the `--all` flag set, meaning that it is not necessary to stage changes using `git add/rm` for changed files. 
+This command is a no-op on any repos that do not have any changes.
+Note that the commit will be run with the `--all` flag set, meaning that it is not necessary to stage changes using `git add/rm` for changed files.
 Newly created files _will_ still need to be staged using `git add`.
 
 Repeat if you want to make multiple commits.
@@ -151,6 +151,16 @@ For example:
 ```
 turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
 ```
+
+### Updating PRs
+
+#### Closing all PRs
+
+To close all PRs currently opened under the campaign, there is a `--close` flag:
+
+```turbolift update-prs --close [--yes]```
+
+If the flag `--yes` is not present, a confirmation prompt will be presented to the user.
 
 ## Status: Preview
 

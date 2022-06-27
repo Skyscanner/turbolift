@@ -46,6 +46,14 @@ func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName str
 	return err
 }
 
+func (f *FakeGitHub) ClosePullRequest(output io.Writer, workingDir string, branchName string) error {
+	// TODO: handle this differently; branchName here is replacing fullRepoName
+	// This is OK for now because fullRepoName is used nowhere in the github mocks
+	f.calls = append(f.calls, []string{workingDir, branchName})
+	_, err := f.handler(output, workingDir, branchName)
+	return err
+}
+
 func (f *FakeGitHub) GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error) {
 	f.calls = append(f.calls, []string{workingDir})
 	result, err := f.returningHandler(output, workingDir)
@@ -80,6 +88,12 @@ func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 		return false, errors.New("synthetic error")
 	}, func(output io.Writer, workingDir string) (interface{}, error) {
 		return nil, errors.New("synthetic error")
+	})
+}
+
+func NewAlwaysThrowNoPRFound() *FakeGitHub {
+	return NewFakeGitHub(func(output io.Writer, workingDir string, branchName string) (bool, error) {
+		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 	})
 }
 
