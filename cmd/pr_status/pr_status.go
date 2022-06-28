@@ -76,13 +76,7 @@ func run(c *cobra.Command, _ []string) {
 	}
 	readCampaignActivity.EndWithSuccess()
 
-	skippedCount := 0
-	noPrCount := 0
-
-	openCount := 0
-	mergedCount := 0
-	closedCount := 0
-
+	statuses := make(map[string]int)
 	reactions := make(map[string]int)
 
 	detailsTable := table.New("Repository", "State", "Reviews", "URL")
@@ -98,25 +92,18 @@ func run(c *cobra.Command, _ []string) {
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
 			checkStatusActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
-			skippedCount++
+			statuses["SKIPPED"]++
 			continue
 		}
 
 		status, err := gh.GetPrStatus(checkStatusActivity.Writer(), repoDirPath)
 		if err != nil {
 			checkStatusActivity.EndWithFailuref("No PR found: %v", err)
-			noPrCount++
+			statuses["NO_PR"]++
 			continue
 		}
 
-		switch status.State {
-		case "OPEN":
-			openCount++
-		case "MERGED":
-			mergedCount++
-		case "CLOSED":
-			closedCount++
-		}
+		statuses[status.State]++
 
 		for _, reaction := range status.ReactionGroups {
 			reactions[reaction.Content] += reaction.Users.TotalCount
@@ -141,11 +128,11 @@ func run(c *cobra.Command, _ []string) {
 	summaryTable.WithFirstColumnFormatter(color.New(color.FgCyan).SprintfFunc())
 	summaryTable.WithWriter(logger.Writer())
 
-	summaryTable.AddRow("Merged", mergedCount)
-	summaryTable.AddRow("Open", openCount)
-	summaryTable.AddRow("Closed", closedCount)
-	summaryTable.AddRow("Skipped", skippedCount)
-	summaryTable.AddRow("Not Found", noPrCount)
+	summaryTable.AddRow("Merged", statuses["MERGED"])
+	summaryTable.AddRow("Open", statuses["OPEN"])
+	summaryTable.AddRow("Closed", statuses["CLOSED"])
+	summaryTable.AddRow("Skipped", statuses["SKIPPED"])
+	summaryTable.AddRow("No PR Found", statuses["NO_PR"])
 
 	summaryTable.Print()
 

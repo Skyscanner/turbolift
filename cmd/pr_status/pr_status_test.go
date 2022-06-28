@@ -81,7 +81,7 @@ func TestItSkipsUnclonedRepos(t *testing.T) {
 	assert.Regexp(t, "Open\\s+1", out)
 	assert.Regexp(t, "Merged\\s+0", out)
 	assert.Regexp(t, "Skipped\\s+1", out)
-	assert.Regexp(t, "Not Found\\s+0", out)
+	assert.Regexp(t, "No PR Found\\s+0", out)
 
 	assert.Regexp(t, "org/repo1\\s+OPEN", out)
 	assert.NotRegexp(t, "org/repo2\\s+MERGED", out)
@@ -98,7 +98,7 @@ func TestItSkipsErroringRepos(t *testing.T) {
 	assert.Regexp(t, "Open\\s+1", out)
 	assert.Regexp(t, "Merged\\s+1", out)
 	assert.Regexp(t, "Skipped\\s+0", out)
-	assert.Regexp(t, "Not Found\\s+1", out)
+	assert.Regexp(t, "No PR Found\\s+1", out)
 
 	assert.Regexp(t, "org/repo1\\s+OPEN", out)
 }
