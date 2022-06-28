@@ -36,6 +36,7 @@ var (
 var (
 	closeFlag bool
 	yesFlag   bool
+	repoFile  string
 )
 
 func NewUpdatePRsCmd() *cobra.Command {
@@ -47,6 +48,7 @@ func NewUpdatePRsCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&closeFlag, "close", false, "Close all generated PRs")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
@@ -89,7 +91,9 @@ func runClose(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
