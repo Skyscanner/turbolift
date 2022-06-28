@@ -10,7 +10,7 @@ BIN_DIR := $(CURDIR)/bin
 $(BIN_DIR)/golangci-lint: $(BIN_DIR)/golangci-lint-${GOLANGCI_VERSION}
 	@ln -sf golangci-lint-${GOLANGCI_VERSION} $(BIN_DIR)/golangci-lint
 $(BIN_DIR)/golangci-lint-${GOLANGCI_VERSION}:
-	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint bash -s -- v${GOLANGCI_VERSION}
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | BINARY=golangci-lint bash -s -- v${GOLANGCI_VERSION}
 	@mv $(BIN_DIR)/golangci-lint $@
 
 mod:
