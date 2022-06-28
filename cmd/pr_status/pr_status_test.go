@@ -87,7 +87,7 @@ func TestItSkipsUnclonedRepos(t *testing.T) {
 	assert.NotRegexp(t, "org/repo2\\s+MERGED", out)
 }
 
-func TestItSkipsErroringRepos(t *testing.T) {
+func TestItNotesReposWhereNoPrCanBeFound(t *testing.T) {
 	prepareFakeResponses()
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repoWithError")
