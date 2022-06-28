@@ -94,6 +94,8 @@ func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 func NewAlwaysThrowNoPRFound() *FakeGitHub {
 	return NewFakeGitHub(func(output io.Writer, workingDir string, branchName string) (bool, error) {
 		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
+	}, func(output io.Writer, workingDir string) (interface{}, error) {
+		panic("should not be invoked")
 	})
 }
 
