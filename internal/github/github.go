@@ -27,10 +27,11 @@ import (
 var execInstance executor.Executor = executor.NewRealExecutor()
 
 type PullRequest struct {
-	Title        string
-	Body         string
-	UpstreamRepo string
-	IsDraft      bool
+	Title          string
+	Body           string
+	UpstreamRepo   string
+	IsDraft        bool
+	ReviewDecision string
 }
 
 type GitHub interface {
@@ -38,6 +39,7 @@ type GitHub interface {
 	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
+	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 }
 
 type RealGitHub struct{}
