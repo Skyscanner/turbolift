@@ -64,3 +64,11 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 
 	return tempDir
 }
+
+func CreateAnotherRepoFile(filename string, repos ...string) {
+	delimitedList := strings.Join(repos, "\n")
+	err := ioutil.WriteFile(filename, []byte(delimitedList), os.ModePerm|0644)
+	if err != nil {
+		panic(err)
+	}
+}

@@ -16,17 +16,20 @@
 package foreach
 
 import (
+	"os"
+	"path"
+	"strings"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"strings"
 )
 
 var exec executor.Executor = executor.NewRealExecutor()
+
+var repoFile string
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -37,6 +40,8 @@ func NewForeachCmd() *cobra.Command {
 		DisableFlagParsing: true,
 	}
 
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+
 	return cmd
 }
 
@@ -44,7 +49,9 @@ func run(c *cobra.Command, args []string) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
