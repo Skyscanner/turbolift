@@ -54,7 +54,7 @@ func (f *FakeGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 	return err
 }
 
-func (f *FakeGitHub) GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error) {
+func (f *FakeGitHub) GetPR(output io.Writer, workingDir string, _ string) (*PrStatus, error) {
 	f.calls = append(f.calls, []string{workingDir})
 	result, err := f.returningHandler(output, workingDir)
 	if result == nil {

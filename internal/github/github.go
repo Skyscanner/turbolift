@@ -39,7 +39,7 @@ type GitHub interface {
 	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
-	GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error)
+	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 }
 
 type RealGitHub struct{}
@@ -152,19 +152,6 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 	}
 
 	return nil, &NoPRFoundError{Path: workingDir, BranchName: branchName}
-}
-
-func (r *RealGitHub) GetPrStatus(output io.Writer, workingDir string) (*PrStatus, error) {
-	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "pr", "view", "--json", "title,state,mergeable,statusCheckRollup,reviewDecision,reactionGroups,url")
-	if err != nil {
-		return nil, err
-	}
-
-	var status PrStatus
-	if err := json.Unmarshal([]byte(s), &status); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal JSON for PR status: %w", err)
-	}
-	return &status, nil
 }
 
 func NewRealGitHub() *RealGitHub {

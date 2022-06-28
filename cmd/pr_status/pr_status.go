@@ -96,20 +96,20 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		status, err := gh.GetPrStatus(checkStatusActivity.Writer(), repoDirPath)
+		prStatus, err := gh.GetPR(checkStatusActivity.Writer(), repoDirPath, dir.Name)
 		if err != nil {
 			checkStatusActivity.EndWithFailuref("No PR found: %v", err)
 			statuses["NO_PR"]++
 			continue
 		}
 
-		statuses[status.State]++
+		statuses[prStatus.State]++
 
-		for _, reaction := range status.ReactionGroups {
+		for _, reaction := range prStatus.ReactionGroups {
 			reactions[reaction.Content] += reaction.Users.TotalCount
 		}
 
-		detailsTable.AddRow(repo.FullRepoName, status.State, status.ReviewDecision, status.Url)
+		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, prStatus.Url)
 
 		checkStatusActivity.EndWithSuccess()
 	}
