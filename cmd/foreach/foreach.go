@@ -16,21 +16,22 @@
 package foreach
 
 import (
+	"os"
+	"path"
+	"strings"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
-	"strings"
 )
 
 var exec executor.Executor = executor.NewRealExecutor()
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "foreach -- SHELL_COMMAND",
+		Use:                "foreach SHELL_COMMAND",
 		Short:              "Run a shell command against each working copy",
 		Run:                run,
 		Args:               cobra.MinimumNArgs(1),
