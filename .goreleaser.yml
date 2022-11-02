@@ -21,4 +21,15 @@ archives:
       amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
+brews:
+  - name: turbolift
+    description: A simple tool to help apply changes across many GitHub repositories simultaneously
+    homepage: https://github.com/Skyscanner/turbolift
+    license: Apache 2.0
+    tap:
+      owner: Skyscanner
+      name: homebrew-tools
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    dependencies:
+      - name: gh
 
