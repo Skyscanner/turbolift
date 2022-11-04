@@ -11,7 +11,8 @@ It's dumb but it works. It doesn't scale well, though. Manually cloning and rais
 Turbolift essentially automates the boring parts and stays out of the way when it comes to actually making the changes. It automates cloning, committing, and raising PRs en-masse, so that you can focus on the substance of the change.
 
 > Historical note: Turbolift supersedes an internal system at Skyscanner named Codelift. Codelift was a centralised batch system, requiring changes to be scripted upfront and run overnight. While Codelift was useful, we have found that a decentralised, interactive tool is far easier and quicker for people to use in practice.
-
+>
+> [This blog post](https://medium.com/@SkyscannerEng/turbolift-a-tool-for-refactoring-at-scale-70603314f7cc) gives a longer background for the thinking behind Turbolift.
 ## Demo
 
 This demo shows Turbolift in action, creating a simple PR in two repositories:
@@ -20,7 +21,20 @@ This demo shows Turbolift in action, creating a simple PR in two repositories:
 
 ## Installation
 
-### Downloading binaries
+<details>
+<summary>Using brew (recommended)</summary>
+Install turbolift using brew from Skyscanner's tap, as follows:
+
+```shell
+brew install skyscanner/tools/turbolift
+```
+
+Note that the GitHub CLI, `gh` is a dependency of Turbolift and will be installed automatically.
+
+</details>
+
+<details>
+<summary>Downloading binaries</summary>
 
 Pre-built binary archives can be downloaded from the [Releases](https://github.com/Skyscanner/turbolift/releases) page.
 
@@ -30,7 +44,9 @@ Pre-built binary archives can be downloaded from the [Releases](https://github.c
 You must also have the GitHub CLI, `gh`, installed:
 
 * Install using `brew install gh`
-* Before using Turbolift, run `gh auth login` once and follow the prompts, to authenticate against github.com and/or your GitHub Enterprise server.
+</details>
+
+> Before using Turbolift, run `gh auth login` once and follow the prompts, to authenticate against github.com and/or your GitHub Enterprise server.
 
 ## Basic usage:
 
