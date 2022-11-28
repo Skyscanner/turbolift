@@ -44,6 +44,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&flags.DryRun, "dry-run", "d", false, "dry run mode")
 	rootCmd.PersistentFlags().BoolVarP(&flags.Verbose, "verbose", "v", false, "verbose output")
 
 	rootCmd.AddCommand(cloneCmd.NewCloneCmd())

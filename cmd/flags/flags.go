@@ -16,5 +16,6 @@
 package flags
 
 var (
+	DryRun  bool
 	Verbose bool
 )
