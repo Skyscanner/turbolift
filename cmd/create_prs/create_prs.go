@@ -20,6 +20,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/skyscanner/turbolift/cmd/internal"
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
@@ -40,9 +41,10 @@ var (
 
 func NewCreatePRsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-prs",
-		Short: "Create pull requests for all repositories with changes",
-		Run:   run,
+		Use:    "create-prs",
+		Short:  "Create pull requests for all repositories with changes",
+		PreRun: internal.PreRun,
+		Run:    run,
 	}
 
 	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")

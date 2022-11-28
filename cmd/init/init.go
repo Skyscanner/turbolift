@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/skyscanner/turbolift/cmd/internal"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
@@ -49,9 +50,10 @@ type TemplateVariables struct {
 
 func NewInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "init",
-		Short: "Initialize a Turbolift campaign directory",
-		Run:   run,
+		Use:    "init",
+		Short:  "Initialize a Turbolift campaign directory",
+		PreRun: internal.PreRun,
+		Run:    run,
 	}
 
 	cmd.Flags().StringVarP(&campaignName, "name", "n", "", "Campaign name")

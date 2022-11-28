@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/skyscanner/turbolift/cmd/internal"
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
@@ -37,9 +38,10 @@ var nofork bool
 
 func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clone",
-		Short: "Clone all repositories",
-		Run:   run,
+		Use:    "clone",
+		Short:  "Clone all repositories",
+		PreRun: internal.PreRun,
+		Run:    run,
 	}
 
 	cmd.Flags().BoolVar(&nofork, "no-fork", false, "Will not fork, just clone and create a branch.")

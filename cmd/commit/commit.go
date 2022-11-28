@@ -16,13 +16,15 @@
 package commit
 
 import (
+	"os"
+	"path"
+
+	"github.com/skyscanner/turbolift/cmd/internal"
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
-	"os"
-	"path"
 )
 
 var g git.Git = git.NewRealGit()
@@ -31,9 +33,10 @@ var message string
 
 func NewCommitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commit",
-		Short: "Applies git commit -a -m '...' to all working copies, if they have changes",
-		Run:   run,
+		Use:    "commit",
+		Short:  "Applies git commit -a -m '...' to all working copies, if they have changes",
+		PreRun: internal.PreRun,
+		Run:    run,
 	}
 
 	cmd.Flags().StringVarP(&message, "message", "m", "", "Commit message to apply")

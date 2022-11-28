@@ -20,6 +20,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/skyscanner/turbolift/cmd/internal"
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
@@ -33,6 +34,7 @@ func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                "foreach SHELL_COMMAND",
 		Short:              "Run a shell command against each working copy",
+		PreRun:             internal.PreRun,
 		Run:                run,
 		Args:               cobra.MinimumNArgs(1),
 		DisableFlagParsing: true,
