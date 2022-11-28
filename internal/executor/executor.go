@@ -35,7 +35,9 @@ type RealExecutor struct {
 
 func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string, args ...string) error {
 	if flags.DryRun {
-		fmt.Printf("Would execute: %s %s. Working dir: %s", name, args, workingDir)
+		msg := fmt.Sprintf("Dry-run mode: %s %s. Working dir: %s", name, args, workingDir)
+		output.Write([]byte(msg))
+		fmt.Print(msg)
 		return nil
 	}
 
@@ -63,7 +65,9 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 
 func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error) {
 	if flags.DryRun {
-		return fmt.Sprintf("Would execute: %s %s. Working dir: %s", name, args, workingDir), nil
+		msg := fmt.Sprintf("Dry-run mode: %s %s. Working dir: %s", name, args, workingDir)
+		output.Write([]byte(msg))
+		return msg, nil
 	}
 
 	command := exec.Command(name, args...)

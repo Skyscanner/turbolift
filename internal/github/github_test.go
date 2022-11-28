@@ -17,10 +17,12 @@ package github
 
 import (
 	"errors"
-	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/skyscanner/turbolift/cmd/flags"
+	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestItReturnsErrorOnFailedFork(t *testing.T) {
@@ -45,6 +47,19 @@ func TestItReturnsNilErrorOnSuccessfulFork(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{
 		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
 	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulPRCreationWithDryRun(t *testing.T) {
+	flags.DryRun = true
+	t.Cleanup(func() {
+		flags.DryRun = false
+	})
+
+	_ = executor.NewRealExecutor()
+	didCreatePr, output, err := runCreatePrAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.False(t, didCreatePr)
+	assert.Equal(t, "Dry-run mode: gh [pr create --title some title --body some body --repo org/repo1]. Working dir: work/org/repo1", output)
 }
 
 func TestItReturnsErrorOnFailedClone(t *testing.T) {
