@@ -16,10 +16,12 @@
 package git
 
 import (
-	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/skyscanner/turbolift/cmd/flags"
+	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestItReturnsErrorOnFailure(t *testing.T) {
@@ -44,6 +46,17 @@ func TestItReturnsNilErrorOnSuccess(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{
 		{"work/org/repo1", "git", "checkout", "-b", "some_branch"},
 	})
+}
+
+func TestItReturnsNilErrorOnSuccessWithDryRun(t *testing.T) {
+	flags.DryRun = true
+	t.Cleanup(func() {
+		flags.DryRun = false
+	})
+
+	output, err := runAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.Equal(t, "Dry-run mode: git [checkout -b some_branch]. Working dir: work/org/repo1", output)
 }
 
 func runAndCaptureOutput() (string, error) {

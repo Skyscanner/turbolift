@@ -49,6 +49,19 @@ func TestItReturnsNilErrorOnSuccessfulFork(t *testing.T) {
 	})
 }
 
+func TestItReturnsNilErrorOnSuccessfulForkWithDryRun(t *testing.T) {
+	flags.DryRun = true
+	t.Cleanup(func() {
+		flags.DryRun = false
+	})
+
+	_ = executor.NewRealExecutor()
+
+	output, err := runForkAndCloneAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.Equal(t, "Dry-run mode: gh [repo fork --clone=true org/repo1]. Working dir: work/org", output)
+}
+
 func TestItReturnsNilErrorOnSuccessfulPRCreationWithDryRun(t *testing.T) {
 	flags.DryRun = true
 	t.Cleanup(func() {
