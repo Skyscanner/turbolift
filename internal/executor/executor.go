@@ -21,6 +21,8 @@ import (
 	"io"
 	"log"
 	"os/exec"
+
+	"github.com/skyscanner/turbolift/cmd/flags"
 )
 
 type Executor interface {
@@ -32,6 +34,11 @@ type RealExecutor struct {
 }
 
 func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string, args ...string) error {
+	if flags.DryRun {
+		fmt.Printf("Would execute: %s %s. Working dir: %s", name, args, workingDir)
+		return nil
+	}
+
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
 	tailer(output)(command.StdoutPipe())
@@ -55,6 +62,10 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 }
 
 func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error) {
+	if flags.DryRun {
+		return fmt.Sprintf("Would execute: %s %s. Working dir: %s", name, args, workingDir), nil
+	}
+
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
 
