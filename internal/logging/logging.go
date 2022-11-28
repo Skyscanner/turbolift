@@ -50,6 +50,11 @@ func (log *Logger) Println(s ...interface{}) {
 	_, _ = fmt.Fprintln(log.writer, s...)
 }
 
+func (log *Logger) Infof(format string, args ...interface{}) {
+	prefixedFormat := fmt.Sprint(colors.Info(" INFO "), " ", colors.Cyan(format))
+	log.Printf(prefixedFormat, args...)
+}
+
 func (log *Logger) Successf(format string, args ...interface{}) {
 	prefixedFormat := fmt.Sprint(colors.Pass("  OK  "), " ", colors.Green(format))
 	log.Printf(prefixedFormat, args...)
