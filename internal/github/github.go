@@ -21,6 +21,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/skyscanner/turbolift/cmd/flags"
 	"github.com/skyscanner/turbolift/internal/executor"
 )
 
@@ -62,7 +63,7 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 	if strings.Contains(execOutput, "GraphQL error: No commits between") {
 		// no PR was created because there are no differences between remotes
 		return false, nil
-	} else if strings.HasPrefix(execOutput, "Dry-run mode") {
+	} else if flags.DryRun {
 		return false, err
 	} else if err != nil {
 		return false, err
