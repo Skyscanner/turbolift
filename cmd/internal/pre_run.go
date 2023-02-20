@@ -26,6 +26,6 @@ func PreRun(cmd *cobra.Command, args []string) {
 	logger := logging.NewLogger(cmd)
 
 	if flags.DryRun {
-		logger.Infof("turbolift init is in dry-run\n")
+		logger.Infof("turbolift %s is in dry-run mode\n", cmd.Use)
 	}
 }
