@@ -39,11 +39,6 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 		logHeader = "Dry-run mode, would execute:"
 	}
 
-	command := exec.Command(name, args...)
-	command.Dir = workingDir
-	tailer(output)(command.StdoutPipe())
-	tailer(output)(command.StderrPipe())
-
 	_, err := fmt.Fprintln(output, logHeader, name, summarizedArgs(args), "in", workingDir)
 	if err != nil {
 		return err
@@ -52,6 +47,11 @@ func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string,
 	if flags.DryRun {
 		return nil
 	}
+
+	command := exec.Command(name, args...)
+	command.Dir = workingDir
+	tailer(output)(command.StdoutPipe())
+	tailer(output)(command.StderrPipe())
 
 	if err := command.Start(); err != nil {
 		return err
@@ -71,9 +71,6 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 		logHeader = "Dry-run mode, would execute:"
 	}
 
-	command := exec.Command(name, args...)
-	command.Dir = workingDir
-
 	_, err := fmt.Fprintln(output, logHeader, name, summarizedArgs(args))
 	if err != nil {
 		return "", err
@@ -82,6 +79,9 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	if flags.DryRun {
 		return "", nil
 	}
+
+	command := exec.Command(name, args...)
+	command.Dir = workingDir
 
 	commandOutput, err := command.Output()
 	if err != nil {
