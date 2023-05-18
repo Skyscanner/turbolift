@@ -27,10 +27,11 @@ import (
 var execInstance executor.Executor = executor.NewRealExecutor()
 
 type PullRequest struct {
-	Title        string
-	Body         string
-	UpstreamRepo string
-	IsDraft      bool
+	Title          string
+	Body           string
+	UpstreamRepo   string
+	IsDraft        bool
+	ReviewDecision string
 }
 
 type GitHub interface {
@@ -38,6 +39,7 @@ type GitHub interface {
 	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
+	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 }
 
 type RealGitHub struct{}
@@ -138,13 +140,13 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 
 	// if the user has write permissions on the repo,
 	// the PR should be under _CurrentBranch_.
-	if prr.CurrentBranch != nil && !prr.CurrentBranch.Closed {
+	if prr.CurrentBranch != nil {
 		return prr.CurrentBranch, nil
 	}
 
 	// If not, then it's a forked PR. The headRefName is as such: `username:branchName`
 	for _, pr := range prr.CreatedBy {
-		if strings.HasSuffix(pr.HeadRefName, branchName) && !pr.Closed {
+		if strings.HasSuffix(pr.HeadRefName, branchName) {
 			return pr, nil
 		}
 	}
