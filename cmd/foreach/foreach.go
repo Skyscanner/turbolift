@@ -33,7 +33,7 @@ var repoFile string
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "foreach -- SHELL_COMMAND",
+		Use:                "foreach SHELL_COMMAND",
 		Short:              "Run a shell command against each working copy",
 		Run:                run,
 		Args:               cobra.MinimumNArgs(1),

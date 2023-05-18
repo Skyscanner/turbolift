@@ -19,12 +19,13 @@ import (
 	"os"
 	"path"
 
+	"github.com/spf13/cobra"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/logging"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -74,7 +75,7 @@ func run(c *cobra.Command, _ []string) {
 			cloneActivity = logger.StartActivity("Forking and cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
 		}
 
-		err := os.MkdirAll(orgDirPath, os.ModeDir|0755)
+		err := os.MkdirAll(orgDirPath, os.ModeDir|0o755)
 		if err != nil {
 			cloneActivity.EndWithFailuref("Unable to create org directory: %s", err)
 			errorCount++
@@ -123,7 +124,7 @@ func run(c *cobra.Command, _ []string) {
 	}
 	logger.Println("To continue:")
 	logger.Println("\t1. Make your changes in the cloned repositories within the", colors.Cyan("work"), "directory")
-	logger.Println("\t2. Add new files across all repos using", colors.Cyan(`turbolift foreach -- git add -A`))
+	logger.Println("\t2. Add new files across all repos using", colors.Cyan(`turbolift foreach git add -A`))
 	logger.Println("\t3. Commit changes across all repos using", colors.Cyan(`turbolift commit --message "Your commit message"`))
 	logger.Println("\t4. Change the PR title and description in the", colors.Cyan(`README.md`), "of a campaign")
 }
