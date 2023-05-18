@@ -169,7 +169,40 @@ For example:
 turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
 ```
 
-### Updating PRs
+### After creating PRs
+
+#### Viewing status
+
+While it's simple to search for PRs in GitHub search, `turbolift pr-status` can be used to view PR status in the terminal. For example:
+
+Viewing a summary of PRs:
+```
+$ turbolift pr-status
+...
+State        Count
+Merged       139
+Open         53
+Closed       29
+Skipped      0
+No PR Found  1
+```
+
+Viewing a detailed list of status per repo:
+```
+$ turbolift pr-status --list
+...
+Repository                                                State   Reviews            URL
+redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/262
+redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/515
+redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/342
+redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/407
+redacted/redacted                                         MERGED  REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/220
+redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/105
+redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/532
+redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/268
+redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/438
+...
+```
 
 #### Closing all PRs
 
