@@ -41,7 +41,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 	tempDir := CreateAndEnterTempDirectory()
 
 	delimitedList := strings.Join(repos, "\n")
-	err := ioutil.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0644)
+	err := ioutil.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 	if createDirs {
 		for _, name := range repos {
 			dirToCreate := path.Join("work", name)
-			err := os.MkdirAll(dirToCreate, os.ModeDir|0755)
+			err := os.MkdirAll(dirToCreate, os.ModeDir|0o755)
 			if err != nil {
 				panic(err)
 			}
@@ -57,7 +57,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 	}
 
 	dummyPrDescription := "# PR title\nPR body"
-	err = ioutil.WriteFile("README.md", []byte(dummyPrDescription), os.ModePerm|0644)
+	err = ioutil.WriteFile("README.md", []byte(dummyPrDescription), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 
 func CreateAnotherRepoFile(filename string, repos ...string) {
 	delimitedList := strings.Join(repos, "\n")
-	err := ioutil.WriteFile(filename, []byte(delimitedList), os.ModePerm|0644)
+	err := ioutil.WriteFile(filename, []byte(delimitedList), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
