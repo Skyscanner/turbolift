@@ -19,11 +19,12 @@ import (
 	"os"
 	"path"
 
+	"github.com/spf13/cobra"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/logging"
-	"github.com/spf13/cobra"
 )
 
 var g git.Git = git.NewRealGit()
@@ -54,7 +55,7 @@ func NewCommitCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	readCampaignActivity := logger.StartActivity("Reading campaign data")
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
 	dir, err := campaign.OpenCampaign(options)

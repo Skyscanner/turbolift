@@ -28,7 +28,7 @@ import (
 	foreachCmd "github.com/skyscanner/turbolift/cmd/foreach"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	prStatusCmd "github.com/skyscanner/turbolift/cmd/prstatus"
-	updatePrsCmd "github.com/skyscanner/turbolift/cmd/update_prs"
+	updatePrsCmd "github.com/skyscanner/turbolift/cmd/updateprs"
 )
 
 var (

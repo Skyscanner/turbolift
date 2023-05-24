@@ -18,8 +18,9 @@ package campaign
 import (
 	"testing"
 
-	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/skyscanner/turbolift/internal/testsupport"
 )
 
 func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
