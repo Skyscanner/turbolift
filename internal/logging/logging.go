@@ -84,3 +84,7 @@ func (log *Logger) StartActivity(format string, args ...interface{}) *Activity {
 		verbose: log.verbose,
 	}
 }
+
+func (log *Logger) Writer() io.Writer {
+	return log.writer
+}

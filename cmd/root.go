@@ -27,6 +27,8 @@ import (
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
 	updatePrsCmd "github.com/skyscanner/turbolift/cmd/update_prs"
 	"github.com/spf13/cobra"
+
+	prStatusCmd "github.com/skyscanner/turbolift/cmd/pr_status"
 )
 
 var (
@@ -52,6 +54,7 @@ func init() {
 	rootCmd.AddCommand(initCmd.NewInitCmd())
 	rootCmd.AddCommand(foreachCmd.NewForeachCmd())
 	rootCmd.AddCommand(updatePrsCmd.NewUpdatePRsCmd())
+	rootCmd.AddCommand(prStatusCmd.NewPrStatusCmd())
 }
 
 func Execute() {
