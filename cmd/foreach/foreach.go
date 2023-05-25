@@ -71,7 +71,7 @@ func run(c *cobra.Command, args []string) {
 		Parsing is disabled for this command to make sure it doesn't capture flags from the subsequent command.
 		E.g.: turbolift foreach ls -l   <- here, the -l would be captured by foreach, not by ls
 		Because of this, we need a manual parsing of the arguments.
-		Assumption is the foreach arguments will
+		Assumption is the foreach arguments will be parsed before the command and its arguments.
 	*/
 	args = parseForeachArgs(args)
 
