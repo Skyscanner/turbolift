@@ -30,7 +30,24 @@ import (
 
 var exec executor.Executor = executor.NewRealExecutor()
 
-var repoFile string
+var repoFile string = "repos.txt"
+
+func parseForeachArgs(args []string) (strippedArgs []string) {
+MAIN:
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--repos":
+			repoFile = args[i+1]
+			i = i + 1
+		default:
+			// we've parsed everything that could be parsed; this is now the command
+			strippedArgs = args[i:]
+			break MAIN
+		}
+	}
+
+	return
+}
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -41,6 +58,7 @@ func NewForeachCmd() *cobra.Command {
 		DisableFlagParsing: true,
 	}
 
+	// this flag will not be parsed (DisabledFlagParsing is on) but is here for the help context and auto complete
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
@@ -48,6 +66,14 @@ func NewForeachCmd() *cobra.Command {
 
 func run(c *cobra.Command, args []string) {
 	logger := logging.NewLogger(c)
+
+	/*
+		Parsing is disabled for this command to make sure it doesn't capture flags from the subsequent command.
+		E.g.: turbolift foreach ls -l   <- here, the -l would be captured by foreach, not by ls
+		Because of this, we need a manual parsing of the arguments.
+		Assumption is the foreach arguments will
+	*/
+	args = parseForeachArgs(args)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()

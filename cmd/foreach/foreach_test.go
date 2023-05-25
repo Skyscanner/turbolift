@@ -17,12 +17,72 @@ package foreach
 
 import (
 	"bytes"
-	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/skyscanner/turbolift/internal/testsupport"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/skyscanner/turbolift/internal/executor"
+	"github.com/skyscanner/turbolift/internal/testsupport"
 )
+
+func TestParseForEachArgs(t *testing.T) {
+	testCases := []struct {
+		Name                 string
+		Args                 []string
+		ExpectedCommand      []string
+		ExpectedRepoFileName string
+	}{
+		{
+			Name:                 "simple command",
+			Args:                 []string{"ls", "-l"},
+			ExpectedCommand:      []string{"ls", "-l"},
+			ExpectedRepoFileName: "repos.txt",
+		},
+		{
+			Name:                 "advanced command",
+			Args:                 []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
+			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
+			ExpectedRepoFileName: "repos.txt",
+		},
+		{
+			Name:                 "simple command with repo flag",
+			Args:                 []string{"--repos", "test.txt", "ls", "-l"},
+			ExpectedCommand:      []string{"ls", "-l"},
+			ExpectedRepoFileName: "test.txt",
+		},
+		{
+			Name:                 "advanced command with repos flag",
+			Args:                 []string{"--repos", "test2.txt", "sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
+			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
+			ExpectedRepoFileName: "test2.txt",
+		},
+		{
+			Name:                 "repos flag should only be caught when at the beginning",
+			Args:                 []string{"ls", "-l", "--repos", "random.txt"},
+			ExpectedCommand:      []string{"ls", "-l", "--repos", "random.txt"},
+			ExpectedRepoFileName: "repos.txt",
+		},
+		{
+			Name:                 "random flag is not caught",
+			Args:                 []string{"--random", "arg", "ls", "-l"},
+			ExpectedCommand:      []string{"--random", "arg", "ls", "-l"},
+			ExpectedRepoFileName: "repos.txt",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			actual := parseForeachArgs(tc.Args)
+			t.Log(actual)
+			assert.EqualValues(t, tc.ExpectedCommand, actual)
+			assert.Equal(t, repoFile, tc.ExpectedRepoFileName)
+
+			// Cleanup to default repo file name
+			repoFile = "repos.txt"
+		})
+	}
+}
 
 func TestItRejectsEmptyArgs(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
@@ -102,7 +162,6 @@ func runCommand(args ...string) (string, error) {
 	cmd.SetOut(outBuffer)
 	cmd.SetArgs(args)
 	err := cmd.Execute()
-
 	if err != nil {
 		return outBuffer.String(), err
 	}
