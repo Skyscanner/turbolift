@@ -74,7 +74,6 @@ func NewPrStatusCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	// dir, err := campaign.OpenCampaign()
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 
 	options := campaign.NewCampaignOptions()
