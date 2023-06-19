@@ -20,12 +20,13 @@ import (
 	"path"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/logging"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -34,8 +35,9 @@ var (
 )
 
 var (
-	sleep   time.Duration
-	isDraft bool
+	isDraft  bool
+	repoFile string
+	sleep    time.Duration
 )
 
 func NewCreatePRsCmd() *cobra.Command {
@@ -47,6 +49,7 @@ func NewCreatePRsCmd() *cobra.Command {
 
 	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")
 	cmd.Flags().BoolVar(&isDraft, "draft", false, "Creates the Pull Request as Draft PR")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
@@ -54,8 +57,10 @@ func NewCreatePRsCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return

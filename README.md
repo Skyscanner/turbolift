@@ -105,6 +105,17 @@ e.g.
 $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 ```
 
+### Working on multiple repo files
+
+Occasionally you may need to work on different repo files. For instance the repos can be divided in sub categories and the same change don't apply to them the same way. 
+The default repo file is called `repos.txt` but you can override this with the `--repos` flag.
+
+```console
+turbolift foreach --repos repoFile1.txt sed 's/pattern1/replacement1/g'
+turbolift foreach --repos repoFile2.txt sed 's/pattern2/replacement2/g'
+```
+
+
 ### Running a mass `clone`
 
 ```turbolift clone```

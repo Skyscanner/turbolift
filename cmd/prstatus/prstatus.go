@@ -13,19 +13,21 @@
  *
  */
 
-package pr_status
+package prstatus
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/rodaine/table"
-	"github.com/skyscanner/turbolift/internal/campaign"
-	"github.com/skyscanner/turbolift/internal/github"
-	"github.com/skyscanner/turbolift/internal/logging"
-	"github.com/spf13/cobra"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
+	"github.com/spf13/cobra"
+
+	"github.com/skyscanner/turbolift/internal/campaign"
+	"github.com/skyscanner/turbolift/internal/github"
+	"github.com/skyscanner/turbolift/internal/logging"
 )
 
 var reactionsOrder = []string{
@@ -52,7 +54,10 @@ var reactionsMapping = map[string]string{
 
 var gh github.GitHub = github.NewRealGitHub()
 
-var list bool
+var (
+	list     bool
+	repoFile string
+)
 
 func NewPrStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -61,6 +66,7 @@ func NewPrStatusCmd() *cobra.Command {
 		Run:   run,
 	}
 	cmd.Flags().BoolVar(&list, "list", false, "Displays a listing by PR")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
@@ -68,8 +74,11 @@ func NewPrStatusCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return

@@ -33,7 +33,10 @@ var (
 	g  git.Git       = git.NewRealGit()
 )
 
-var nofork bool
+var (
+	nofork   bool
+	repoFile string
+)
 
 func NewCloneCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -43,6 +46,7 @@ func NewCloneCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&nofork, "no-fork", false, "Will not fork, just clone and create a branch.")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
@@ -50,8 +54,10 @@ func NewCloneCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	readCampaignActivity := logger.StartActivity("Reading campaign data")
-	dir, err := campaign.OpenCampaign()
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return

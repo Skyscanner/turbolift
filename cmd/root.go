@@ -19,16 +19,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/spf13/cobra"
+
 	cloneCmd "github.com/skyscanner/turbolift/cmd/clone"
 	commitCmd "github.com/skyscanner/turbolift/cmd/commit"
 	createPrsCmd "github.com/skyscanner/turbolift/cmd/create_prs"
 	"github.com/skyscanner/turbolift/cmd/flags"
 	foreachCmd "github.com/skyscanner/turbolift/cmd/foreach"
 	initCmd "github.com/skyscanner/turbolift/cmd/init"
-	updatePrsCmd "github.com/skyscanner/turbolift/cmd/update_prs"
-	"github.com/spf13/cobra"
-
-	prStatusCmd "github.com/skyscanner/turbolift/cmd/pr_status"
+	prStatusCmd "github.com/skyscanner/turbolift/cmd/prstatus"
+	updatePrsCmd "github.com/skyscanner/turbolift/cmd/updateprs"
 )
 
 var (

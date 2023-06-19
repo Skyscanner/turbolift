@@ -1,14 +1,15 @@
-package update_prs
+package updateprs
 
 import (
 	"bytes"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestItLogsClosePrErrorsButContinuesToTryAll(t *testing.T) {

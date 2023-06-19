@@ -16,15 +16,18 @@
 package campaign
 
 import (
-	"github.com/skyscanner/turbolift/internal/testsupport"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/skyscanner/turbolift/internal/testsupport"
 )
 
 func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, testsupport.Pwd(), campaign.Name)
@@ -49,7 +52,8 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "mygitserver.com/org/repo2")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, testsupport.Pwd(), campaign.Name)
@@ -74,7 +78,8 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 func TestItIgnoresCommentedLines(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "#org/repo2")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, testsupport.Pwd(), campaign.Name)
@@ -93,7 +98,8 @@ func TestItIgnoresCommentedLines(t *testing.T) {
 func TestItIgnoresEmptyLines(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, testsupport.Pwd(), campaign.Name)
@@ -112,7 +118,8 @@ func TestItIgnoresEmptyLines(t *testing.T) {
 func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "#Comment", "org/repo1", "")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, testsupport.Pwd(), campaign.Name)
@@ -131,7 +138,8 @@ func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
 func TestItIgnoresDuplicatedLines(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo1")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, []Repo{
@@ -147,7 +155,8 @@ func TestItIgnoresDuplicatedLines(t *testing.T) {
 func TestItIgnoresDuplicatedNonSequentialLines(t *testing.T) {
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2", "org/repo1")
 
-	campaign, err := OpenCampaign()
+	defaultOptions := NewCampaignOptions()
+	campaign, err := OpenCampaign(defaultOptions)
 	assert.NoError(t, err)
 
 	assert.Equal(t, []Repo{
@@ -164,4 +173,52 @@ func TestItIgnoresDuplicatedNonSequentialLines(t *testing.T) {
 			FullRepoName: "org/repo2",
 		},
 	}, campaign.Repos)
+}
+
+func TestItShouldAcceptADifferentRepoFileSuccess(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	testsupport.CreateAnotherRepoFile("newrepos.txt", "org/repo1", "org/repo2", "org/repo3")
+	options := NewCampaignOptions()
+	options.RepoFilename = "newrepos.txt"
+	campaign, err := OpenCampaign(options)
+	assert.NoError(t, err)
+
+	assert.Equal(t, []Repo{
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo1",
+			FullRepoName: "org/repo1",
+		},
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo2",
+			FullRepoName: "org/repo2",
+		},
+		{
+			Host:         "",
+			OrgName:      "org",
+			RepoName:     "repo3",
+			FullRepoName: "org/repo3",
+		},
+	}, campaign.Repos)
+}
+
+func TestItShouldAcceptADifferentRepoFileNotExist(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	options := NewCampaignOptions()
+	options.RepoFilename = "newrepos.txt"
+	_, err := OpenCampaign(options)
+	assert.Error(t, err)
+}
+
+func TestItShouldErrorWhenRepoFileIsEmpty(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	options := &CampaignOptions{}
+	_, err := OpenCampaign(options)
+	assert.Error(t, err)
 }

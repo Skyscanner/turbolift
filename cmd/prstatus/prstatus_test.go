@@ -13,7 +13,7 @@
  *
  */
 
-package pr_status
+package prstatus
 
 import (
 	"bytes"
@@ -22,9 +22,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/testsupport"
-	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -109,7 +110,6 @@ func runCommand(showList bool) (string, error) {
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
-
 	if err != nil {
 		return outBuffer.String(), err
 	}
