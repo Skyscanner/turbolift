@@ -46,6 +46,30 @@ func TestItReturnsNilErrorOnSuccess(t *testing.T) {
 	})
 }
 
+func TestItReturnsErrorOnFailedPull(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runPullAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org1/repo1", "git", "pull", "--ff-only", "upstream", "main"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulPull(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runPullAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org1/repo1", "git", "pull", "--ff-only", "upstream", "main"},
+	})
+}
+
 func runAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGit().Checkout(&sb, "work/org/repo1", "some_branch")
@@ -54,4 +78,11 @@ func runAndCaptureOutput() (string, error) {
 		return sb.String(), err
 	}
 	return sb.String(), nil
+}
+
+func runPullAndCaptureOutput() (string, error) {
+	sb := strings.Builder{}
+	err := NewRealGit().Pull(&sb, "work/org1/repo1", "upstream", "main")
+
+	return sb.String(), err
 }

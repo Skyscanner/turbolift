@@ -68,7 +68,7 @@ func (r *RealGit) IsRepoChanged(output io.Writer, workingDir string) (bool, erro
 }
 
 func (r *RealGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
-	return execInstance.Execute(output, workingDir, "git", "pull", remote, branchName)
+	return execInstance.Execute(output, workingDir, "git", "pull", "--ff-only", remote, branchName)
 }
 
 func NewRealGit() *RealGit {

@@ -130,14 +130,14 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		pullFromUpstreamActivity := logger.StartActivity("Pulling latest changes from %s", repo.FullRepoName)
-		var upstreamBranch string
-		upstreamBranch, err = gh.GetDefaultBranchName(pullFromUpstreamActivity.Writer(), repoDirPath, repo.FullRepoName)
+		var defaultBranch string
+		defaultBranch, err = gh.GetDefaultBranchName(pullFromUpstreamActivity.Writer(), repoDirPath, repo.FullRepoName)
 		if err != nil {
 			pullFromUpstreamActivity.EndWithFailure(err)
 			errorCount++
 			continue
 		}
-		err = g.Pull(pullFromUpstreamActivity.Writer(), repoDirPath, "upstream", upstreamBranch)
+		err = g.Pull(pullFromUpstreamActivity.Writer(), repoDirPath, "upstream", defaultBranch)
 		if err != nil {
 			pullFromUpstreamActivity.EndWithFailure(err)
 			errorCount++
