@@ -40,6 +40,7 @@ type GitHub interface {
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
+	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 }
 
 type RealGitHub struct{}
@@ -85,6 +86,10 @@ func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 	}
 
 	return execInstance.Execute(output, workingDir, "gh", "pr", "close", fmt.Sprint(pr.Number))
+}
+
+func (r *RealGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
+	return execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json defaultBranchRef", "--jq '.defaultBranchRef.name'")
 }
 
 // the following is used internally to retrieve PRs from a given repository

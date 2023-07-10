@@ -29,6 +29,7 @@ type Git interface {
 	Push(stdout io.Writer, workingDir string, remote string, branchName string) error
 	Commit(output io.Writer, workingDir string, message string) error
 	IsRepoChanged(output io.Writer, workingDir string) (bool, error)
+	Pull(output io.Writer, workingDir string, remote string, branchName string) error
 }
 
 type RealGit struct {
@@ -64,6 +65,10 @@ func (r *RealGit) IsRepoChanged(output io.Writer, workingDir string) (bool, erro
 	}
 
 	return diffSize > 0, nil
+}
+
+func (r *RealGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
+	return execInstance.Execute(output, workingDir, "git", "pull", remote, branchName)
 }
 
 func NewRealGit() *RealGit {
