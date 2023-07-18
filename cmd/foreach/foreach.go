@@ -47,7 +47,7 @@ MAIN:
 			helpFlag = true
 		default:
 			// we've parsed everything that could be parsed; this is now the command
-			if len(args) > 1 {
+			if len(args[i:]) > 0 {
 				strippedArgs = args[i:]
 			}
 			break MAIN
