@@ -30,23 +30,31 @@ import (
 
 var exec executor.Executor = executor.NewRealExecutor()
 
-var repoFile string = "repos.txt"
+var (
+	repoFile string = "repos.txt"
+	helpFlag bool   = false
+)
 
-func parseForeachArgs(args []string) (strippedArgs []string) {
+func parseForeachArgs(args []string) []string {
+	strippedArgs := make([]string, 0)
 MAIN:
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--repos":
 			repoFile = args[i+1]
 			i = i + 1
+		case "--help":
+			helpFlag = true
 		default:
 			// we've parsed everything that could be parsed; this is now the command
-			strippedArgs = args[i:]
+			if len(args) > 1 {
+				strippedArgs = args[i:]
+			}
 			break MAIN
 		}
 	}
 
-	return
+	return strippedArgs
 }
 
 func NewForeachCmd() *cobra.Command {
@@ -74,6 +82,12 @@ func run(c *cobra.Command, args []string) {
 		Assumption is the foreach arguments will be parsed before the command and its arguments.
 	*/
 	args = parseForeachArgs(args)
+
+	// check if the help flag was toggled
+	if helpFlag {
+		_ = c.Usage()
+		return
+	}
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
