@@ -97,6 +97,13 @@ func TestParseForEachArgs(t *testing.T) {
 			ExpectedRepoFileName: "example.txt",
 			ExpectedHelpFlag:     true,
 		},
+		{
+			Name:                 "Help flag is not triggered from a subsequent command",
+			Args:                 []string{"command", "--help"},
+			ExpectedCommand:      []string{"command", "--help"},
+			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
+		},
 	}
 
 	for _, tc := range testCases {
