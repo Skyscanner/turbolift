@@ -57,11 +57,12 @@ MAIN:
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                "foreach SHELL_COMMAND",
-		Short:              "Run a shell command against each working copy",
-		Run:                run,
-		Args:               cobra.MinimumNArgs(1),
-		DisableFlagParsing: true,
+		Use:                   "foreach [flags] SHELL_COMMAND",
+		Short:                 "Run a shell command against each working copy",
+		Run:                   run,
+		Args:                  cobra.MinimumNArgs(1),
+		DisableFlagsInUseLine: true,
+		DisableFlagParsing:    true,
 	}
 
 	// this flag will not be parsed (DisabledFlagParsing is on) but is here for the help context and auto complete

@@ -196,7 +196,7 @@ func TestHelpFlagReturnsUsage(t *testing.T) {
 	assert.NoError(t, err)
 	// should return usage
 	assert.Contains(t, out, "Usage:")
-	assert.Contains(t, out, "foreach SHELL_COMMAND [flags]")
+	assert.Contains(t, out, "foreach [flags] SHELL_COMMAND")
 	assert.Contains(t, out, "Flags:")
 	assert.Contains(t, out, "help for foreach")
 
