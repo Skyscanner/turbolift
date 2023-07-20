@@ -114,16 +114,6 @@ func run(c *cobra.Command, _ []string) {
 		}
 		createBranchActivity.EndWithSuccess()
 
-		// pull from upstream
-		// if !nofork
-		// check main or master
-		// pullactivity = logger.StartActivity(etc)
-		// err = g / gh . pull branch
-		// if err != nil, error and break, endwithfailure
-		// pullactivity.endwithsuccess.
-
-		// then add a test or two
-
 		if nofork {
 			doneCount++
 			continue

@@ -63,6 +63,12 @@ func (f *FakeGitHub) GetPR(output io.Writer, workingDir string, _ string) (*PrSt
 	return result.(*PrStatus), err
 }
 
+func (f *FakeGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
+	f.calls = append(f.calls, []string{workingDir, fullRepoName})
+	_, err := f.handler(output, workingDir, fullRepoName)
+	return "", err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }

@@ -55,6 +55,13 @@ func (f *FakeGit) Push(output io.Writer, workingDir string, _ string, branchName
 	return err
 }
 
+func (f *FakeGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
+	call := []string{"pull", "--ff-only", workingDir, remote, branchName}
+	f.calls = append(f.calls, call)
+	_, err := f.handler(output, call)
+	return err
+}
+
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
