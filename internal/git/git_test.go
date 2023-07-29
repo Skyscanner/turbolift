@@ -22,11 +22,11 @@ import (
 	"testing"
 )
 
-func TestItReturnsErrorOnFailure(t *testing.T) {
+func TestItReturnsErrorOnFailedCheckout(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
 	execInstance = fakeExecutor
 
-	_, err := runAndCaptureOutput()
+	_, err := runCheckoutAndCaptureOutput()
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
@@ -34,11 +34,11 @@ func TestItReturnsErrorOnFailure(t *testing.T) {
 	})
 }
 
-func TestItReturnsNilErrorOnSuccess(t *testing.T) {
+func TestItReturnsNilErrorOnSuccessfulCheckout(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	execInstance = fakeExecutor
 
-	_, err := runAndCaptureOutput()
+	_, err := runCheckoutAndCaptureOutput()
 	assert.NoError(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
@@ -70,7 +70,7 @@ func TestItReturnsNilErrorOnSuccessfulPull(t *testing.T) {
 	})
 }
 
-func runAndCaptureOutput() (string, error) {
+func runCheckoutAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGit().Checkout(&sb, "work/org/repo1", "some_branch")
 
