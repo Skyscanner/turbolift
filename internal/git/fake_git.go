@@ -84,3 +84,12 @@ func NewAlwaysFailsFakeGit() *FakeGit {
 		return false, errors.New("synthetic error")
 	})
 }
+
+func NewAlwaysFailsOnPullFakeGit() *FakeGit {
+	return NewFakeGit(func(_ io.Writer, args []string) (bool, error) {
+		if args[0] == "pull" {
+			return false, errors.New("synthetic error")
+		}
+		return true, nil
+	})
+}

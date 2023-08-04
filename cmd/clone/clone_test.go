@@ -167,6 +167,60 @@ func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
 	})
 }
 
+func TestItLogsDefaultBranchErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsOnGetDefaultBranchFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+	out, err := runCloneCommandWithFork()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
+	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed with errors")
+	assert.Contains(t, out, "2 repos errored")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org1/repo1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+		{"work/org2/repo2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+	})
+}
+
+func TestItLogsPullErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsOnPullFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+	out, err := runCloneCommandWithFork()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
+	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed with errors")
+	assert.Contains(t, out, "2 repos errored")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org1/repo1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+		{"work/org2/repo2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org1/repo1", "upstream", "main"},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org2/repo2", "upstream", "main"},
+	})
+}
+
 func TestItClonesReposFoundInReposFile(t *testing.T) {
 	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
