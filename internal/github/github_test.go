@@ -135,7 +135,7 @@ func TestItReturnsErrorOnFailedGetDefaultBranchName(t *testing.T) {
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org1/repo1", "gh", "repo", "view", "org1/repo1", "--json defaultBranchRef", "--jq '.defaultBranchRef.name'"},
+		{"work/org1/repo1", "gh", "repo", "view", "org1/repo1", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"},
 	})
 }
 
@@ -147,7 +147,7 @@ func TestItReturnsNilErrorOnSuccessfulGetDefaultBranchName(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org1/repo1", "gh", "repo", "view", "org1/repo1", "--json defaultBranchRef", "--jq '.defaultBranchRef.name'"},
+		{"work/org1/repo1", "gh", "repo", "view", "org1/repo1", "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"},
 	})
 }
 

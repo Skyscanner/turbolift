@@ -89,7 +89,8 @@ func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 }
 
 func (r *RealGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
-	return execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json defaultBranchRef", "--jq '.defaultBranchRef.name'")
+	defaultBranch, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name")
+	return strings.Trim(defaultBranch, "\n"), err
 }
 
 // the following is used internally to retrieve PRs from a given repository
