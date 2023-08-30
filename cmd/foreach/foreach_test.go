@@ -32,42 +32,77 @@ func TestParseForEachArgs(t *testing.T) {
 		Args                 []string
 		ExpectedCommand      []string
 		ExpectedRepoFileName string
+		ExpectedHelpFlag     bool
 	}{
 		{
 			Name:                 "simple command",
 			Args:                 []string{"ls", "-l"},
 			ExpectedCommand:      []string{"ls", "-l"},
 			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
 		},
 		{
 			Name:                 "advanced command",
 			Args:                 []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
 			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
 			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
 		},
 		{
 			Name:                 "simple command with repo flag",
 			Args:                 []string{"--repos", "test.txt", "ls", "-l"},
 			ExpectedCommand:      []string{"ls", "-l"},
 			ExpectedRepoFileName: "test.txt",
+			ExpectedHelpFlag:     false,
 		},
 		{
 			Name:                 "advanced command with repos flag",
 			Args:                 []string{"--repos", "test2.txt", "sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
 			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
 			ExpectedRepoFileName: "test2.txt",
+			ExpectedHelpFlag:     false,
 		},
 		{
 			Name:                 "repos flag should only be caught when at the beginning",
 			Args:                 []string{"ls", "-l", "--repos", "random.txt"},
 			ExpectedCommand:      []string{"ls", "-l", "--repos", "random.txt"},
 			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
 		},
 		{
 			Name:                 "random flag is not caught",
 			Args:                 []string{"--random", "arg", "ls", "-l"},
 			ExpectedCommand:      []string{"--random", "arg", "ls", "-l"},
 			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
+		},
+		{
+			Name:                 "Help flag is triggered",
+			Args:                 []string{"--help"},
+			ExpectedCommand:      []string{},
+			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     true,
+		},
+		{
+			Name:                 "Help flag is triggered after the repo one",
+			Args:                 []string{"--repos", "example.txt", "--help", "thecommand"},
+			ExpectedCommand:      []string{"thecommand"},
+			ExpectedRepoFileName: "example.txt",
+			ExpectedHelpFlag:     true,
+		},
+		{
+			Name:                 "Help flag is triggered before the repo one",
+			Args:                 []string{"--help", "--repos", "example.txt", "newcommand", "anotherarg"},
+			ExpectedCommand:      []string{"newcommand", "anotherarg"},
+			ExpectedRepoFileName: "example.txt",
+			ExpectedHelpFlag:     true,
+		},
+		{
+			Name:                 "Help flag is not triggered from a subsequent command",
+			Args:                 []string{"command", "--help"},
+			ExpectedCommand:      []string{"command", "--help"},
+			ExpectedRepoFileName: "repos.txt",
+			ExpectedHelpFlag:     false,
 		},
 	}
 
@@ -77,9 +112,11 @@ func TestParseForEachArgs(t *testing.T) {
 			t.Log(actual)
 			assert.EqualValues(t, tc.ExpectedCommand, actual)
 			assert.Equal(t, repoFile, tc.ExpectedRepoFileName)
+			assert.Equal(t, helpFlag, tc.ExpectedHelpFlag)
 
 			// Cleanup to default repo file name
 			repoFile = "repos.txt"
+			helpFlag = false
 		})
 	}
 }
@@ -146,6 +183,25 @@ func TestItContinuesOnAndRecordsFailures(t *testing.T) {
 		{"work/org/repo1", userShell(), "-c", "some command"},
 		{"work/org/repo2", userShell(), "-c", "some command"},
 	})
+}
+
+func TestHelpFlagReturnsUsage(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommand("--help", "command1")
+	t.Log(out)
+	assert.NoError(t, err)
+	// should return usage
+	assert.Contains(t, out, "Usage:")
+	assert.Contains(t, out, "foreach [flags] SHELL_COMMAND")
+	assert.Contains(t, out, "Flags:")
+	assert.Contains(t, out, "help for foreach")
+
+	// nothing should have been called
+	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
 func userShell() string {
