@@ -1,4 +1,4 @@
-# Documentation at http://goreleaser.com
+# Documentation at https://goreleaser.com/
 before:
   hooks:
     - go mod tidy
