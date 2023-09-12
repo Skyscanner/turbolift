@@ -1,0 +1,17 @@
+# Run `pre-commit autoupdate` to update tool versions.
+# Note that pre-commit.ci can update hook versions automatically.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v4.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.54.2
+    hooks:
+      - id: golangci-lint
