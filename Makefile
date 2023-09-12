@@ -46,4 +46,3 @@ test: lint
 	@echo "--- test all the things"
 	@go test -race -cover ./...
 .PHONY: test
-

@@ -32,4 +32,3 @@ brews:
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     dependencies:
       - name: gh
-
