@@ -71,11 +71,11 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 }
 
 func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
-	return execInstance.Execute(output, workingDir, "gh", "repo", "fork", "--clone=true", fullRepoName)
+	return execInstance.Execute(output, workingDir, "gh", "repo", "fork", "--clone=true", fullRepoName, "--", "--depth=1")
 }
 
 func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
-	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName)
+	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName, "--", "--depth=1")
 }
 
 func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branchName string) error {
