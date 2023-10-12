@@ -127,13 +127,14 @@ You may wish to skip the fork and work on the upstream repository branch directl
 > omit the `--no-fork` flag and let all the repositories be forked.
 > For now, it's an all-or-nothing scenario.
 
-Repositories are cloned with the git flag `--depth=1`.
-If you need the full commit history and tags, you can run the following command
-after running `turbolift clone`:
-
-```shell
-turbolift foreach git fetch --unshallow --tags
-```
+> **Note**
+> Repositories are cloned with the git flag `--depth=1`.
+> If you need the full commit history and tags, you can run the following command
+> after running `turbolift clone`:
+> 
+> ```shell
+> turbolift foreach git fetch --unshallow --tags
+> ```
 
 ### Making changes
 
