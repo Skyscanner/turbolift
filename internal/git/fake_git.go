@@ -55,6 +55,13 @@ func (f *FakeGit) Push(output io.Writer, workingDir string, _ string, branchName
 	return err
 }
 
+func (f *FakeGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
+	call := []string{"pull", "--ff-only", workingDir, remote, branchName}
+	f.calls = append(f.calls, call)
+	_, err := f.handler(output, call)
+	return err
+}
+
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
@@ -75,5 +82,14 @@ func NewAlwaysSucceedsFakeGit() *FakeGit {
 func NewAlwaysFailsFakeGit() *FakeGit {
 	return NewFakeGit(func(io.Writer, []string) (bool, error) {
 		return false, errors.New("synthetic error")
+	})
+}
+
+func NewAlwaysFailsOnPullFakeGit() *FakeGit {
+	return NewFakeGit(func(_ io.Writer, args []string) (bool, error) {
+		if args[0] == "pull" {
+			return false, errors.New("synthetic error")
+		}
+		return true, nil
 	})
 }
