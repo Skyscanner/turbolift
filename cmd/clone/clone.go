@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,6 +113,25 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 		createBranchActivity.EndWithSuccess()
+
+		if !nofork {
+			pullFromUpstreamActivity := logger.StartActivity("Pulling latest changes from %s", repo.FullRepoName)
+			var defaultBranch string
+			defaultBranch, err = gh.GetDefaultBranchName(pullFromUpstreamActivity.Writer(), repoDirPath, repo.FullRepoName)
+			if err != nil {
+				pullFromUpstreamActivity.EndWithFailure(err)
+				errorCount++
+				continue
+			}
+			err = g.Pull(pullFromUpstreamActivity.Writer(), repoDirPath, "upstream", defaultBranch)
+			if err != nil {
+				pullFromUpstreamActivity.EndWithFailure(err)
+				errorCount++
+				continue
+			}
+			pullFromUpstreamActivity.EndWithSuccess()
+		}
+
 		doneCount++
 	}
 

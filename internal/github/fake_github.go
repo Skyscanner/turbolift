@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,25 +24,25 @@ import (
 )
 
 type FakeGitHub struct {
-	handler          func(output io.Writer, workingDir string, fullRepoName string) (bool, error)
+	handler          func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error)
 	returningHandler func(output io.Writer, workingDir string) (interface{}, error)
 	calls            [][]string
 }
 
 func (f *FakeGitHub) CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
 	f.calls = append(f.calls, []string{workingDir, metadata.Title})
-	return f.handler(output, workingDir, "")
+	return f.handler(output, CreatePullRequest, workingDir, "")
 }
 
 func (f *FakeGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
 	f.calls = append(f.calls, []string{workingDir, fullRepoName})
-	_, err := f.handler(output, workingDir, fullRepoName)
+	_, err := f.handler(output, ForkAndClone, workingDir, fullRepoName)
 	return err
 }
 
 func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
 	f.calls = append(f.calls, []string{workingDir, fullRepoName})
-	_, err := f.handler(output, workingDir, fullRepoName)
+	_, err := f.handler(output, Clone, workingDir, fullRepoName)
 	return err
 }
 
@@ -50,7 +50,7 @@ func (f *FakeGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 	// TODO: handle this differently; branchName here is replacing fullRepoName
 	// This is OK for now because fullRepoName is used nowhere in the github mocks
 	f.calls = append(f.calls, []string{workingDir, branchName})
-	_, err := f.handler(output, workingDir, branchName)
+	_, err := f.handler(output, ClosePullRequest, workingDir, branchName)
 	return err
 }
 
@@ -63,11 +63,17 @@ func (f *FakeGitHub) GetPR(output io.Writer, workingDir string, _ string) (*PrSt
 	return result.(*PrStatus), err
 }
 
+func (f *FakeGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
+	f.calls = append(f.calls, []string{workingDir, fullRepoName})
+	_, err := f.handler(output, GetDefaultBranchName, workingDir, fullRepoName)
+	return "main", err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName string) (bool, error), r func(output io.Writer, workingDir string) (interface{}, error)) *FakeGitHub {
+func NewFakeGitHub(h func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error), r func(output io.Writer, workingDir string) (interface{}, error)) *FakeGitHub {
 	return &FakeGitHub{
 		handler:          h,
 		returningHandler: r,
@@ -76,7 +82,7 @@ func NewFakeGitHub(h func(output io.Writer, workingDir string, fullRepoName stri
 }
 
 func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
 		return true, nil
 	}, func(output io.Writer, workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
@@ -84,7 +90,7 @@ func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
 }
 
 func NewAlwaysFailsFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
 		return false, errors.New("synthetic error")
 	}, func(output io.Writer, workingDir string) (interface{}, error) {
 		return nil, errors.New("synthetic error")
@@ -92,7 +98,7 @@ func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 }
 
 func NewAlwaysThrowNoPRFound() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, workingDir string, branchName string) (bool, error) {
+	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, branchName string) (bool, error) {
 		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 	}, func(output io.Writer, workingDir string) (interface{}, error) {
 		panic("should not be invoked")
@@ -100,9 +106,30 @@ func NewAlwaysThrowNoPRFound() *FakeGitHub {
 }
 
 func NewAlwaysReturnsFalseFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
 		return false, nil
 	}, func(output io.Writer, workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
+
+func NewAlwaysFailsOnGetDefaultBranchFakeGitHub() *FakeGitHub {
+	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
+		if command == GetDefaultBranchName {
+			return false, errors.New("synthetic error")
+		}
+		return true, nil
+	}, func(output io.Writer, workingDir string) (interface{}, error) {
+		return PrStatus{}, nil
+	})
+}
+
+type Command int
+
+const (
+	ForkAndClone Command = iota
+	Clone
+	CreatePullRequest
+	ClosePullRequest
+	GetDefaultBranchName
+)

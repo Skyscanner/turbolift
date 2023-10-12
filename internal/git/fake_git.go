@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,13 @@ func (f *FakeGit) Push(output io.Writer, workingDir string, _ string, branchName
 	return err
 }
 
+func (f *FakeGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
+	call := []string{"pull", "--ff-only", workingDir, remote, branchName}
+	f.calls = append(f.calls, call)
+	_, err := f.handler(output, call)
+	return err
+}
+
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
@@ -75,5 +82,14 @@ func NewAlwaysSucceedsFakeGit() *FakeGit {
 func NewAlwaysFailsFakeGit() *FakeGit {
 	return NewFakeGit(func(io.Writer, []string) (bool, error) {
 		return false, errors.New("synthetic error")
+	})
+}
+
+func NewAlwaysFailsOnPullFakeGit() *FakeGit {
+	return NewFakeGit(func(_ io.Writer, args []string) (bool, error) {
+		if args[0] == "pull" {
+			return false, errors.New("synthetic error")
+		}
+		return true, nil
 	})
 }

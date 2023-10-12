@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,6 +115,112 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 	})
 }
 
+func TestItPullsFromUpstreamWhenCloningWithFork(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+
+	out, err := runCloneCommandWithFork()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
+	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org1/repo1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+		{"work/org2/repo2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org1/repo1", "upstream", "main"},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org2/repo2", "upstream", "main"},
+	})
+}
+
+func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+
+	out, err := runCloneCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Pulling latest changes from org1/repo1")
+	assert.NotContains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+	})
+}
+
+func TestItLogsDefaultBranchErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsOnGetDefaultBranchFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+	out, err := runCloneCommandWithFork()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
+	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed with errors")
+	assert.Contains(t, out, "2 repos errored")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org1/repo1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+		{"work/org2/repo2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+	})
+}
+
+func TestItLogsPullErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsOnPullFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org1/repo1", "org2/repo2")
+	out, err := runCloneCommandWithFork()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
+	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "turbolift clone completed with errors")
+	assert.Contains(t, out, "2 repos errored")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1", "org1/repo1"},
+		{"work/org1/repo1", "org1/repo1"},
+		{"work/org2", "org2/repo2"},
+		{"work/org2/repo2", "org2/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org1/repo1", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org1/repo1", "upstream", "main"},
+		{"checkout", "work/org2/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org2/repo2", "upstream", "main"},
+	})
+}
+
 func TestItClonesReposFoundInReposFile(t *testing.T) {
 	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
@@ -195,9 +301,11 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
 		{"work/org", "org/repo2"},
+		{"work/org/repo2", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org/repo2", "upstream", "main"},
 	})
 }
 

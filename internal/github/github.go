@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,6 +40,7 @@ type GitHub interface {
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
+	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 }
 
 type RealGitHub struct{}
@@ -85,6 +86,11 @@ func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 	}
 
 	return execInstance.Execute(output, workingDir, "gh", "pr", "close", fmt.Sprint(pr.Number))
+}
+
+func (r *RealGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
+	defaultBranch, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name")
+	return strings.Trim(defaultBranch, "\n"), err
 }
 
 // the following is used internally to retrieve PRs from a given repository
