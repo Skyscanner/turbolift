@@ -172,12 +172,14 @@ Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause betwee
 > * create PRs in batches, for example by commenting out repositories in `repos.txt`
 > * Use the `--draft` flag to create the PRs as Draft
 
-If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
+#### Working with multiple PR description files
 
-For example:
+Occasionally you may want to work with more than one PR title and description. When this is the case, use the flag `--description` to specify an alternative file when creating prs.
+The first line of the file chosen will be used as the PR title and the rest as the description body.
 
-```
-turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
+```console
+turbolift create-prs --repos repoFile1.txt --description prDescriptionFile1.md
+turbolift create-prs --repos repoFile2.txt --description prDescriptionFile2.md
 ```
 
 ### After creating PRs
