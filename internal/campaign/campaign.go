@@ -44,11 +44,15 @@ func (r Repo) FullRepoPath() string {
 }
 
 type CampaignOptions struct {
-	RepoFilename string
+	RepoFilename          string
+	PrDescriptionFilename string
 }
 
 func NewCampaignOptions() *CampaignOptions {
-	return &CampaignOptions{RepoFilename: "repos.txt"}
+	return &CampaignOptions{
+		RepoFilename:          "repos.txt",
+		PrDescriptionFilename: "README.md",
+	}
 }
 
 func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
@@ -60,7 +64,7 @@ func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 		return nil, err
 	}
 
-	prTitle, prBody, err := readPrDescriptionFile()
+	prTitle, prBody, err := readPrDescriptionFile(options.PrDescriptionFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -131,10 +135,13 @@ func readReposTxtFile(filename string) ([]Repo, error) {
 	return repos, nil
 }
 
-func readPrDescriptionFile() (string, string, error) {
-	file, err := os.Open("README.md")
+func readPrDescriptionFile(filename string) (string, string, error) {
+	if filename == "" {
+		return "", "", errors.New("no PR description file to open")
+	}
+	file, err := os.Open(filename)
 	if err != nil {
-		return "", "", errors.New("unable to open README.md file")
+		return "", "", fmt.Errorf("unable to open PR description file: %s", filename)
 	}
 	defer func() {
 		closeErr := file.Close()
