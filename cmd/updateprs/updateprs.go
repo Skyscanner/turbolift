@@ -35,9 +35,10 @@ var (
 )
 
 var (
-	closeFlag bool
-	yesFlag   bool
-	repoFile  string
+	closeFlag             bool
+	updateDescriptionFlag bool
+	yesFlag               bool
+	repoFile              string
 )
 
 func NewUpdatePRsCmd() *cobra.Command {
@@ -48,6 +49,7 @@ func NewUpdatePRsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&closeFlag, "close", false, "Close all generated PRs")
+	cmd.Flags().BoolVar(&updateDescriptionFlag, "description", false, "Update PR titles and descriptions")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
@@ -67,9 +69,9 @@ func onlyOne(args ...bool) bool {
 	return b[true] == 1
 }
 
-func validateFlags(closeFlag bool) error {
+func validateFlags(closeFlag bool, updateDescriptionFlag bool) error {
 	// only option at the moment is `close`
-	if !onlyOne(closeFlag) {
+	if !onlyOne(closeFlag, updateDescriptionFlag) {
 		return errors.New("update-prs needs one and only one action flag")
 	}
 	return nil
@@ -78,13 +80,15 @@ func validateFlags(closeFlag bool) error {
 // we keep the args as one of the subfunctions might need it one day.
 func run(c *cobra.Command, args []string) {
 	logger := logging.NewLogger(c)
-	if err := validateFlags(closeFlag); err != nil {
+	if err := validateFlags(closeFlag, updateDescriptionFlag); err != nil {
 		logger.Errorf("Error while parsing the flags: %v", err)
 		return
 	}
 
 	if closeFlag {
 		runClose(c, args)
+	} else if updateDescriptionFlag {
+		runUpdatePrDescription(c, args)
 	}
 }
 
@@ -142,5 +146,55 @@ func runClose(c *cobra.Command, _ []string) {
 		logger.Successf("turbolift update-prs completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
 	} else {
 		logger.Warnf("turbolift update-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
+	}
+}
+
+func runUpdatePrDescription(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
+	if err != nil {
+		readCampaignActivity.EndWithFailure(err)
+		return
+	}
+	readCampaignActivity.EndWithSuccess()
+
+	// Prompting for confirmation
+	if !yesFlag {
+		if !p.AskConfirm(fmt.Sprintf("Update all PR titles and descriptions from the %s campaign?", dir.Name)) {
+			return
+		}
+	}
+
+	doneCount := 0
+	skippedCount := 0
+	errorCount := 0
+
+	for _, repo := range dir.Repos {
+		updatePrActivity := logger.StartActivity("Updating PR description in %s", repo.FullRepoName)
+
+		// skip if the working copy does not exist
+		if _, err = os.Stat(repo.FullRepoPath()); os.IsNotExist(err) {
+			updatePrActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repo.FullRepoPath())
+			skippedCount++
+			continue
+		}
+
+		err = gh.UpdatePRDescription(updatePrActivity.Writer(), repo.FullRepoPath(), dir.PrTitle, dir.PrBody)
+		if err != nil {
+			if _, ok := err.(*github.NoPRFoundError); ok {
+				updatePrActivity.EndWithWarning(err)
+				skippedCount++
+			} else {
+				updatePrActivity.EndWithFailure(err)
+				errorCount++
+			}
+		} else {
+			updatePrActivity.EndWithSuccess()
+			doneCount++
+		}
 	}
 }

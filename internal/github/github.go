@@ -39,6 +39,7 @@ type GitHub interface {
 	Clone(output io.Writer, workingDir string, fullRepoName string) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
+	UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 }
@@ -86,6 +87,10 @@ func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 	}
 
 	return execInstance.Execute(output, workingDir, "gh", "pr", "close", fmt.Sprint(pr.Number))
+}
+
+func (r *RealGitHub) UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error {
+	return execInstance.Execute(output, workingDir, "gh", "pr", "edit", "--title", title, "--body", body)
 }
 
 func (r *RealGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
