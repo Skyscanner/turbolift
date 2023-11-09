@@ -31,7 +31,7 @@ func TestItReturnsErrorOnFailedFork(t *testing.T) {
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
+		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1", "--", "--depth=1"},
 	})
 }
 
@@ -43,7 +43,7 @@ func TestItReturnsNilErrorOnSuccessfulFork(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1"},
+		{"work/org", "gh", "repo", "fork", "--clone=true", "org/repo1", "--", "--depth=1"},
 	})
 }
 
@@ -55,7 +55,7 @@ func TestItReturnsErrorOnFailedClone(t *testing.T) {
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "clone", "org/repo1"},
+		{"work/org", "gh", "repo", "clone", "org/repo1", "--", "--depth=1"},
 	})
 }
 
@@ -67,7 +67,7 @@ func TestItReturnsNilErrorOnSuccessfulClone(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org", "gh", "repo", "clone", "org/repo1"},
+		{"work/org", "gh", "repo", "clone", "org/repo1", "--", "--depth=1"},
 	})
 }
 
