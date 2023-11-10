@@ -49,7 +49,7 @@ func NewUpdatePRsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&closeFlag, "close", false, "Close all generated PRs")
-	cmd.Flags().BoolVar(&updateDescriptionFlag, "description", false, "Update PR titles and descriptions")
+	cmd.Flags().BoolVar(&updateDescriptionFlag, "amend-description", false, "Update PR titles and descriptions")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
