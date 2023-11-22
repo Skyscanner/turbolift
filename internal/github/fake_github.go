@@ -25,7 +25,7 @@ import (
 
 type FakeGitHub struct {
 	handler          func(command Command, args []string) (bool, error)
-	returningHandler func() (interface{}, error)
+	returningHandler func(workingDir string) (interface{}, error)
 	calls            [][]string
 }
 
@@ -58,7 +58,7 @@ func (f *FakeGitHub) ClosePullRequest(_ io.Writer, workingDir string, branchName
 
 func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, _ string) (*PrStatus, error) {
 	f.calls = append(f.calls, []string{workingDir})
-	result, err := f.returningHandler()
+	result, err := f.returningHandler(workingDir)
 	if result == nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGitHub(h func(command Command, args []string) (bool, error), r func() (interface{}, error)) *FakeGitHub {
+func NewFakeGitHub(h func(command Command, args []string) (bool, error), r func(workingDir string) (interface{}, error)) *FakeGitHub {
 	return &FakeGitHub{
 		handler:          h,
 		returningHandler: r,
@@ -87,7 +87,7 @@ func NewFakeGitHub(h func(command Command, args []string) (bool, error), r func(
 func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return true, nil
-	}, func() (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
@@ -95,7 +95,7 @@ func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
 func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return false, errors.New("synthetic error")
-	}, func() (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return nil, errors.New("synthetic error")
 	})
 }
@@ -104,7 +104,7 @@ func NewAlwaysThrowNoPRFound() *FakeGitHub {
 	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		workingDir, branchName := args[0], args[1]
 		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
-	}, func() (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		panic("should not be invoked")
 	})
 }
@@ -112,7 +112,7 @@ func NewAlwaysThrowNoPRFound() *FakeGitHub {
 func NewAlwaysReturnsFalseFakeGitHub() *FakeGitHub {
 	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return false, nil
-	}, func() (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
@@ -123,7 +123,7 @@ func NewAlwaysFailsOnGetDefaultBranchFakeGitHub() *FakeGitHub {
 			return false, errors.New("synthetic error")
 		}
 		return true, nil
-	}, func() (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
