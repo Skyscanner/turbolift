@@ -136,5 +136,4 @@ const (
 	CreatePullRequest
 	ClosePullRequest
 	GetDefaultBranchName
-	GetPR
 )
