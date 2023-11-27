@@ -24,48 +24,51 @@ import (
 )
 
 type FakeGitHub struct {
-	handler          func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error)
-	returningHandler func(output io.Writer, workingDir string) (interface{}, error)
+	handler          func(command Command, args []string) (bool, error)
+	returningHandler func(workingDir string) (interface{}, error)
 	calls            [][]string
 }
 
-func (f *FakeGitHub) CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
-	f.calls = append(f.calls, []string{workingDir, metadata.Title})
-	return f.handler(output, CreatePullRequest, workingDir, "")
+func (f *FakeGitHub) CreatePullRequest(_ io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
+	args := []string{workingDir, metadata.Title}
+	f.calls = append(f.calls, args)
+	return f.handler(CreatePullRequest, args)
 }
 
-func (f *FakeGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
-	f.calls = append(f.calls, []string{workingDir, fullRepoName})
-	_, err := f.handler(output, ForkAndClone, workingDir, fullRepoName)
+func (f *FakeGitHub) ForkAndClone(_ io.Writer, workingDir string, fullRepoName string) error {
+	args := []string{workingDir, fullRepoName}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(ForkAndClone, args)
 	return err
 }
 
-func (f *FakeGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
-	f.calls = append(f.calls, []string{workingDir, fullRepoName})
-	_, err := f.handler(output, Clone, workingDir, fullRepoName)
+func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) error {
+	args := []string{workingDir, fullRepoName}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(Clone, args)
 	return err
 }
 
-func (f *FakeGitHub) ClosePullRequest(output io.Writer, workingDir string, branchName string) error {
-	// TODO: handle this differently; branchName here is replacing fullRepoName
-	// This is OK for now because fullRepoName is used nowhere in the github mocks
-	f.calls = append(f.calls, []string{workingDir, branchName})
-	_, err := f.handler(output, ClosePullRequest, workingDir, branchName)
+func (f *FakeGitHub) ClosePullRequest(_ io.Writer, workingDir string, branchName string) error {
+	args := []string{workingDir, branchName}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(ClosePullRequest, args)
 	return err
 }
 
-func (f *FakeGitHub) GetPR(output io.Writer, workingDir string, _ string) (*PrStatus, error) {
+func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, _ string) (*PrStatus, error) {
 	f.calls = append(f.calls, []string{workingDir})
-	result, err := f.returningHandler(output, workingDir)
+	result, err := f.returningHandler(workingDir)
 	if result == nil {
 		return nil, err
 	}
 	return result.(*PrStatus), err
 }
 
-func (f *FakeGitHub) GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error) {
-	f.calls = append(f.calls, []string{workingDir, fullRepoName})
-	_, err := f.handler(output, GetDefaultBranchName, workingDir, fullRepoName)
+func (f *FakeGitHub) GetDefaultBranchName(_ io.Writer, workingDir string, fullRepoName string) (string, error) {
+	args := []string{workingDir, fullRepoName}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(GetDefaultBranchName, args)
 	return "main", err
 }
 
@@ -80,7 +83,7 @@ func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
 
-func NewFakeGitHub(h func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error), r func(output io.Writer, workingDir string) (interface{}, error)) *FakeGitHub {
+func NewFakeGitHub(h func(command Command, args []string) (bool, error), r func(workingDir string) (interface{}, error)) *FakeGitHub {
 	return &FakeGitHub{
 		handler:          h,
 		returningHandler: r,
@@ -89,44 +92,45 @@ func NewFakeGitHub(h func(output io.Writer, command Command, workingDir string, 
 }
 
 func NewAlwaysSucceedsFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return true, nil
-	}, func(output io.Writer, workingDir string) (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
 
 func NewAlwaysFailsFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return false, errors.New("synthetic error")
-	}, func(output io.Writer, workingDir string) (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return nil, errors.New("synthetic error")
 	})
 }
 
 func NewAlwaysThrowNoPRFound() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, branchName string) (bool, error) {
+	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
+		workingDir, branchName := args[0], args[1]
 		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
-	}, func(output io.Writer, workingDir string) (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		panic("should not be invoked")
 	})
 }
 
 func NewAlwaysReturnsFalseFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		return false, nil
-	}, func(output io.Writer, workingDir string) (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
 
 func NewAlwaysFailsOnGetDefaultBranchFakeGitHub() *FakeGitHub {
-	return NewFakeGitHub(func(output io.Writer, command Command, workingDir string, fullRepoName string) (bool, error) {
+	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
 		if command == GetDefaultBranchName {
 			return false, errors.New("synthetic error")
 		}
 		return true, nil
-	}, func(output io.Writer, workingDir string) (interface{}, error) {
+	}, func(workingDir string) (interface{}, error) {
 		return PrStatus{}, nil
 	})
 }
