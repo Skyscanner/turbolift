@@ -108,7 +108,7 @@ func runClose(c *cobra.Command, _ []string) {
 	// Prompting for confirmation
 	if !yesFlag {
 		// TODO: add the number of PRs that it will actually close
-		if !p.AskConfirm(fmt.Sprintf("Close all PRs from the %s campaign?", dir.Name)) {
+		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s?", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -164,7 +164,7 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 
 	// Prompting for confirmation
 	if !yesFlag {
-		if !p.AskConfirm(fmt.Sprintf("Update all PR titles and descriptions from the %s campaign?", dir.Name)) {
+		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s?", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -196,5 +196,11 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 			updatePrActivity.EndWithSuccess()
 			doneCount++
 		}
+	}
+
+	if errorCount == 0 {
+		logger.Successf("turbolift update-prs completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
+	} else {
+		logger.Warnf("turbolift update-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 }

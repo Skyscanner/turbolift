@@ -90,6 +90,7 @@ func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branc
 }
 
 func (r *RealGitHub) UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error {
+	// todo: check whether we need to GetPR and specify it in the command like in ClosePullRequest
 	return execInstance.Execute(output, workingDir, "gh", "pr", "edit", "--title", title, "--body", body)
 }
 
