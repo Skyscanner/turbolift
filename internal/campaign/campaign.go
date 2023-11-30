@@ -165,7 +165,7 @@ func readPrDescriptionFile(filename string) (string, string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", "", errors.New("unable to read README.md file")
+		return "", "", fmt.Errorf("unable to read PR description file: %s", filename)
 	}
 
 	return prTitle, strings.Join(prBodyLines, "\n"), nil
