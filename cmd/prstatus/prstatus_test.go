@@ -18,7 +18,6 @@ package prstatus
 import (
 	"bytes"
 	"errors"
-	"io"
 	"os"
 	"testing"
 
@@ -160,7 +159,7 @@ func prepareFakeResponses() {
 			},
 		},
 	}
-	fakeGitHub := github.NewFakeGitHub(nil, func(output io.Writer, workingDir string) (interface{}, error) {
+	fakeGitHub := github.NewFakeGitHub(nil, func(workingDir string) (interface{}, error) {
 		if workingDir == "work/org/repoWithError" {
 			return nil, errors.New("Synthetic error")
 		} else {
