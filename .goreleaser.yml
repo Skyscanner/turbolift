@@ -13,7 +13,8 @@ builds:
     ldflags:
       - -s -w -X github.com/skyscanner/turbolift/cmd.version={{.Version}} -X github.com/skyscanner/turbolift/cmd.commit={{.Commit}} -X github.com/skyscanner/turbolift/cmd.date={{.Date}}
 archives:
-  - name_template: >-
+  - id: foo
+    name_template: >-
       {{- .ProjectName }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
@@ -27,7 +28,7 @@ brews:
     description: Simple tool to help apply changes across many GitHub repositories simultaneously
     homepage: https://github.com/Skyscanner/turbolift
     license: Apache-2.0
-    tap:
+    repository:
       owner: Skyscanner
       name: homebrew-tools
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
