@@ -123,7 +123,18 @@ turbolift foreach --repos repoFile2.txt sed 's/pattern2/replacement2/g'
 This creates a fork and clones all repositories listed in the `repos.txt` file (or the specified alternative repo file) into the `work` directory.
 You may wish to skip the fork and work on the upstream repository branch directly with the flag `--no-fork`.
 
-> NTLD: if one of the repositories in the list requires a fork to create a PR, omit the `--no-fork` flag and let all the repositories be forked. For now it's a all-or-nothing scenario.
+> NTLD: if one of the repositories in the list requires a fork to create a PR,
+> omit the `--no-fork` flag and let all the repositories be forked.
+> For now, it's an all-or-nothing scenario.
+
+> [!NOTE]
+> Repositories are cloned with the git flag `--depth=1`.
+> If you need the full commit history and tags, you can run the following command
+> after running `turbolift clone`:
+> 
+> ```shell
+> turbolift foreach git fetch --unshallow --tags
+> ```
 
 ### Making changes
 
