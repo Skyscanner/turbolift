@@ -16,6 +16,7 @@
 package testsupport
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -68,6 +69,14 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 func CreateAnotherRepoFile(filename string, repos ...string) {
 	delimitedList := strings.Join(repos, "\n")
 	err := ioutil.WriteFile(filename, []byte(delimitedList), os.ModePerm|0o644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func CreateAnotherPrDescriptionFile(filename string, prTitle string, prBody string) {
+	prDescription := fmt.Sprintf("# %s\n%s", prTitle, prBody)
+	err := os.WriteFile(filename, []byte(prDescription), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
