@@ -218,7 +218,39 @@ func TestItShouldAcceptADifferentRepoFileNotExist(t *testing.T) {
 func TestItShouldErrorWhenRepoFileIsEmpty(t *testing.T) {
 	testsupport.PrepareTempCampaign(false)
 
-	options := &CampaignOptions{}
+	options := NewCampaignOptions()
+	options.RepoFilename = ""
+	_, err := OpenCampaign(options)
+	assert.Error(t, err)
+}
+
+func TestItShouldAcceptADifferentPrDescriptionFile(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	testsupport.CreateAnotherPrDescriptionFile("newprdescription.txt", "new PR title", "new PR body")
+	options := NewCampaignOptions()
+	options.PrDescriptionFilename = "newprdescription.txt"
+	campaign, err := OpenCampaign(options)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "new PR title", campaign.PrTitle)
+	assert.Equal(t, "new PR body", campaign.PrBody)
+}
+
+func TestItShouldErrorWhenPrDescriptionFileDoesNotExist(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	options := NewCampaignOptions()
+	options.PrDescriptionFilename = "newprdescription.txt"
+	_, err := OpenCampaign(options)
+	assert.Error(t, err)
+}
+
+func TestItShouldErrorWhenPrDescriptionFileNameIsEmpty(t *testing.T) {
+	testsupport.PrepareTempCampaign(false)
+
+	options := NewCampaignOptions()
+	options.PrDescriptionFilename = ""
 	_, err := OpenCampaign(options)
 	assert.Error(t, err)
 }

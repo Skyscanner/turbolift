@@ -35,9 +35,10 @@ var (
 )
 
 var (
-	isDraft  bool
-	repoFile string
-	sleep    time.Duration
+	isDraft           bool
+	repoFile          string
+	prDescriptionFile string
+	sleep             time.Duration
 )
 
 func NewCreatePRsCmd() *cobra.Command {
@@ -50,6 +51,7 @@ func NewCreatePRsCmd() *cobra.Command {
 	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")
 	cmd.Flags().BoolVar(&isDraft, "draft", false, "Creates the Pull Request as Draft PR")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+	cmd.Flags().StringVar(&prDescriptionFile, "description", "README.md", "A file containing the title and description for the PRs.")
 
 	return cmd
 }
@@ -57,9 +59,10 @@ func NewCreatePRsCmd() *cobra.Command {
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
-	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s, %s)", repoFile, prDescriptionFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
+	options.PrDescriptionFilename = prDescriptionFile
 	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
