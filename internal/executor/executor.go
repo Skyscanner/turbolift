@@ -16,38 +16,38 @@
 package executor
 
 import (
-	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os/exec"
 )
 
 type Executor interface {
 	Execute(output io.Writer, workingDir string, name string, args ...string) error
 	ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error)
+	SetVerbose(bool)
 }
 
 type RealExecutor struct {
+	Verbose bool
 }
 
 func (e *RealExecutor) Execute(output io.Writer, workingDir string, name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
-	tailer(output)(command.StdoutPipe())
-	tailer(output)(command.StderrPipe())
+	command.Stdout = output
+	command.Stderr = output
 
-	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir)
-	if err != nil {
-		return err
+	if e.Verbose {
+		if _, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir); err != nil {
+			return err
+		}
 	}
 
 	if err := command.Start(); err != nil {
 		return err
 	}
 
-	err = command.Wait()
-	if err != nil {
+	if err := command.Wait(); err != nil {
 		return err
 	}
 
@@ -58,9 +58,11 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	command := exec.Command(name, args...)
 	command.Dir = workingDir
 
-	_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args))
-	if err != nil {
-		return "", err
+	if e.Verbose {
+		_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	commandOutput, err := command.Output()
@@ -73,6 +75,10 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	}
 
 	return string(commandOutput), nil
+}
+
+func (e *RealExecutor) SetVerbose(verbose bool) {
+	e.Verbose = verbose
 }
 
 // summarizedArgs transforms a list of command arguments where any long value is replaced by "...". Used to ensure
@@ -90,23 +96,5 @@ func summarizedArgs(args []string) []string {
 }
 
 func NewRealExecutor() *RealExecutor {
-	return &RealExecutor{}
-}
-
-func tailer(output io.Writer) func(io.ReadCloser, error) {
-	return func(pipe io.ReadCloser, err error) {
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		scanner := bufio.NewScanner(pipe)
-		go func() {
-			for scanner.Scan() {
-				_, err := fmt.Fprintf(output, "    %s\n", scanner.Text())
-				if err != nil {
-					return
-				}
-			}
-		}()
-	}
+	return &RealExecutor{Verbose: true}
 }
