@@ -112,8 +112,10 @@ func TestSummarizedArgs(t *testing.T) {
 				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 				"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
 				"ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+				"ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+				"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
 			},
-			Expected: []string{"...", "...", "..."},
+			Expected: []string{"...", "...", "...", "...", "..."},
 		},
 	}
 	for _, testCase := range testCases {

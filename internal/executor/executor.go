@@ -59,8 +59,7 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	command.Dir = workingDir
 
 	if e.Verbose {
-		_, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir)
-		if err != nil {
+		if _, err := fmt.Fprintln(output, "Executing:", name, summarizedArgs(args), "in", workingDir); err != nil {
 			return "", err
 		}
 	}
