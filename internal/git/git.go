@@ -16,10 +16,11 @@
 package git
 
 import (
-	"github.com/skyscanner/turbolift/internal/executor"
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/skyscanner/turbolift/internal/executor"
 )
 
 var execInstance executor.Executor = executor.NewRealExecutor()
@@ -32,8 +33,7 @@ type Git interface {
 	Pull(output io.Writer, workingDir string, remote string, branchName string) error
 }
 
-type RealGit struct {
-}
+type RealGit struct{}
 
 func (r *RealGit) Checkout(output io.Writer, workingDir string, branchName string) error {
 	return execInstance.Execute(output, workingDir, "git", "checkout", "-b", branchName)
@@ -48,13 +48,14 @@ func (r *RealGit) Commit(output io.Writer, workingDir string, message string) er
 }
 
 func (r *RealGit) IsRepoChanged(output io.Writer, workingDir string) (bool, error) {
+	var localExecutor executor.Executor = executor.NewRealExecutor()
+	localExecutor.SetVerbose(false)
 	shellCommand := os.Getenv("SHELL")
 	if shellCommand == "" {
 		shellCommand = "sh"
 	}
 	shellArgs := []string{"-c", "git status --porcelain=v1 | wc -l | tr -d '[:space:]'"}
-	commandOutput, err := execInstance.ExecuteAndCapture(output, workingDir, shellCommand, shellArgs...)
-
+	commandOutput, err := localExecutor.ExecuteAndCapture(output, workingDir, shellCommand, shellArgs...)
 	if err != nil {
 		return false, err
 	}
