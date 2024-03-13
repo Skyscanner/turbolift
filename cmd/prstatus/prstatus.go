@@ -117,8 +117,15 @@ func run(c *cobra.Command, _ []string) {
 		for _, reaction := range prStatus.ReactionGroups {
 			reactions[reaction.Content] += reaction.Users.TotalCount
 		}
+		
+		buildChecksStatus := "SUCCESS"
+		for _, check := range prStatus.StatusCheckRollup {
+			if strings.Contains(check.State, "FAILURE") {
+				buildChecksStatus = "FAILURE"
+			}
+		}
 
-		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, prStatus.Mergeable, prStatus.Url)
+		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, buildChecksStatus, prStatus.Url)
 
 		checkStatusActivity.EndWithSuccess()
 	}
