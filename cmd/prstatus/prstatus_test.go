@@ -64,9 +64,9 @@ func TestItLogsDetailedInformation(t *testing.T) {
 	assert.Regexp(t, "Open\\s+1", out)
 	assert.Regexp(t, "👍\\s+4", out)
 
-	assert.Regexp(t, "org/repo1\\s+OPEN\\s+REVIEW_REQUIRED", out)
-	assert.Regexp(t, "org/repo2\\s+MERGED\\s+APPROVED", out)
-	assert.Regexp(t, "org/repo3\\s+CLOSED", out)
+	assert.Regexp(t, "org/repo1\\s+OPEN\\s+REVIEW_REQUIRED\\s+MERGEABLE", out)
+	assert.Regexp(t, "org/repo2\\s+MERGED\\s+APPROVED\\s+UNKNOWN", out)
+	assert.Regexp(t, "org/repo3\\s+CLOSED\\s+UNKNOWN", out)
 }
 
 func TestItSkipsUnclonedRepos(t *testing.T) {
@@ -119,6 +119,7 @@ func prepareFakeResponses() {
 	dummyData := map[string]*github.PrStatus{
 		"work/org/repo1": {
 			State: "OPEN",
+			Mergeable: "MERGEABLE",
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_UP",
@@ -137,6 +138,7 @@ func prepareFakeResponses() {
 		},
 		"work/org/repo2": {
 			State: "MERGED",
+			Mergeable: "UNKNOWN",
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_UP",
@@ -149,6 +151,7 @@ func prepareFakeResponses() {
 		},
 		"work/org/repo3": {
 			State: "CLOSED",
+			Mergeable: "UNKNOWN",
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_DOWN",

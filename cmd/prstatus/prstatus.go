@@ -88,7 +88,7 @@ func run(c *cobra.Command, _ []string) {
 	statuses := make(map[string]int)
 	reactions := make(map[string]int)
 
-	detailsTable := table.New("Repository", "State", "Reviews", "URL")
+	detailsTable := table.New("Repository", "State", "Reviews", "Build status", "URL")
 	detailsTable.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
 	detailsTable.WithFirstColumnFormatter(color.New(color.FgCyan).SprintfFunc())
 	detailsTable.WithWriter(logger.Writer())
@@ -118,7 +118,7 @@ func run(c *cobra.Command, _ []string) {
 			reactions[reaction.Content] += reaction.Users.TotalCount
 		}
 
-		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, prStatus.Url)
+		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, prStatus.Mergeable, prStatus.Url)
 
 		checkStatusActivity.EndWithSuccess()
 	}
