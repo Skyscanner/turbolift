@@ -17,9 +17,10 @@ package executor
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type FakeExecutor struct {
@@ -39,6 +40,8 @@ func (e *FakeExecutor) ExecuteAndCapture(_ io.Writer, workingDir string, name st
 	e.calls = append(e.calls, allArgs)
 	return e.ReturningHandler(workingDir, name, args...)
 }
+
+func (e *FakeExecutor) SetVerbose(_ bool) {}
 
 func (e *FakeExecutor) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, e.calls)

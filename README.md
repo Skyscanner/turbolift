@@ -108,7 +108,7 @@ $ gh-search --repos-with-matches YOUR_GITHUB_CODE_SEARCH_QUERY > repos.txt
 ### Working on multiple repo files
 
 Occasionally you may need to work on different repo files. For instance the repos can be divided in sub categories and the same change don't apply to them the same way. 
-The default repo file is called `repos.txt` but you can override this with the `--repos` flag.
+The default repo file is called `repos.txt` but you can override this on any command with the `--repos` flag.
 
 ```console
 turbolift foreach --repos repoFile1.txt sed 's/pattern1/replacement1/g'
@@ -120,7 +120,7 @@ turbolift foreach --repos repoFile2.txt sed 's/pattern2/replacement2/g'
 
 ```turbolift clone```
 
-This creates a fork and clones all repositories listed in the `repos.txt` file into the `work` directory.
+This creates a fork and clones all repositories listed in the `repos.txt` file (or the specified alternative repo file) into the `work` directory.
 You may wish to skip the fork and work on the upstream repository branch directly with the flag `--no-fork`.
 
 > NTLD: if one of the repositories in the list requires a fork to create a PR, omit the `--no-fork` flag and let all the repositories be forked. For now it's a all-or-nothing scenario.
@@ -172,12 +172,14 @@ Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause betwee
 > * create PRs in batches, for example by commenting out repositories in `repos.txt`
 > * Use the `--draft` flag to create the PRs as Draft
 
-If you need to mass-close PRs, it is easy to do using `turbolift foreach` and the `gh` GitHub CLI ([docs](https://cli.github.com/manual/gh_pr_close)):
+#### Working with multiple PR description files
 
-For example:
+Occasionally you may want to work with more than one PR title and description. When this is the case, use the flag `--description` to specify an alternative file when creating prs.
+The first line of the file chosen will be used as the PR title and the rest as the description body.
 
-```
-turbolift foreach gh pr close --delete-branch YOUR_USERNAME:CAMPAIGN_NAME
+```console
+turbolift create-prs --repos repoFile1.txt --description prDescriptionFile1.md
+turbolift create-prs --repos repoFile2.txt --description prDescriptionFile2.md
 ```
 
 ### After creating PRs
