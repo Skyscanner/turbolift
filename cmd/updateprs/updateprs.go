@@ -39,6 +39,7 @@ var (
 	updateDescriptionFlag bool
 	yesFlag               bool
 	repoFile              string
+	prDescriptionFile     string
 )
 
 func NewUpdatePRsCmd() *cobra.Command {
@@ -52,6 +53,7 @@ func NewUpdatePRsCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&updateDescriptionFlag, "amend-description", false, "Update PR titles and descriptions")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+	cmd.Flags().StringVar(&prDescriptionFile, "description", "README.md", "A file containing the title and description for the PRs.")
 
 	return cmd
 }
@@ -70,7 +72,6 @@ func onlyOne(args ...bool) bool {
 }
 
 func validateFlags(closeFlag bool, updateDescriptionFlag bool) error {
-	// only option at the moment is `close`
 	if !onlyOne(closeFlag, updateDescriptionFlag) {
 		return errors.New("update-prs needs one and only one action flag")
 	}
@@ -155,6 +156,7 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
+	options.PrDescriptionFilename = prDescriptionFile
 	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)

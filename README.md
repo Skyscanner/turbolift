@@ -217,13 +217,25 @@ redacted/redacted                                         OPEN    REVIEW_REQUIRE
 ...
 ```
 
-#### Closing all PRs
+#### Updating PRs
 
-To close all PRs currently opened under the campaign, there is a `--close` flag:
+Use the `update-prs` command to update PRs after creating them. Current options for updating PRs are:
+
+- Update PR titles and descriptions with `--amend-description`:
+
+```turbolift update-prs --amend-description [--yes]```
+
+As with creating PRs, use the flag `--description` to specify an alternative file to README.md.
+
+```turblift update-prs --amend-description --description prDescriptionFile1.md```
+
+- Close PRs with the `--close` flag:
 
 ```turbolift update-prs --close [--yes]```
 
-If the flag `--yes` is not present, a confirmation prompt will be presented to the user.
+If the flag `--yes` is not passed with an `update-prs` command, a confirmation prompt will be presented to the user.
+
+As always, use the `--repos` flag to specify an alternative repo file to repos.txt.
 
 ## Status: Preview
 
