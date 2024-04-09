@@ -225,7 +225,9 @@ Use the `update-prs` command to update PRs after creating them. Current options 
 
 ```turbolift update-prs --amend-description [--yes]```
 
-As with creating PRs, use the flag `--description` to specify an alternative file to README.md.
+By default, turbolift will read a revised PR Title and Description from `README.md`. The title is taken from the first heading line, and the description is the remainder of the file contents.
+
+As with creating PRs, if you need Turbolift to read these values from an alternative file, use the flag `--description PATH_TO_FILE`.
 
 ```turblift update-prs --amend-description --description prDescriptionFile1.md```
 
