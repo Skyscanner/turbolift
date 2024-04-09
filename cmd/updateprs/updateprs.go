@@ -35,9 +35,11 @@ var (
 )
 
 var (
-	closeFlag bool
-	yesFlag   bool
-	repoFile  string
+	closeFlag             bool
+	updateDescriptionFlag bool
+	yesFlag               bool
+	repoFile              string
+	prDescriptionFile     string
 )
 
 func NewUpdatePRsCmd() *cobra.Command {
@@ -48,8 +50,10 @@ func NewUpdatePRsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&closeFlag, "close", false, "Close all generated PRs")
+	cmd.Flags().BoolVar(&updateDescriptionFlag, "amend-description", false, "Update PR titles and descriptions")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+	cmd.Flags().StringVar(&prDescriptionFile, "description", "README.md", "A file containing the title and description for the PRs.")
 
 	return cmd
 }
@@ -67,9 +71,8 @@ func onlyOne(args ...bool) bool {
 	return b[true] == 1
 }
 
-func validateFlags(closeFlag bool) error {
-	// only option at the moment is `close`
-	if !onlyOne(closeFlag) {
+func validateFlags(closeFlag bool, updateDescriptionFlag bool) error {
+	if !onlyOne(closeFlag, updateDescriptionFlag) {
 		return errors.New("update-prs needs one and only one action flag")
 	}
 	return nil
@@ -78,13 +81,15 @@ func validateFlags(closeFlag bool) error {
 // we keep the args as one of the subfunctions might need it one day.
 func run(c *cobra.Command, args []string) {
 	logger := logging.NewLogger(c)
-	if err := validateFlags(closeFlag); err != nil {
+	if err := validateFlags(closeFlag, updateDescriptionFlag); err != nil {
 		logger.Errorf("Error while parsing the flags: %v", err)
 		return
 	}
 
 	if closeFlag {
 		runClose(c, args)
+	} else if updateDescriptionFlag {
+		runUpdatePrDescription(c, args)
 	}
 }
 
@@ -104,7 +109,7 @@ func runClose(c *cobra.Command, _ []string) {
 	// Prompting for confirmation
 	if !yesFlag {
 		// TODO: add the number of PRs that it will actually close
-		if !p.AskConfirm(fmt.Sprintf("Close all PRs from the %s campaign?", dir.Name)) {
+		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s?", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -134,6 +139,63 @@ func runClose(c *cobra.Command, _ []string) {
 			}
 		} else {
 			closeActivity.EndWithSuccess()
+			doneCount++
+		}
+	}
+
+	if errorCount == 0 {
+		logger.Successf("turbolift update-prs completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
+	} else {
+		logger.Warnf("turbolift update-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
+	}
+}
+
+func runUpdatePrDescription(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	options.PrDescriptionFilename = prDescriptionFile
+	dir, err := campaign.OpenCampaign(options)
+	if err != nil {
+		readCampaignActivity.EndWithFailure(err)
+		return
+	}
+	readCampaignActivity.EndWithSuccess()
+
+	// Prompting for confirmation
+	if !yesFlag {
+		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s?", dir.Name, repoFile)) {
+			return
+		}
+	}
+
+	doneCount := 0
+	skippedCount := 0
+	errorCount := 0
+
+	for _, repo := range dir.Repos {
+		updatePrActivity := logger.StartActivity("Updating PR description in %s", repo.FullRepoName)
+
+		// skip if the working copy does not exist
+		if _, err = os.Stat(repo.FullRepoPath()); os.IsNotExist(err) {
+			updatePrActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repo.FullRepoPath())
+			skippedCount++
+			continue
+		}
+
+		err = gh.UpdatePRDescription(updatePrActivity.Writer(), repo.FullRepoPath(), dir.PrTitle, dir.PrBody)
+		if err != nil {
+			if _, ok := err.(*github.NoPRFoundError); ok {
+				updatePrActivity.EndWithWarning(err)
+				skippedCount++
+			} else {
+				updatePrActivity.EndWithFailure(err)
+				errorCount++
+			}
+		} else {
+			updatePrActivity.EndWithSuccess()
 			doneCount++
 		}
 	}

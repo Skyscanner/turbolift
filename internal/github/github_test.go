@@ -151,6 +151,30 @@ func TestItReturnsNilErrorOnSuccessfulGetDefaultBranchName(t *testing.T) {
 	})
 }
 
+func TestItReturnsErrorOnFailedUpdatePrDescription(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runUpdatePrDescriptionAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "pr", "edit", "--title", "new title", "--body", "new body"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulUpdatePrDescription(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, err := runUpdatePrDescriptionAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "pr", "edit", "--title", "new title", "--body", "new body"},
+	})
+}
+
 func runForkAndCloneAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1")
@@ -192,4 +216,10 @@ func runGetDefaultBranchNameAndCaptureOutput() (string, string, error) {
 	sb := strings.Builder{}
 	defaultBranchName, err := NewRealGitHub().GetDefaultBranchName(&sb, "work/org1/repo1", "org1/repo1")
 	return defaultBranchName, sb.String(), err
+}
+
+func runUpdatePrDescriptionAndCaptureOutput() (string, error) {
+	sb := strings.Builder{}
+	err := NewRealGitHub().UpdatePRDescription(&sb, "work/org/repo1", "new title", "new body")
+	return sb.String(), err
 }

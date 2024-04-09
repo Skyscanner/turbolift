@@ -227,7 +227,7 @@ func TestItShouldErrorWhenRepoFileIsEmpty(t *testing.T) {
 func TestItShouldAcceptADifferentPrDescriptionFile(t *testing.T) {
 	testsupport.PrepareTempCampaign(false)
 
-	testsupport.CreateAnotherPrDescriptionFile("newprdescription.txt", "new PR title", "new PR body")
+	testsupport.CreateOrUpdatePrDescriptionFile("newprdescription.txt", "new PR title", "new PR body")
 	options := NewCampaignOptions()
 	options.PrDescriptionFilename = "newprdescription.txt"
 	campaign, err := OpenCampaign(options)

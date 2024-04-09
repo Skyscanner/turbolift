@@ -74,7 +74,7 @@ func CreateAnotherRepoFile(filename string, repos ...string) {
 	}
 }
 
-func CreateAnotherPrDescriptionFile(filename string, prTitle string, prBody string) {
+func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody string) {
 	prDescription := fmt.Sprintf("# %s\n%s", prTitle, prBody)
 	err := os.WriteFile(filename, []byte(prDescription), os.ModePerm|0o644)
 	if err != nil {
