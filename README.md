@@ -221,7 +221,7 @@ redacted/redacted                                         OPEN    REVIEW_REQUIRE
 
 Use the `update-prs` command to update PRs after creating them. Current options for updating PRs are:
 
-- Update PR titles and descriptions with `--amend-description`:
+##### Update PR titles and descriptions with `--amend-description`
 
 ```turbolift update-prs --amend-description [--yes]```
 
@@ -229,7 +229,7 @@ As with creating PRs, use the flag `--description` to specify an alternative fil
 
 ```turblift update-prs --amend-description --description prDescriptionFile1.md```
 
-- Close PRs with the `--close` flag:
+##### Close PRs with the `--close` flag
 
 ```turbolift update-prs --close [--yes]```
 
