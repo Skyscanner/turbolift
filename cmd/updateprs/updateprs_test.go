@@ -112,6 +112,7 @@ func TestItUpdatesDescriptionsSuccessfully(t *testing.T) {
 	gh = fakeGitHub
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.CreateOrUpdatePrDescriptionFile("README.md", "Updated PR title", "Updated PR body")
 
 	out, err := runUpdateDescriptionCommandAuto("README.md")
 	assert.NoError(t, err)
@@ -121,8 +122,8 @@ func TestItUpdatesDescriptionsSuccessfully(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "PR title", "PR body"},
-		{"work/org/repo2", "PR title", "PR body"},
+		{"work/org/repo1", "Updated PR title", "Updated PR body"},
+		{"work/org/repo2", "Updated PR title", "Updated PR body"},
 	})
 }
 
@@ -131,7 +132,7 @@ func TestItUpdatesDescriptionsFromAlternativeFile(t *testing.T) {
 	gh = fakeGitHub
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.CreateAnotherPrDescriptionFile("custom.md", "custom PR title", "custom PR body")
+	testsupport.CreateOrUpdatePrDescriptionFile("custom.md", "custom PR title", "custom PR body")
 
 	out, err := runUpdateDescriptionCommandAuto("custom.md")
 	assert.NoError(t, err)
