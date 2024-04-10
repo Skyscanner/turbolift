@@ -83,8 +83,18 @@ func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody str
 }
 
 func UseDefaultPrDescription(dirName string) {
-	originalPrTitle := fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName)
-	originalPrBody := `TODO: This file will serve as both a README and the description of the PR. Describe the pull request using markdown in this file. Make it clear why the change is being made, and make suggestions for anything that the reviewer may need to do.
+	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName), originalPrBody)
+}
+
+func UseDefaultPrTitleOnly(dirName string) {
+	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("Title of Pull Request (%s)", dirName), "custom PR body")
+}
+
+func UseDefaultPrBodyOnly() {
+	CreateOrUpdatePrDescriptionFile("README.md", "custom PR title", originalPrBody)
+}
+
+var originalPrBody = `TODO: This file will serve as both a README and the description of the PR. Describe the pull request using markdown in this file. Make it clear why the change is being made, and make suggestions for anything that the reviewer may need to do.
 
 By approving this PR, you are confirming that you have adequately and effectively reviewed this change.
 
@@ -94,5 +104,3 @@ TODO: Describe any shell commands, scripts, manual operations, etc, that were us
 
 <!-- Please keep the footer below, to support turbolift usage tracking -->
 <sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>`
-	CreateOrUpdatePrDescriptionFile("README.md", originalPrTitle, originalPrBody)
-}

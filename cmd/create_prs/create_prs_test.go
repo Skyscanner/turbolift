@@ -46,6 +46,48 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
 }
 
+func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UseDefaultPrBodyOnly()
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfPrBodyIsUpdatedButNotPrTitle(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UseDefaultPrTitleOnly(dir)
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+}
+
 func TestItWarnsIfDescriptionFileIsEmpty(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
