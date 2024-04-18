@@ -72,6 +72,13 @@ func (f *FakeGitHub) GetDefaultBranchName(_ io.Writer, workingDir string, fullRe
 	return "main", err
 }
 
+func (f *FakeGitHub) UpdatePRDescription(_ io.Writer, workingDir string, title string, body string) error {
+	args := []string{workingDir, title, body}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(UpdatePRDescription, args)
+	return err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
@@ -136,4 +143,5 @@ const (
 	CreatePullRequest
 	ClosePullRequest
 	GetDefaultBranchName
+	UpdatePRDescription
 )
