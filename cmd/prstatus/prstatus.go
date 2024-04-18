@@ -88,7 +88,7 @@ func run(c *cobra.Command, _ []string) {
 	statuses := make(map[string]int)
 	reactions := make(map[string]int)
 
-	detailsTable := table.New("Repository", "State", "Reviews", "Build status", "URL")
+	detailsTable := table.New("Repository", "State", "Reviews", "Checks status", "URL")
 	detailsTable.WithHeaderFormatter(color.New(color.Underline).SprintfFunc())
 	detailsTable.WithFirstColumnFormatter(color.New(color.FgCyan).SprintfFunc())
 	detailsTable.WithWriter(logger.Writer())
@@ -118,14 +118,14 @@ func run(c *cobra.Command, _ []string) {
 			reactions[reaction.Content] += reaction.Users.TotalCount
 		}
 		
-		buildChecksStatus := "SUCCESS"
+		checksStatus := "SUCCESS"
 		for _, check := range prStatus.StatusCheckRollup {
 			if strings.Contains(check.State, "FAILURE") {
-				buildChecksStatus = "FAILURE"
+				checksStatus = "FAILURE"
 			}
 		}
 
-		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, buildChecksStatus, prStatus.Url)
+		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, checksStatus, prStatus.Url)
 
 		checkStatusActivity.EndWithSuccess()
 	}
