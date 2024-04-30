@@ -16,9 +16,9 @@
 package foreach
 
 import (
-	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -101,7 +101,7 @@ func run(c *cobra.Command, args []string) {
 
 	for i := range args {
 		if strings.Contains(args[i], " ") {
-			args[i] = fmt.Sprintf(`"%s"`, args[i])
+			args[i] = strconv.Quote(args[i])
 		}
 	}
 	command := strings.Join(args, " ")
