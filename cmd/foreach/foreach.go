@@ -18,6 +18,7 @@ package foreach
 import (
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -98,10 +99,16 @@ func run(c *cobra.Command, args []string) {
 	}
 	readCampaignActivity.EndWithSuccess()
 
+	for i := range args {
+		if strings.Contains(args[i], " ") {
+			args[i] = strconv.Quote(args[i])
+		}
+	}
+	command := strings.Join(args, " ")
+
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
-		command := strings.Join(args, " ")
 
 		execActivity := logger.StartActivity("Executing %s in %s", command, repoDirPath)
 
