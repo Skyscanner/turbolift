@@ -151,6 +151,23 @@ func TestItRunsCommandInShellAgainstWorkingCopies(t *testing.T) {
 	})
 }
 
+func TestItRunsCommandQuotedInShellAgainstWorkingCopied(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommand("some", "command", "with spaces")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", userShell(), "-c", "some command \"with spaces\""},
+		{"work/org/repo2", userShell(), "-c", "some command \"with spaces\""},
+	})
+}
+
 func TestItSkipsMissingWorkingCopies(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
