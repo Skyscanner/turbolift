@@ -22,6 +22,7 @@ import (
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 )
 
@@ -46,6 +47,7 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
 }
 
+// todo: why isn't this failing? it fails in manual testing
 func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
@@ -76,7 +78,8 @@ func TestItWarnsIfPrBodyIsUpdatedButNotPrTitle(t *testing.T) {
 	p = fakePrompt
 
 	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrTitleOnly(dir)
+	// dir is in the format /var/.../.../turbolift-test-XXXXXX
+	testsupport.UseDefaultPrTitleOnly(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)

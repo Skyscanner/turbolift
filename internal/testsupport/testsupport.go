@@ -87,7 +87,7 @@ func UseDefaultPrDescription(dirName string) {
 }
 
 func UseDefaultPrTitleOnly(dirName string) {
-	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("Title of Pull Request (%s)", dirName), "custom PR body")
+	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName), "custom PR body")
 }
 
 func UseDefaultPrBodyOnly() {
