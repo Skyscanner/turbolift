@@ -111,8 +111,8 @@ Occasionally you may need to work on different repo files. For instance the repo
 The default repo file is called `repos.txt` but you can override this on any command with the `--repos` flag.
 
 ```console
-turbolift foreach --repos repoFile1.txt sed 's/pattern1/replacement1/g'
-turbolift foreach --repos repoFile2.txt sed 's/pattern2/replacement2/g'
+turbolift foreach --repos repoFile1.txt -- sed 's/pattern1/replacement1/g'
+turbolift foreach --repos repoFile2.txt -- sed 's/pattern2/replacement2/g'
 ```
 
 
@@ -132,16 +132,17 @@ You can do this manually using an editor, using `sed` and similar commands, or u
 
 **You are free to use any tools that help get the job done.**
 
-If you wish to, you can run the same command against every repo using `turbolift foreach ...` (where `...` is the shell command you want to run).
+If you wish to, you can run the same command against every repo using `turbolift foreach -- ...` (where `...` is the command you want to run).
 
 For example, you might choose to:
 
-* `turbolift foreach rm somefile` - to delete a particular file
-* `turbolift foreach sed -i '' 's/foo/bar/g' somefile` - to find/replace in a common file
-* `turbolift foreach make test` - for example, to run tests (using any appropriate command to invoke the tests)
-* `turbolift foreach git add somefile` - to stage a file that you have created
+* `turbolift foreach -- rm somefile` - to delete a particular file
+* `turbolift foreach -- sed -i '' 's/foo/bar/g' somefile` - to find/replace in a common file
+* `turbolift foreach -- make test` - for example, to run tests (using any appropriate command to invoke the tests)
+* `turbolift foreach -- git add somefile` - to stage a file that you have created
+* `turbolift foreach -- sh -c 'grep needle haystack.txt > output.txt'` - use a shell to run a command using redirection
 
-At any time, if you need to update your working copy branches from the upstream, you can run `turbolift foreach git pull upstream master`.
+At any time, if you need to update your working copy branches from the upstream, you can run `turbolift foreach -- git pull upstream master`.
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
 
