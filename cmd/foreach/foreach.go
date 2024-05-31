@@ -26,6 +26,8 @@ import (
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
+
+	"github.com/alessio/shellescape"
 )
 
 var exec executor.Executor = executor.NewRealExecutor()
@@ -33,6 +35,14 @@ var exec executor.Executor = executor.NewRealExecutor()
 var (
 	repoFile string = "repos.txt"
 )
+
+func formatArguments(arguments []string) string {
+	quotedArgs := make([]string, len(arguments))
+	for i, arg := range arguments {
+		quotedArgs[i] = shellescape.Quote(arg)
+	}
+	return strings.Join(quotedArgs, " ")
+}
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -64,13 +74,15 @@ func run(c *cobra.Command, args []string) {
 	}
 	readCampaignActivity.EndWithSuccess()
 
-	command := strings.Join(args, " ")
+	// We shell escape these to avoid ambiguity in our logs, and give
+	// the user something they could copy and paste.
+	prettyArgs := formatArguments(args)
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
-		execActivity := logger.StartActivity("Executing %s in %s", command, repoDirPath)
+		execActivity := logger.StartActivity("Executing %s in %s", prettyArgs, repoDirPath)
 
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
