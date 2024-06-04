@@ -47,7 +47,7 @@ func formatArguments(arguments []string) string {
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "foreach [--repos REPOFILE] -- COMMAND [ARGUMENT...]",
+		Use:   "foreach [flags] -- COMMAND [ARGUMENT...]",
 		Short: "Run COMMAND against each working copy",
 		Long:
 `Run COMMAND against each working copy. Make sure to include a
