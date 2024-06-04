@@ -50,9 +50,9 @@ func NewForeachCmd() *cobra.Command {
 		Use:   "foreach [--repos REPOFILE] -- COMMAND [ARGUMENT...]",
 		Short: "Run COMMAND against each working copy",
 		Long: "Run COMMAND against each working copy. " +
-			"Make sure to include -- otherwise options will be " +
-			"interpreted as options for turbolift instead of the " +
-			"command.",
+			"Make sure to include a double hyphen -- with space on " +
+			"both sides before COMMAND, as this marks that no " +
+			"further options should be interpreted by turbolift.",
 		RunE: runE,
 		Args: cobra.MinimumNArgs(1),
 	}
