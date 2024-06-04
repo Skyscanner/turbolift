@@ -79,6 +79,9 @@ func TestItRunsCommandWithSpacesAgainstWorkingCopied(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped")
+	assert.Contains(t, out,
+		"Executing { some command 'with spaces' } in work/org/repo1",
+		"It should format the executed command accurately")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
 		{"work/org/repo1", "some", "command", "with spaces"},
@@ -137,6 +140,26 @@ func TestHelpFlagReturnsUsage(t *testing.T) {
 
 	// nothing should have been called
 	fakeExecutor.AssertCalledWith(t, [][]string{})
+}
+
+func TestFormatArguments(t *testing.T) {
+	// Don't go too heavy here. We are not seeking to exhaustively test
+	// shellescape. We just want to make sure formatArguments works.
+	var tests = []struct {
+		input    []string
+		expected string
+		title    string
+	}{
+		{[]string{""}, `''`, "Empty arg should be quoted"},
+		{[]string{"one two"}, `'one two'`, "Arg with space should be quoted"},
+		{[]string{"one"}, `one`, "Plain arg should not need quotes"},
+		{[]string{}, ``, "Empty arg list should give empty string"},
+		{[]string{"x", "", "y y"}, `x '' 'y y'`, "Args should be separated with spaces"},
+	}
+	for _, test := range tests {
+		actual := formatArguments(test.input)
+		assert.Equal(t, actual, test.expected, test.title)
+	}
 }
 
 func runCommand(args ...string) (string, error) {

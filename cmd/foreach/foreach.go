@@ -87,7 +87,7 @@ func runE(c *cobra.Command, args []string) error {
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
-		execActivity := logger.StartActivity("Executing %s in %s", prettyArgs, repoDirPath)
+		execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
 
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
