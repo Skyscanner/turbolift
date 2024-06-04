@@ -16,6 +16,7 @@
 package foreach
 
 import (
+	"errors"
 	"os"
 	"path"
 	"strings"
@@ -52,7 +53,7 @@ func NewForeachCmd() *cobra.Command {
 			"Make sure to include -- otherwise options will be " +
 			"interpreted as options for turbolift instead of the " +
 			"command.",
-		Run: run,
+		RunE: runE,
 		Args: cobra.MinimumNArgs(1),
 	}
 
@@ -61,8 +62,12 @@ func NewForeachCmd() *cobra.Command {
 	return cmd
 }
 
-func run(c *cobra.Command, args []string) {
+func runE(c *cobra.Command, args []string) error {
 	logger := logging.NewLogger(c)
+
+	if c.ArgsLenAtDash() != 0 {
+		return errors.New("Use -- to separate command")
+	}
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
@@ -70,7 +75,7 @@ func run(c *cobra.Command, args []string) {
 	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
-		return
+		return nil
 	}
 	readCampaignActivity.EndWithSuccess()
 
@@ -108,5 +113,5 @@ func run(c *cobra.Command, args []string) {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 
-	return
+	return nil
 }

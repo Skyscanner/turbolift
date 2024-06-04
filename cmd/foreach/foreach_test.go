@@ -39,13 +39,26 @@ func TestItRejectsEmptyArgs(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
-func TestItRunsCommandWithoutShellAgainstWorkingCopies(t *testing.T) {
+func TestItRejectsCommandWithoutDashes(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some", "command")
+	assert.Error(t, err, "Expected an error to be returned")
+	assert.Contains(t, out, "Usage")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{})
+}
+
+func TestItRunsCommandWithoutShellAgainstWorkingCopies(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped")
@@ -62,7 +75,7 @@ func TestItRunsCommandWithSpacesAgainstWorkingCopied(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("some", "command", "with spaces")
+	out, err := runCommand("--", "some", "command", "with spaces")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped")
@@ -80,7 +93,7 @@ func TestItSkipsMissingWorkingCopies(t *testing.T) {
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 	_ = os.Remove("work/org/repo2")
 
-	out, err := runCommand("some", "command")
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "1 OK, 1 skipped")
@@ -96,7 +109,7 @@ func TestItContinuesOnAndRecordsFailures(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("some", "command")
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed with errors")
 	assert.Contains(t, out, "0 OK, 0 skipped, 2 errored")
@@ -113,7 +126,7 @@ func TestHelpFlagReturnsUsage(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("--help", "command1")
+	out, err := runCommand("--help", "--", "command1")
 	t.Log(out)
 	assert.NoError(t, err)
 	// should return usage
