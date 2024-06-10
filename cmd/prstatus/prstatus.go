@@ -117,12 +117,22 @@ func run(c *cobra.Command, _ []string) {
 		for _, reaction := range prStatus.ReactionGroups {
 			reactions[reaction.Content] += reaction.Users.TotalCount
 		}
-		
-		checksStatus := "SUCCESS"
+
+		failedCheck := false
+		pendingCheck := false
 		for _, check := range prStatus.StatusCheckRollup {
 			if strings.Contains(check.State, "FAILURE") {
-				checksStatus = "FAILURE"
+				failedCheck = true
+			} else if strings.Contains(check.State, "PENDING") {
+				pendingCheck = true
 			}
+		}
+
+		checksStatus := "SUCCESS"
+		if failedCheck {
+			checksStatus = "FAILURE"
+		} else if pendingCheck {
+			checksStatus = "PENDING"
 		}
 
 		detailsTable.AddRow(repo.FullRepoName, prStatus.State, prStatus.ReviewDecision, checksStatus, prStatus.Url)
