@@ -56,17 +56,20 @@ func TestItLogsSummaryInformation(t *testing.T) {
 func TestItLogsDetailedInformation(t *testing.T) {
 	prepareFakeResponses()
 
-	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3", "org/repo4", "org/repo5", "org/repo6")
 
 	out, err := runCommand(true)
 	assert.NoError(t, err)
 	// Should still show summary info
-	assert.Regexp(t, "Open\\s+1", out)
-	assert.Regexp(t, "👍\\s+4", out)
+	assert.Regexp(t, "Open\\s+4", out)
+	assert.Regexp(t, "👍\\s+13", out)
 
-	assert.Regexp(t, "org/repo1\\s+OPEN\\s+REVIEW_REQUIRED", out)
-	assert.Regexp(t, "org/repo2\\s+MERGED\\s+APPROVED", out)
-	assert.Regexp(t, "org/repo3\\s+CLOSED", out)
+	assert.Regexp(t, "org/repo1\\s+OPEN\\s+REVIEW_REQUIRED\\s+FAILURE", out)
+	assert.Regexp(t, "org/repo2\\s+MERGED\\s+APPROVED\\s+SUCCESS", out)
+	assert.Regexp(t, "org/repo3\\s+CLOSED\\s+FAILURE", out)
+	assert.Regexp(t, "org/repo4\\s+OPEN\\s+REVIEW_REQUIRED\\s+PENDING", out)
+	assert.Regexp(t, "org/repo5\\s+OPEN\\s+REVIEW_REQUIRED\\s+FAILURE", out)
+	assert.Regexp(t, "org/repo6\\s+OPEN\\s+REVIEW_REQUIRED\\s+PENDING", out)
 }
 
 func TestItSkipsUnclonedRepos(t *testing.T) {
@@ -119,6 +122,14 @@ func prepareFakeResponses() {
 	dummyData := map[string]*github.PrStatus{
 		"work/org/repo1": {
 			State: "OPEN",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "FAILURE",
+				},
+				{
+					State: "SUCCESS",
+				},
+			},
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_UP",
@@ -137,6 +148,14 @@ func prepareFakeResponses() {
 		},
 		"work/org/repo2": {
 			State: "MERGED",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "SUCCESS",
+				},
+				{
+					State: "SUCCESS",
+				},
+			},
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_UP",
@@ -148,7 +167,13 @@ func prepareFakeResponses() {
 			ReviewDecision: "APPROVED",
 		},
 		"work/org/repo3": {
-			State: "CLOSED",
+			State:     "CLOSED",
+			Mergeable: "UNKNOWN",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "FAILURE",
+				},
+			},
 			ReactionGroups: []github.ReactionGroup{
 				{
 					Content: "THUMBS_DOWN",
@@ -157,6 +182,66 @@ func prepareFakeResponses() {
 					},
 				},
 			},
+		},
+		"work/org/repo4": {
+			State: "OPEN",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "SUCCESS",
+				},
+				{
+					State: "PENDING",
+				},
+			},
+			ReactionGroups: []github.ReactionGroup{
+				{
+					Content: "THUMBS_UP",
+					Users: github.ReactionGroupUsers{
+						TotalCount: 3,
+					},
+				},
+			},
+			ReviewDecision: "REVIEW_REQUIRED",
+		},
+		"work/org/repo5": {
+			State: "OPEN",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "FAILURE",
+				},
+				{
+					State: "PENDING",
+				},
+			},
+			ReactionGroups: []github.ReactionGroup{
+				{
+					Content: "THUMBS_UP",
+					Users: github.ReactionGroupUsers{
+						TotalCount: 3,
+					},
+				},
+			},
+			ReviewDecision: "REVIEW_REQUIRED",
+		},
+		"work/org/repo6": {
+			State: "OPEN",
+			StatusCheckRollup: []github.StatusCheckRollup{
+				{
+					State: "PENDING",
+				},
+				{
+					State: "PENDING",
+				},
+			},
+			ReactionGroups: []github.ReactionGroup{
+				{
+					Content: "THUMBS_UP",
+					Users: github.ReactionGroupUsers{
+						TotalCount: 3,
+					},
+				},
+			},
+			ReviewDecision: "REVIEW_REQUIRED",
 		},
 	}
 	fakeGitHub := github.NewFakeGitHub(nil, func(workingDir string) (interface{}, error) {

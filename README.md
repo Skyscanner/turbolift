@@ -204,16 +204,16 @@ Viewing a detailed list of status per repo:
 ```
 $ turbolift pr-status --list
 ...
-Repository                                                State   Reviews            URL
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/262
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/515
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/342
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/407
-redacted/redacted                                         MERGED  REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/220
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/105
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/532
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/268
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/438
+Repository                                                State   Reviews           Build status    URL
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/262
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/515
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/342
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/407
+redacted/redacted                                         MERGED  REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/220
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   FAILURE         https://github.redacted/redacted/redacted/pull/105
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/532
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/268
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   FAILURE         https://github.redacted/redacted/redacted/pull/438
 ...
 ```
 
