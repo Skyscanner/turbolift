@@ -142,6 +142,16 @@ For example, you might choose to:
 * `turbolift foreach -- git add somefile` - to stage a file that you have created
 * `turbolift foreach -- sh -c 'grep needle haystack.txt > output.txt'` - use a shell to run a command using redirection
 
+Remember that when the command runs the working directory will be the
+repository root. If you want to refer to files from elsewhere you need
+to provide an absolute path. You may find the `pwd` command helpful here.
+For example, to run a shell script from the current directory against
+each repository:
+
+```
+turbolift foreach -- sh "$(pwd)/script.sh"
+```
+
 At any time, if you need to update your working copy branches from the upstream, you can run `turbolift foreach -- git pull upstream master`.
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
