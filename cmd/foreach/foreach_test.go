@@ -26,101 +26,6 @@ import (
 	"github.com/skyscanner/turbolift/internal/testsupport"
 )
 
-func TestParseForEachArgs(t *testing.T) {
-	testCases := []struct {
-		Name                 string
-		Args                 []string
-		ExpectedCommand      []string
-		ExpectedRepoFileName string
-		ExpectedHelpFlag     bool
-	}{
-		{
-			Name:                 "simple command",
-			Args:                 []string{"ls", "-l"},
-			ExpectedCommand:      []string{"ls", "-l"},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "advanced command",
-			Args:                 []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
-			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "simple command with repo flag",
-			Args:                 []string{"--repos", "test.txt", "ls", "-l"},
-			ExpectedCommand:      []string{"ls", "-l"},
-			ExpectedRepoFileName: "test.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "advanced command with repos flag",
-			Args:                 []string{"--repos", "test2.txt", "sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
-			ExpectedCommand:      []string{"sed", "-e", "'s/foo/bar/'", "-e", "'s/bar/baz/'"},
-			ExpectedRepoFileName: "test2.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "repos flag should only be caught when at the beginning",
-			Args:                 []string{"ls", "-l", "--repos", "random.txt"},
-			ExpectedCommand:      []string{"ls", "-l", "--repos", "random.txt"},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "random flag is not caught",
-			Args:                 []string{"--random", "arg", "ls", "-l"},
-			ExpectedCommand:      []string{"--random", "arg", "ls", "-l"},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     false,
-		},
-		{
-			Name:                 "Help flag is triggered",
-			Args:                 []string{"--help"},
-			ExpectedCommand:      []string{},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     true,
-		},
-		{
-			Name:                 "Help flag is triggered after the repo one",
-			Args:                 []string{"--repos", "example.txt", "--help", "thecommand"},
-			ExpectedCommand:      []string{"thecommand"},
-			ExpectedRepoFileName: "example.txt",
-			ExpectedHelpFlag:     true,
-		},
-		{
-			Name:                 "Help flag is triggered before the repo one",
-			Args:                 []string{"--help", "--repos", "example.txt", "newcommand", "anotherarg"},
-			ExpectedCommand:      []string{"newcommand", "anotherarg"},
-			ExpectedRepoFileName: "example.txt",
-			ExpectedHelpFlag:     true,
-		},
-		{
-			Name:                 "Help flag is not triggered from a subsequent command",
-			Args:                 []string{"command", "--help"},
-			ExpectedCommand:      []string{"command", "--help"},
-			ExpectedRepoFileName: "repos.txt",
-			ExpectedHelpFlag:     false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.Name, func(t *testing.T) {
-			actual := parseForeachArgs(tc.Args)
-			t.Log(actual)
-			assert.EqualValues(t, tc.ExpectedCommand, actual)
-			assert.Equal(t, repoFile, tc.ExpectedRepoFileName)
-			assert.Equal(t, helpFlag, tc.ExpectedHelpFlag)
-
-			// Cleanup to default repo file name
-			repoFile = "repos.txt"
-			helpFlag = false
-		})
-	}
-}
-
 func TestItRejectsEmptyArgs(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
@@ -128,43 +33,59 @@ func TestItRejectsEmptyArgs(t *testing.T) {
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand([]string{}...)
-	assert.Errorf(t, err, "requires at least 1 arg(s), only received 0")
+	assert.Error(t, err, "Expected an error to be returned")
 	assert.Contains(t, out, "Usage")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
-func TestItRunsCommandInShellAgainstWorkingCopies(t *testing.T) {
+func TestItRejectsCommandWithoutDashes(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
 	out, err := runCommand("some", "command")
-	assert.NoError(t, err)
-	assert.Contains(t, out, "turbolift foreach completed")
-	assert.Contains(t, out, "2 OK, 0 skipped")
+	assert.Error(t, err, "Expected an error to be returned")
+	assert.Contains(t, out, "Usage")
 
-	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", userShell(), "-c", "some command"},
-		{"work/org/repo2", userShell(), "-c", "some command"},
-	})
+	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
-func TestItRunsCommandQuotedInShellAgainstWorkingCopied(t *testing.T) {
+func TestItRunsCommandWithoutShellAgainstWorkingCopies(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("some", "command", "with spaces")
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", userShell(), "-c", "some command \"with spaces\""},
-		{"work/org/repo2", userShell(), "-c", "some command \"with spaces\""},
+		{"work/org/repo1", "some", "command"},
+		{"work/org/repo2", "some", "command"},
+	})
+}
+
+func TestItRunsCommandWithSpacesAgainstWorkingCopied(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommand("--", "some", "command", "with spaces")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+	assert.Contains(t, out,
+		"Executing { some command 'with spaces' } in work/org/repo1",
+		"It should format the executed command accurately")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "some", "command", "with spaces"},
+		{"work/org/repo2", "some", "command", "with spaces"},
 	})
 }
 
@@ -175,13 +96,13 @@ func TestItSkipsMissingWorkingCopies(t *testing.T) {
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 	_ = os.Remove("work/org/repo2")
 
-	out, err := runCommand("some", "command")
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "1 OK, 1 skipped")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", userShell(), "-c", "some command"},
+		{"work/org/repo1", "some", "command"},
 	})
 }
 
@@ -191,14 +112,14 @@ func TestItContinuesOnAndRecordsFailures(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("some", "command")
+	out, err := runCommand("--", "some", "command")
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift foreach completed with errors")
 	assert.Contains(t, out, "0 OK, 0 skipped, 2 errored")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", userShell(), "-c", "some command"},
-		{"work/org/repo2", userShell(), "-c", "some command"},
+		{"work/org/repo1", "some", "command"},
+		{"work/org/repo2", "some", "command"},
 	})
 }
 
@@ -208,12 +129,12 @@ func TestHelpFlagReturnsUsage(t *testing.T) {
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 
-	out, err := runCommand("--help", "command1")
+	out, err := runCommand("--help", "--", "command1")
 	t.Log(out)
 	assert.NoError(t, err)
 	// should return usage
 	assert.Contains(t, out, "Usage:")
-	assert.Contains(t, out, "foreach [flags] SHELL_COMMAND")
+	assert.Contains(t, out, "foreach [flags] -- COMMAND [ARGUMENT...]")
 	assert.Contains(t, out, "Flags:")
 	assert.Contains(t, out, "help for foreach")
 
@@ -221,12 +142,24 @@ func TestHelpFlagReturnsUsage(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
-func userShell() string {
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		return "sh"
+func TestFormatArguments(t *testing.T) {
+	// Don't go too heavy here. We are not seeking to exhaustively test
+	// shellescape. We just want to make sure formatArguments works.
+	var tests = []struct {
+		input    []string
+		expected string
+		title    string
+	}{
+		{[]string{""}, `''`, "Empty arg should be quoted"},
+		{[]string{"one two"}, `'one two'`, "Arg with space should be quoted"},
+		{[]string{"one"}, `one`, "Plain arg should not need quotes"},
+		{[]string{}, ``, "Empty arg list should give empty string"},
+		{[]string{"x", "", "y y"}, `x '' 'y y'`, "Args should be separated with spaces"},
 	}
-	return shell
+	for _, test := range tests {
+		actual := formatArguments(test.input)
+		assert.Equal(t, actual, test.expected, test.title)
+	}
 }
 
 func runCommand(args ...string) (string, error) {

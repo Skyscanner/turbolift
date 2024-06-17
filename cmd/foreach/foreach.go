@@ -16,9 +16,9 @@
 package foreach
 
 import (
+	"errors"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -27,66 +27,46 @@ import (
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
+
+	"github.com/alessio/shellescape"
 )
 
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
 	repoFile string = "repos.txt"
-	helpFlag bool   = false
 )
 
-func parseForeachArgs(args []string) []string {
-	strippedArgs := make([]string, 0)
-MAIN:
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--repos":
-			repoFile = args[i+1]
-			i = i + 1
-		case "--help":
-			helpFlag = true
-		default:
-			// we've parsed everything that could be parsed; this is now the command
-			strippedArgs = append(strippedArgs, args[i:]...)
-			break MAIN
-		}
+func formatArguments(arguments []string) string {
+	quotedArgs := make([]string, len(arguments))
+	for i, arg := range arguments {
+		quotedArgs[i] = shellescape.Quote(arg)
 	}
-
-	return strippedArgs
+	return strings.Join(quotedArgs, " ")
 }
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "foreach [flags] SHELL_COMMAND",
-		Short:                 "Run a shell command against each working copy",
-		Run:                   run,
-		Args:                  cobra.MinimumNArgs(1),
-		DisableFlagsInUseLine: true,
-		DisableFlagParsing:    true,
+		Use:   "foreach [flags] -- COMMAND [ARGUMENT...]",
+		Short: "Run COMMAND against each working copy",
+		Long:
+`Run COMMAND against each working copy. Make sure to include a
+double hyphen -- with space on both sides before COMMAND, as this
+marks that no further options should be interpreted by turbolift.`,
+		RunE: runE,
+		Args: cobra.MinimumNArgs(1),
 	}
 
-	// this flag will not be parsed (DisabledFlagParsing is on) but is here for the help context and auto complete
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
 
-func run(c *cobra.Command, args []string) {
+func runE(c *cobra.Command, args []string) error {
 	logger := logging.NewLogger(c)
 
-	/*
-		Parsing is disabled for this command to make sure it doesn't capture flags from the subsequent command.
-		E.g.: turbolift foreach ls -l   <- here, the -l would be captured by foreach, not by ls
-		Because of this, we need a manual parsing of the arguments.
-		Assumption is the foreach arguments will be parsed before the command and its arguments.
-	*/
-	args = parseForeachArgs(args)
-
-	// check if the help flag was toggled
-	if helpFlag {
-		_ = c.Usage()
-		return
+	if c.ArgsLenAtDash() != 0 {
+		return errors.New("Use -- to separate command")
 	}
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
@@ -95,22 +75,19 @@ func run(c *cobra.Command, args []string) {
 	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
-		return
+		return nil
 	}
 	readCampaignActivity.EndWithSuccess()
 
-	for i := range args {
-		if strings.Contains(args[i], " ") {
-			args[i] = strconv.Quote(args[i])
-		}
-	}
-	command := strings.Join(args, " ")
+	// We shell escape these to avoid ambiguity in our logs, and give
+	// the user something they could copy and paste.
+	prettyArgs := formatArguments(args)
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
-		execActivity := logger.StartActivity("Executing %s in %s", command, repoDirPath)
+		execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
 
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
@@ -119,13 +96,7 @@ func run(c *cobra.Command, args []string) {
 			continue
 		}
 
-		// Execute within a shell so that piping, redirection, etc are possible
-		shellCommand := os.Getenv("SHELL")
-		if shellCommand == "" {
-			shellCommand = "sh"
-		}
-		shellArgs := []string{"-c", command}
-		err := exec.Execute(execActivity.Writer(), repoDirPath, shellCommand, shellArgs...)
+		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 		if err != nil {
 			execActivity.EndWithFailure(err)
@@ -141,4 +112,6 @@ func run(c *cobra.Command, args []string) {
 	} else {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
+
+	return nil
 }
