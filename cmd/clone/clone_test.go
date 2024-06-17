@@ -204,6 +204,8 @@ func TestItLogsPullErrorsButContinuesToTryAll(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Pulling latest changes from org1/repo1")
 	assert.Contains(t, out, "Pulling latest changes from org2/repo2")
+	assert.Contains(t, out, "We weren't able to pull the latest upstream changes into your fork of org1/repo1")
+	assert.Contains(t, out, "We weren't able to pull the latest upstream changes into your fork of org2/repo2")
 	assert.Contains(t, out, "turbolift clone completed with errors")
 	assert.Contains(t, out, "2 repos errored")
 
