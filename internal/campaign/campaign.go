@@ -17,13 +17,33 @@ package campaign
 
 import (
 	"bufio"
+	_ "embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
+
+var (
+	//go:embed templates/.gitignore
+	gitignoreTemplate string
+
+	//go:embed templates/.turbolift
+	turboliftTemplate string
+
+	//go:embed templates/README.md
+	readmeTemplate string
+
+	//go:embed templates/repos.txt
+	reposTemplate string
+)
+
+type TemplateVariables struct {
+	CampaignName string
+}
 
 type Repo struct {
 	Host         string
@@ -169,4 +189,74 @@ func readPrDescriptionFile(filename string) (string, string, error) {
 	}
 
 	return prTitle, strings.Join(prBodyLines, "\n"), nil
+}
+
+func CreateInitialFiles(campaignName string) error {
+	data := TemplateVariables{
+		CampaignName: campaignName,
+	}
+	files := map[string]string{
+		".gitignore": gitignoreTemplate,
+		".turbolift": turboliftTemplate,
+		"README.md":  readmeTemplate,
+		"repos.txt":  reposTemplate,
+	}
+	for filename, templateFile := range files {
+		err := ApplyTemplate(filepath.Join(campaignName, filename), templateFile, data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Applies a given template and data to produce a file with the outputFilename
+func ApplyTemplate(outputFilename string, templateContent string, data interface{}) error {
+	file, err := os.Create(outputFilename)
+	if err != nil {
+		return fmt.Errorf("unable to open file for output: %w", err)
+	}
+
+	fmt.Println(templateContent)
+	parsedTemplate, err := template.New("").Parse(templateContent)
+
+	if err != nil {
+		return fmt.Errorf("unable to parse template: %w", err)
+	}
+
+	err = parsedTemplate.Execute(file, data)
+
+	if err != nil {
+		return fmt.Errorf("unable to write templated file: %w", err)
+	}
+	return nil
+}
+
+func PrDescriptionUnchanged(dir *Campaign) (bool, error) {
+	tempPrDescriptionFile, err := os.Create("turbolift-temp-pr-description-*")
+	if err != nil {
+		return false, fmt.Errorf("unable to create temp pr description file: %w", err)
+	}
+	defer os.Remove(tempPrDescriptionFile.Name())
+	parsedPrDescriptionTemplate, err := template.New("").Parse(readmeTemplate)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse template: %w", err)
+	}
+	data := TemplateVariables{
+		CampaignName: dir.Name,
+	}
+	err = parsedPrDescriptionTemplate.Execute(tempPrDescriptionFile, data)
+	if err != nil {
+		return false, fmt.Errorf("unable to write templated file: %w", err)
+	}
+	err = tempPrDescriptionFile.Close()
+	if err != nil {
+		return false, fmt.Errorf("unable to close temp pr description file: %w", err)
+	}
+	println(tempPrDescriptionFile.Name())
+	originalPrTitle, originalPrBody, err := readPrDescriptionFile(tempPrDescriptionFile.Name())
+	if err != nil {
+		return false, fmt.Errorf("unable to read pr description file: %w", err)
+	}
+	return dir.PrTitle == originalPrTitle || dir.PrBody == originalPrBody || dir.PrTitle == "", err
 }

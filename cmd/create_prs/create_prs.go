@@ -71,7 +71,11 @@ func run(c *cobra.Command, _ []string) {
 		readCampaignActivity.EndWithFailure(err)
 		return
 	}
-	if prDescriptionUnchanged(dir) {
+	prDescriptionUnchanged, err := campaign.PrDescriptionUnchanged(dir)
+	if err != nil {
+		logger.Warnf("unable to verify whether PR description has been updated: %s", err)
+	}
+	if prDescriptionUnchanged {
 		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description has not been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
 			return
 		}
@@ -138,18 +142,4 @@ func run(c *cobra.Command, _ []string) {
 	} else {
 		logger.Warnf("turbolift create-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
-}
-
-func prDescriptionUnchanged(dir *campaign.Campaign) bool {
-	originalPrTitle := fmt.Sprintf("TODO: Title of Pull Request (%s)", dir.Name)
-	originalPrBody := `TODO: This file will serve as both a README and the description of the PR. Describe the pull request using markdown in this file. Make it clear why the change is being made, and make suggestions for anything that the reviewer may need to do.
-
-By approving this PR, you are confirming that you have adequately and effectively reviewed this change.
-
-## How this change was made
-TODO: Describe the approach that was used to select repositories for this change
-TODO: Describe any shell commands, scripts, manual operations, etc, that were used to make changes
-
-<sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>`
-	return dir.PrTitle == originalPrTitle || dir.PrBody == originalPrBody || dir.PrTitle == ""
 }
