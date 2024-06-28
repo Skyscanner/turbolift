@@ -17,6 +17,7 @@ package testsupport
 
 import (
 	"fmt"
+	"github.com/skyscanner/turbolift/internal/campaign"
 	"io/ioutil"
 	"os"
 	"path"
@@ -83,23 +84,52 @@ func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody str
 }
 
 func UseDefaultPrDescription(dirName string) {
-	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName), originalPrBody)
+	fileName := "README.md"
+	err := os.Remove(fileName)
+	if err != nil {
+		panic(err)
+	}
+	err = campaign.ApplyReadMeTemplate(fileName, dirName)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func UseDefaultPrTitleOnly(dirName string) {
-	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName), "custom PR body")
+	UseDefaultPrDescription(dirName)
+	// append some text to change the pr description body
+	f, err := os.OpenFile("README.md", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+	_, err = f.WriteString("additional pr description")
+	if err != nil {
+		panic(err)
+	}
 }
 
-func UseDefaultPrBodyOnly() {
-	CreateOrUpdatePrDescriptionFile("README.md", "custom PR title", originalPrBody)
+func UseDefaultPrBodyOnly(dirName string) {
+	UseDefaultPrDescription(dirName)
+	//	append something to first line to change title
+	fileName := "README.md"
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	lines[0] += "updated title"
+
+	newContent := strings.Join(lines, "\n")
+
+	err = os.WriteFile(fileName, []byte(newContent), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
-
-var originalPrBody = `TODO: This file will serve as both a README and the description of the PR. Describe the pull request using markdown in this file. Make it clear why the change is being made, and make suggestions for anything that the reviewer may need to do.
-
-By approving this PR, you are confirming that you have adequately and effectively reviewed this change.
-
-## How this change was made
-TODO: Describe the approach that was used to select repositories for this change
-TODO: Describe any shell commands, scripts, manual operations, etc, that were used to make changes
-
-<sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>`

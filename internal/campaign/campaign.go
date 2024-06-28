@@ -232,12 +232,24 @@ func ApplyTemplate(outputFilename string, templateContent string, data interface
 	return nil
 }
 
+func ApplyReadMeTemplate(filename string, dirName string) error {
+	data := TemplateVariables{
+		CampaignName: dirName,
+	}
+	err := ApplyTemplate(filename, readmeTemplate, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func PrDescriptionUnchanged(dir *Campaign) (bool, error) {
 	tempPrDescriptionFile, err := os.Create("turbolift-temp-pr-description-*")
 	if err != nil {
 		return false, fmt.Errorf("unable to create temp pr description file: %w", err)
 	}
 	defer os.Remove(tempPrDescriptionFile.Name())
+	// todo: refactor using ApplyReadMeTemplate()
 	parsedPrDescriptionTemplate, err := template.New("").Parse(readmeTemplate)
 	if err != nil {
 		return false, fmt.Errorf("unable to parse template: %w", err)
@@ -253,7 +265,6 @@ func PrDescriptionUnchanged(dir *Campaign) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("unable to close temp pr description file: %w", err)
 	}
-	println(tempPrDescriptionFile.Name())
 	originalPrTitle, originalPrBody, err := readPrDescriptionFile(tempPrDescriptionFile.Name())
 	if err != nil {
 		return false, fmt.Errorf("unable to read pr description file: %w", err)

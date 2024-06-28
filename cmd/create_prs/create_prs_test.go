@@ -35,7 +35,7 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	p = fakePrompt
 
 	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrDescription(dir)
+	testsupport.UseDefaultPrDescription(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -47,7 +47,6 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
 }
 
-// todo: why isn't this failing? it fails in manual testing
 func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
@@ -56,8 +55,8 @@ func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
 	fakePrompt := prompt.NewFakePromptNo()
 	p = fakePrompt
 
-	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrBodyOnly()
+	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UseDefaultPrBodyOnly(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)
