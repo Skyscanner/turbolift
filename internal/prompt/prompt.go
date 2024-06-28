@@ -2,8 +2,10 @@ package prompt
 
 import (
 	"strings"
+	"testing"
 
 	"github.com/manifoldco/promptui"
+	"github.com/stretchr/testify/assert"
 )
 
 type Prompt interface {
@@ -49,12 +51,19 @@ func (f FakePromptYes) AskConfirm(_ string) bool {
 }
 
 // Mock Prompt that always returns false
-type FakePromptNo struct{}
+type FakePromptNo struct {
+	call string
+}
 
 func NewFakePromptNo() *FakePromptNo {
 	return &FakePromptNo{}
 }
 
-func (f FakePromptNo) AskConfirm(_ string) bool {
+func (f *FakePromptNo) AskConfirm(question string) bool {
+	f.call = question
 	return false
+}
+
+func (f *FakePromptNo) AssertCalledWith(t *testing.T, expected string) {
+	assert.Equal(t, expected, f.call)
 }

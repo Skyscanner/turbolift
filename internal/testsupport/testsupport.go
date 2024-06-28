@@ -17,6 +17,7 @@ package testsupport
 
 import (
 	"fmt"
+	"github.com/skyscanner/turbolift/internal/campaign"
 	"io/ioutil"
 	"os"
 	"path"
@@ -77,6 +78,57 @@ func CreateAnotherRepoFile(filename string, repos ...string) {
 func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody string) {
 	prDescription := fmt.Sprintf("# %s\n%s", prTitle, prBody)
 	err := os.WriteFile(filename, []byte(prDescription), os.ModePerm|0o644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func UseDefaultPrDescription(dirName string) {
+	fileName := "README.md"
+	err := os.Remove(fileName)
+	if err != nil {
+		panic(err)
+	}
+	err = campaign.ApplyReadMeTemplate(fileName, dirName)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func UseDefaultPrTitleOnly(dirName string) {
+	UseDefaultPrDescription(dirName)
+	// append some text to change the pr description body
+	f, err := os.OpenFile("README.md", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+	_, err = f.WriteString("additional pr description")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func UseDefaultPrBodyOnly(dirName string) {
+	UseDefaultPrDescription(dirName)
+	//	append something to first line to change title
+	fileName := "README.md"
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	lines[0] += "updated title"
+
+	newContent := strings.Join(lines, "\n")
+
+	err = os.WriteFile(fileName, []byte(newContent), 0644)
 	if err != nil {
 		panic(err)
 	}

@@ -16,6 +16,8 @@
 package create_prs
 
 import (
+	"fmt"
+	"github.com/skyscanner/turbolift/internal/prompt"
 	"os"
 	"path"
 	"time"
@@ -32,6 +34,7 @@ import (
 var (
 	gh github.GitHub = github.NewRealGitHub()
 	g  git.Git       = git.NewRealGit()
+	p  prompt.Prompt = prompt.NewRealPrompt()
 )
 
 var (
@@ -67,6 +70,15 @@ func run(c *cobra.Command, _ []string) {
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
+	}
+	prDescriptionUnchanged, err := campaign.PrDescriptionUnchanged(dir)
+	if err != nil {
+		logger.Warnf("unable to verify whether PR description has been updated: %s", err)
+	}
+	if prDescriptionUnchanged {
+		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description has not been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
+			return
+		}
 	}
 	readCampaignActivity.EndWithSuccess()
 
