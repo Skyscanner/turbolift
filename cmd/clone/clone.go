@@ -126,6 +126,7 @@ func run(c *cobra.Command, _ []string) {
 			err = g.Pull(pullFromUpstreamActivity.Writer(), repoDirPath, "upstream", defaultBranch)
 			if err != nil {
 				pullFromUpstreamActivity.EndWithFailure(err)
+				logger.Printf("\nWe weren't able to pull the latest upstream changes into your fork of %s. This is probably because you have a pre-existing fork with commits ahead of upstream. Please change this or delete your fork, and try again.\n", repo.FullRepoName)
 				errorCount++
 				continue
 			}
