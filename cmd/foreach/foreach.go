@@ -103,9 +103,9 @@ func runE(c *cobra.Command, args []string) error {
 		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 		if err != nil {
+			emitOutcomeToFiles(repo, o.failedReposFile, o.failedResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithFailure(err)
 			errorCount++
-			emitOutcomeToFiles(repo, o.failedReposFile, o.failedResultsDirectory, execActivity.Logs(), logger)
 		} else {
 			emitOutcomeToFiles(repo, o.successfulReposFile, o.successfulResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithSuccessAndEmitLogs()
