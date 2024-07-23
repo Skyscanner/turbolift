@@ -35,7 +35,15 @@ import (
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile string = "repos.txt"
+	repoFile = "repos.txt"
+
+	overallResultsDirectory string
+
+	successfulResultsDirectory string
+	successfulReposFileName    string
+
+	failedResultsDirectory string
+	failedReposFileName    string
 )
 
 func formatArguments(arguments []string) string {
@@ -83,9 +91,9 @@ func runE(c *cobra.Command, args []string) error {
 	// the user something they could copy and paste.
 	prettyArgs := formatArguments(args)
 
-	o := setupOutputFiles(dir.Name, prettyArgs)
+	setupOutputFiles(dir.Name, prettyArgs)
 
-	logger.Printf("Logs for all executions will be stored under %s", o.overallResultsDirectory)
+	logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
@@ -103,11 +111,11 @@ func runE(c *cobra.Command, args []string) error {
 		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 		if err != nil {
-			emitOutcomeToFiles(repo, o.failedReposFile, o.failedResultsDirectory, execActivity.Logs(), logger)
+			emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithFailure(err)
 			errorCount++
 		} else {
-			emitOutcomeToFiles(repo, o.successfulReposFile, o.successfulResultsDirectory, execActivity.Logs(), logger)
+			emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithSuccessAndEmitLogs()
 			doneCount++
 		}
@@ -119,58 +127,42 @@ func runE(c *cobra.Command, args []string) error {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 
-	logger.Printf("Logs for all executions have been stored under %s", o.overallResultsDirectory)
-	logger.Printf("Names of successful repos have been written to %s", o.successfulReposFile.Name())
-	logger.Printf("Names of failed repos have been written to %s", o.failedReposFile.Name())
+	logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
+	logger.Printf("Names of successful repos have been written to %s", successfulReposFileName)
+	logger.Printf("Names of failed repos have been written to %s", failedReposFileName)
 
 	return nil
 }
 
-type outputLogFileDestinations struct {
-	overallResultsDirectory string
-
-	successfulResultsDirectory string
-	successfulReposFile        *os.File
-
-	failedResultsDirectory string
-	failedReposFile        *os.File
-}
-
 // sets up a temporary directory to store success/failure logs etc
-func setupOutputFiles(campaignName string, command string) outputLogFileDestinations {
-	resultsDirectory, _ := os.MkdirTemp("", fmt.Sprintf("turbolift-foreach-%s-", campaignName))
-	successfulResultsDirectory := path.Join(resultsDirectory, "successful")
-	failedResultsDirectory := path.Join(resultsDirectory, "failed")
+func setupOutputFiles(campaignName string, command string) {
+	overallResultsDirectory, _ = os.MkdirTemp("", fmt.Sprintf("turbolift-foreach-%s-", campaignName))
+	successfulResultsDirectory = path.Join(overallResultsDirectory, "successful")
+	failedResultsDirectory = path.Join(overallResultsDirectory, "failed")
 	_ = os.MkdirAll(successfulResultsDirectory, 0755)
 	_ = os.MkdirAll(failedResultsDirectory, 0755)
 
-	successfulReposTxt := path.Join(successfulResultsDirectory, "repos.txt")
-	failedReposTxt := path.Join(failedResultsDirectory, "repos.txt")
+	successfulReposFileName = path.Join(successfulResultsDirectory, "repos.txt")
+	failedReposFileName = path.Join(failedResultsDirectory, "repos.txt")
 
 	// create the files
-	successfulReposFile, _ := os.Create(successfulReposTxt)
-	failedReposFile, _ := os.Create(failedReposTxt)
+	successfulReposFile, _ := os.Create(successfulReposFileName)
+	failedReposFile, _ := os.Create(failedReposFileName)
 
 	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
 	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))
-
-	return outputLogFileDestinations{
-		overallResultsDirectory: resultsDirectory,
-
-		successfulResultsDirectory: successfulResultsDirectory,
-		successfulReposFile:        successfulReposFile,
-
-		failedResultsDirectory: failedResultsDirectory,
-		failedReposFile:        failedReposFile,
-	}
+	successfulReposFile.Close()
+	failedReposFile.Close()
 }
 
-func emitOutcomeToFiles(repo campaign.Repo, reposFile *os.File, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
+func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
 	// write the repo name to the repos file
+	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
 	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
 	if err != nil {
 		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
 	}
+	reposFile.Close()
 
 	// write logs to a file under the logsParent directory, in a directory structure that mirrors that of the work directory
 	logsDir := path.Join(logsDirectoryParent, repo.FullRepoName)
@@ -185,4 +177,5 @@ func emitOutcomeToFiles(repo campaign.Repo, reposFile *os.File, logsDirectoryPar
 	if err != nil {
 		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
 	}
+	logs.Close()
 }
