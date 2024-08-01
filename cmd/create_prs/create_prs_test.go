@@ -17,12 +17,15 @@ package create_prs
 
 import (
 	"bytes"
+	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -35,7 +38,7 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	p = fakePrompt
 
 	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrDescription(filepath.Base(dir))
+	useDefaultPrDescription(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -56,7 +59,7 @@ func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
 	p = fakePrompt
 
 	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrBodyOnly(filepath.Base(dir))
+	useDefaultPrBodyOnly(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -78,7 +81,7 @@ func TestItWarnsIfPrBodyIsUpdatedButNotPrTitle(t *testing.T) {
 
 	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
 	// dir is in the format /var/.../.../turbolift-test-XXXXXX
-	testsupport.UseDefaultPrTitleOnly(filepath.Base(dir))
+	useDefaultPrTitleOnly(filepath.Base(dir))
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -256,4 +259,55 @@ func runCommandDraft() (string, error) {
 		return outBuffer.String(), err
 	}
 	return outBuffer.String(), nil
+}
+
+func useDefaultPrDescription(dirName string) {
+	fileName := "README.md"
+	err := os.Remove(fileName)
+	if err != nil {
+		panic(err)
+	}
+	err = campaign.ApplyReadMeTemplate(fileName, dirName)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func useDefaultPrTitleOnly(dirName string) {
+	useDefaultPrDescription(dirName)
+	// append some text to change the pr description body
+	f, err := os.OpenFile("README.md", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+	_, err = f.WriteString("additional pr description")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func useDefaultPrBodyOnly(dirName string) {
+	useDefaultPrDescription(dirName)
+	//	append something to first line to change title
+	fileName := "README.md"
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	lines[0] += "updated title"
+
+	newContent := strings.Join(lines, "\n")
+
+	err = os.WriteFile(fileName, []byte(newContent), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
