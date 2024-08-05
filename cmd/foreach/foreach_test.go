@@ -18,6 +18,7 @@ package foreach
 import (
 	"bytes"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -160,6 +161,47 @@ func TestFormatArguments(t *testing.T) {
 		actual := formatArguments(test.input)
 		assert.Equal(t, actual, test.expected, test.title)
 	}
+}
+
+func TestItCreatesLogFiles(t *testing.T) {
+	fakeExecutor := executor.NewAlternatingSuccessFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommand("--", "some", "command")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "1 OK, 0 skipped, 1 errored")
+
+	// Logs should describe where output was written
+	r := regexp.MustCompile(`Logs for all executions have been stored under (.+)`)
+	matches := r.FindStringSubmatch(out)
+	assert.Len(t, matches, 2, "Expected to find the log directory path")
+	path := matches[1]
+
+	// check that expected static directories and files exist
+	_, err = os.Stat(path)
+	assert.NoError(t, err, "Expected the log directory to exist")
+
+	_, err = os.Stat(path + "/successful")
+	assert.NoError(t, err, "Expected the successful log directory to exist")
+
+	_, err = os.Stat(path + "/failed")
+	assert.NoError(t, err, "Expected the failure log directory to exist")
+
+	_, err = os.Stat(path + "/successful/repos.txt")
+	assert.NoError(t, err, "Expected the successful repos.txt file to exist")
+
+	_, err = os.Stat(path + "/failed/repos.txt")
+	assert.NoError(t, err, "Expected the failure repos.txt file to exist")
+
+	// check that the expected logs files exist
+	_, err = os.Stat(path + "/successful/org/repo1/logs.txt")
+	assert.NoError(t, err, "Expected the successful log file for org/repo1 to exist")
+
+	_, err = os.Stat(path + "/failed/org/repo2/logs.txt")
+	assert.NoError(t, err, "Expected the failure log file for org/repo2 to exist")
 }
 
 func runCommand(args ...string) (string, error) {

@@ -70,3 +70,25 @@ func NewAlwaysFailsFakeExecutor() *FakeExecutor {
 		return "", errors.New("synthetic error")
 	})
 }
+
+func NewAlternatingSuccessFakeExecutor() *FakeExecutor {
+	i := 0
+	return NewFakeExecutor(
+		func(s string, s2 string, s3 ...string) error {
+			i++
+			if i%2 == 1 {
+				return nil
+			} else {
+				return errors.New("synthetic error")
+			}
+		},
+		func(s string, s2 string, s3 ...string) (string, error) {
+			i++
+			if i%2 == 1 {
+				return "", nil
+			} else {
+				return "", errors.New("synthetic error")
+			}
+		},
+	)
+}
