@@ -148,21 +148,21 @@ func setupOutputFiles(campaignName string, command string) {
 	// create the files
 	successfulReposFile, _ := os.Create(successfulReposFileName)
 	failedReposFile, _ := os.Create(failedReposFileName)
+	defer successfulReposFile.Close()
+	defer failedReposFile.Close()
 
 	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
 	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))
-	successfulReposFile.Close()
-	failedReposFile.Close()
 }
 
 func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
 	// write the repo name to the repos file
 	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
+	defer reposFile.Close()
 	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
 	if err != nil {
 		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
 	}
-	reposFile.Close()
 
 	// write logs to a file under the logsParent directory, in a directory structure that mirrors that of the work directory
 	logsDir := path.Join(logsDirectoryParent, repo.FullRepoName)
@@ -173,9 +173,9 @@ func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryP
 	}
 
 	logs, _ := os.Create(logsFile)
+	defer logs.Close()
 	_, err = logs.WriteString(executionLogs)
 	if err != nil {
 		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
 	}
-	logs.Close()
 }
