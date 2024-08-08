@@ -202,7 +202,7 @@ func CreateInitialFiles(campaignName string) error {
 		"repos.txt":  reposTemplate,
 	}
 	for filename, templateFile := range files {
-		err := ApplyTemplate(filepath.Join(campaignName, filename), templateFile, data)
+		err := applyTemplate(filepath.Join(campaignName, filename), templateFile, data)
 		if err != nil {
 			return err
 		}
@@ -211,7 +211,7 @@ func CreateInitialFiles(campaignName string) error {
 }
 
 // Applies a given template and data to produce a file with the outputFilename
-func ApplyTemplate(outputFilename string, templateContent string, data interface{}) error {
+func applyTemplate(outputFilename string, templateContent string, data interface{}) error {
 	file, err := os.Create(outputFilename)
 	if err != nil {
 		return fmt.Errorf("unable to open file for output: %w", err)
@@ -237,7 +237,7 @@ func ApplyReadMeTemplate(filename string, dirName string) error {
 	data := TemplateVariables{
 		CampaignName: dirName,
 	}
-	err := ApplyTemplate(filename, readmeTemplate, data)
+	err := applyTemplate(filename, readmeTemplate, data)
 	if err != nil {
 		return err
 	}
