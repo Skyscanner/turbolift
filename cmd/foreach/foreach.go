@@ -16,6 +16,8 @@
 package foreach
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -26,66 +28,53 @@ import (
 	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/executor"
 	"github.com/skyscanner/turbolift/internal/logging"
+
+	"github.com/alessio/shellescape"
 )
 
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile string = "repos.txt"
-	helpFlag bool   = false
+	repoFile = "repos.txt"
+
+	overallResultsDirectory string
+
+	successfulResultsDirectory string
+	successfulReposFileName    string
+
+	failedResultsDirectory string
+	failedReposFileName    string
 )
 
-func parseForeachArgs(args []string) []string {
-	strippedArgs := make([]string, 0)
-MAIN:
-	for i := 0; i < len(args); i++ {
-		switch args[i] {
-		case "--repos":
-			repoFile = args[i+1]
-			i = i + 1
-		case "--help":
-			helpFlag = true
-		default:
-			// we've parsed everything that could be parsed; this is now the command
-			strippedArgs = append(strippedArgs, args[i:]...)
-			break MAIN
-		}
+func formatArguments(arguments []string) string {
+	quotedArgs := make([]string, len(arguments))
+	for i, arg := range arguments {
+		quotedArgs[i] = shellescape.Quote(arg)
 	}
-
-	return strippedArgs
+	return strings.Join(quotedArgs, " ")
 }
 
 func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "foreach [flags] SHELL_COMMAND",
-		Short:                 "Run a shell command against each working copy",
-		Run:                   run,
-		Args:                  cobra.MinimumNArgs(1),
-		DisableFlagsInUseLine: true,
-		DisableFlagParsing:    true,
+		Use:   "foreach [flags] -- COMMAND [ARGUMENT...]",
+		Short: "Run COMMAND against each working copy",
+		Long: `Run COMMAND against each working copy. Make sure to include a
+double hyphen -- with space on both sides before COMMAND, as this
+marks that no further options should be interpreted by turbolift.`,
+		RunE: runE,
+		Args: cobra.MinimumNArgs(1),
 	}
 
-	// this flag will not be parsed (DisabledFlagParsing is on) but is here for the help context and auto complete
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
 }
 
-func run(c *cobra.Command, args []string) {
+func runE(c *cobra.Command, args []string) error {
 	logger := logging.NewLogger(c)
 
-	/*
-		Parsing is disabled for this command to make sure it doesn't capture flags from the subsequent command.
-		E.g.: turbolift foreach ls -l   <- here, the -l would be captured by foreach, not by ls
-		Because of this, we need a manual parsing of the arguments.
-		Assumption is the foreach arguments will be parsed before the command and its arguments.
-	*/
-	args = parseForeachArgs(args)
-
-	// check if the help flag was toggled
-	if helpFlag {
-		_ = c.Usage()
-		return
+	if c.ArgsLenAtDash() != 0 {
+		return errors.New("Use -- to separate command")
 	}
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
@@ -94,16 +83,23 @@ func run(c *cobra.Command, args []string) {
 	dir, err := campaign.OpenCampaign(options)
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
-		return
+		return nil
 	}
 	readCampaignActivity.EndWithSuccess()
+
+	// We shell escape these to avoid ambiguity in our logs, and give
+	// the user something they could copy and paste.
+	prettyArgs := formatArguments(args)
+
+	setupOutputFiles(dir.Name, prettyArgs)
+
+	logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
-		command := strings.Join(args, " ")
 
-		execActivity := logger.StartActivity("Executing %s in %s", command, repoDirPath)
+		execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
 
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
@@ -112,18 +108,14 @@ func run(c *cobra.Command, args []string) {
 			continue
 		}
 
-		// Execute within a shell so that piping, redirection, etc are possible
-		shellCommand := os.Getenv("SHELL")
-		if shellCommand == "" {
-			shellCommand = "sh"
-		}
-		shellArgs := []string{"-c", command}
-		err := exec.Execute(execActivity.Writer(), repoDirPath, shellCommand, shellArgs...)
+		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 		if err != nil {
+			emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithFailure(err)
 			errorCount++
 		} else {
+			emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithSuccessAndEmitLogs()
 			doneCount++
 		}
@@ -133,5 +125,57 @@ func run(c *cobra.Command, args []string) {
 		logger.Successf("turbolift foreach completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
 	} else {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
+	}
+
+	logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
+	logger.Printf("Names of successful repos have been written to %s", successfulReposFileName)
+	logger.Printf("Names of failed repos have been written to %s", failedReposFileName)
+
+	return nil
+}
+
+// sets up a temporary directory to store success/failure logs etc
+func setupOutputFiles(campaignName string, command string) {
+	overallResultsDirectory, _ = os.MkdirTemp("", fmt.Sprintf("turbolift-foreach-%s-", campaignName))
+	successfulResultsDirectory = path.Join(overallResultsDirectory, "successful")
+	failedResultsDirectory = path.Join(overallResultsDirectory, "failed")
+	_ = os.MkdirAll(successfulResultsDirectory, 0755)
+	_ = os.MkdirAll(failedResultsDirectory, 0755)
+
+	successfulReposFileName = path.Join(successfulResultsDirectory, "repos.txt")
+	failedReposFileName = path.Join(failedResultsDirectory, "repos.txt")
+
+	// create the files
+	successfulReposFile, _ := os.Create(successfulReposFileName)
+	failedReposFile, _ := os.Create(failedReposFileName)
+	defer successfulReposFile.Close()
+	defer failedReposFile.Close()
+
+	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
+	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))
+}
+
+func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
+	// write the repo name to the repos file
+	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
+	defer reposFile.Close()
+	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
+	if err != nil {
+		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
+	}
+
+	// write logs to a file under the logsParent directory, in a directory structure that mirrors that of the work directory
+	logsDir := path.Join(logsDirectoryParent, repo.FullRepoName)
+	logsFile := path.Join(logsDir, "logs.txt")
+	err = os.MkdirAll(logsDir, 0755)
+	if err != nil {
+		logger.Errorf("Failed to create directory %s: %s", logsDir, err)
+	}
+
+	logs, _ := os.Create(logsFile)
+	defer logs.Close()
+	_, err = logs.WriteString(executionLogs)
+	if err != nil {
+		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
 	}
 }

@@ -108,15 +108,16 @@ type PrStatusResponse struct { // https://github.com/cli/cli/blob/4b415f80d79e57
 }
 
 type PrStatus struct {
-	Closed         bool            `json:"closed"`
-	HeadRefName    string          `json:"headRefName"`
-	Mergeable      string          `json:"mergeable"`
-	Number         int             `json:"number"`
-	ReactionGroups []ReactionGroup `json:"reactionGroups"`
-	ReviewDecision string          `json:"reviewDecision"`
-	State          string          `json:"state"`
-	Title          string          `json:"title"`
-	Url            string          `json:"url"`
+	Closed            bool                `json:"closed"`
+	HeadRefName       string              `json:"headRefName"`
+	Mergeable         string              `json:"mergeable"`
+	Number            int                 `json:"number"`
+	ReactionGroups    []ReactionGroup     `json:"reactionGroups"`
+	ReviewDecision    string              `json:"reviewDecision"`
+	State             string              `json:"state"`
+	StatusCheckRollup []StatusCheckRollup `json:"statusCheckRollup"`
+	Title             string              `json:"title"`
+	Url               string              `json:"url"`
 }
 
 type ReactionGroupUsers struct {
@@ -126,6 +127,10 @@ type ReactionGroupUsers struct {
 type ReactionGroup struct {
 	Content string
 	Users   ReactionGroupUsers
+}
+
+type StatusCheckRollup struct {
+	State string
 }
 
 // GetPR is a helper function to retrieve the PR associated with the branch Name
@@ -139,7 +144,7 @@ func (e *NoPRFoundError) Error() string {
 }
 
 func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error) {
-	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "pr", "status", "--json", "closed,headRefName,mergeable,number,reactionGroups,reviewDecision,state,title,url")
+	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "pr", "status", "--json", "closed,headRefName,mergeable,number,reactionGroups,reviewDecision,state,statusCheckRollup,title,url")
 	if err != nil {
 		return nil, err
 	}

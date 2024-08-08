@@ -111,8 +111,8 @@ Occasionally you may need to work on different repo files. For instance the repo
 The default repo file is called `repos.txt` but you can override this on any command with the `--repos` flag.
 
 ```console
-turbolift foreach --repos repoFile1.txt sed 's/pattern1/replacement1/g'
-turbolift foreach --repos repoFile2.txt sed 's/pattern2/replacement2/g'
+turbolift foreach --repos repoFile1.txt -- sed 's/pattern1/replacement1/g'
+turbolift foreach --repos repoFile2.txt -- sed 's/pattern2/replacement2/g'
 ```
 
 
@@ -132,16 +132,27 @@ You can do this manually using an editor, using `sed` and similar commands, or u
 
 **You are free to use any tools that help get the job done.**
 
-If you wish to, you can run the same command against every repo using `turbolift foreach ...` (where `...` is the shell command you want to run).
+If you wish to, you can run the same command against every repo using `turbolift foreach -- ...` (where `...` is the command you want to run).
 
 For example, you might choose to:
 
-* `turbolift foreach rm somefile` - to delete a particular file
-* `turbolift foreach sed -i '' 's/foo/bar/g' somefile` - to find/replace in a common file
-* `turbolift foreach make test` - for example, to run tests (using any appropriate command to invoke the tests)
-* `turbolift foreach git add somefile` - to stage a file that you have created
+* `turbolift foreach -- rm somefile` - to delete a particular file
+* `turbolift foreach -- sed -i '' 's/foo/bar/g' somefile` - to find/replace in a common file
+* `turbolift foreach -- make test` - for example, to run tests (using any appropriate command to invoke the tests)
+* `turbolift foreach -- git add somefile` - to stage a file that you have created
+* `turbolift foreach -- sh -c 'grep needle haystack.txt > output.txt'` - use a shell to run a command using redirection
 
-At any time, if you need to update your working copy branches from the upstream, you can run `turbolift foreach git pull upstream master`.
+Remember that when the command runs the working directory will be the
+repository root. If you want to refer to files from elsewhere you need
+to provide an absolute path. You may find the `pwd` command helpful here.
+For example, to run a shell script from the current directory against
+each repository:
+
+```
+turbolift foreach -- sh "$(pwd)/script.sh"
+```
+
+At any time, if you need to update your working copy branches from the upstream, you can run `turbolift foreach -- git pull upstream master`.
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
 
@@ -204,16 +215,16 @@ Viewing a detailed list of status per repo:
 ```
 $ turbolift pr-status --list
 ...
-Repository                                                State   Reviews            URL
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/262
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/515
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/342
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/407
-redacted/redacted                                         MERGED  REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/220
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/105
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/532
-redacted/redacted                                         MERGED  APPROVED           https://github.redacted/redacted/redacted/pull/268
-redacted/redacted                                         OPEN    REVIEW_REQUIRED    https://github.redacted/redacted/redacted/pull/438
+Repository                                                State   Reviews           Build status    URL
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/262
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/515
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/342
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/407
+redacted/redacted                                         MERGED  REVIEW_REQUIRED   SUCCESS         https://github.redacted/redacted/redacted/pull/220
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   FAILURE         https://github.redacted/redacted/redacted/pull/105
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/532
+redacted/redacted                                         MERGED  APPROVED          SUCCESS         https://github.redacted/redacted/redacted/pull/268
+redacted/redacted                                         OPEN    REVIEW_REQUIRED   FAILURE         https://github.redacted/redacted/redacted/pull/438
 ...
 ```
 
