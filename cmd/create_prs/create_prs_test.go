@@ -262,12 +262,7 @@ func runCommandDraft() (string, error) {
 }
 
 func useDefaultPrDescription(dirName string) {
-	fileName := "README.md"
-	err := os.Remove(fileName)
-	if err != nil {
-		panic(err)
-	}
-	err = campaign.ApplyReadMeTemplate(fileName, dirName)
+	err := campaign.ApplyReadMeTemplate("README.md", dirName)
 	if err != nil {
 		panic(err)
 	}

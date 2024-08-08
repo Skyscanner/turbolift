@@ -217,7 +217,8 @@ func ApplyTemplate(outputFilename string, templateContent string, data interface
 		return fmt.Errorf("unable to open file for output: %w", err)
 	}
 
-	fmt.Println(templateContent)
+	defer file.Close()
+
 	parsedTemplate, err := template.New("").Parse(templateContent)
 
 	if err != nil {
@@ -248,23 +249,13 @@ func PrDescriptionUnchanged(dir *Campaign) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("unable to create temp pr description file: %w", err)
 	}
+	err = ApplyReadMeTemplate(tempPrDescriptionFile.Name(), dir.Name)
+	if err != nil {
+		return false, fmt.Errorf("unable to write temp pr description file: %w", err)
+	}
+
 	defer os.Remove(tempPrDescriptionFile.Name())
-	// todo: refactor using ApplyReadMeTemplate()
-	parsedPrDescriptionTemplate, err := template.New("").Parse(readmeTemplate)
-	if err != nil {
-		return false, fmt.Errorf("unable to parse template: %w", err)
-	}
-	data := TemplateVariables{
-		CampaignName: dir.Name,
-	}
-	err = parsedPrDescriptionTemplate.Execute(tempPrDescriptionFile, data)
-	if err != nil {
-		return false, fmt.Errorf("unable to write templated file: %w", err)
-	}
-	err = tempPrDescriptionFile.Close()
-	if err != nil {
-		return false, fmt.Errorf("unable to close temp pr description file: %w", err)
-	}
+
 	originalPrTitle, originalPrBody, err := readPrDescriptionFile(tempPrDescriptionFile.Name())
 	if err != nil {
 		return false, fmt.Errorf("unable to read pr description file: %w", err)
