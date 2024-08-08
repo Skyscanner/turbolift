@@ -17,12 +17,104 @@ package create_prs
 
 import (
 	"bytes"
+	"github.com/skyscanner/turbolift/internal/campaign"
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
+	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	useDefaultPrDescription(filepath.Base(dir))
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfPrTitleIsUpdatedButNotPrBody(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	useDefaultPrBodyOnly(filepath.Base(dir))
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfPrBodyIsUpdatedButNotPrTitle(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	// dir is in the format /var/.../.../turbolift-test-XXXXXX
+	useDefaultPrTitleOnly(filepath.Base(dir))
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfDescriptionFileIsEmpty(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	customDescriptionFileName := "custom.md"
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.CreateOrUpdatePrDescriptionFile(customDescriptionFileName, "", "")
+
+	out, err := runCommandWithAlternativeDescriptionFile(customDescriptionFileName)
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in custom.md. Are you sure you want to proceed?")
+}
 
 func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
@@ -106,8 +198,46 @@ func TestItLogsCreateDraftPr(t *testing.T) {
 	})
 }
 
+func TestItCreatesPrsFromAlternativeDescriptionFile(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	customDescriptionFileName := "custom.md"
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.CreateOrUpdatePrDescriptionFile(customDescriptionFileName, "custom PR title", "custom PR body")
+
+	out, err := runCommandWithAlternativeDescriptionFile(customDescriptionFileName)
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Reading campaign data (repos.txt, custom.md)")
+	assert.Contains(t, out, "Creating PR in org/repo1")
+	assert.Contains(t, out, "Creating PR in org/repo2")
+	assert.Contains(t, out, "turbolift create-prs completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "custom PR title"},
+		{"work/org/repo2", "custom PR title"},
+	})
+}
+
 func runCommand() (string, error) {
 	cmd := NewCreatePRsCmd()
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	err := cmd.Execute()
+
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandWithAlternativeDescriptionFile(fileName string) (string, error) {
+	cmd := NewCreatePRsCmd()
+	prDescriptionFile = fileName
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
@@ -129,4 +259,50 @@ func runCommandDraft() (string, error) {
 		return outBuffer.String(), err
 	}
 	return outBuffer.String(), nil
+}
+
+func useDefaultPrDescription(dirName string) {
+	err := campaign.ApplyReadMeTemplate("README.md", dirName)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func useDefaultPrTitleOnly(dirName string) {
+	useDefaultPrDescription(dirName)
+	// append some text to change the pr description body
+	f, err := os.OpenFile("README.md", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(f)
+	_, err = f.WriteString("additional pr description")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func useDefaultPrBodyOnly(dirName string) {
+	useDefaultPrDescription(dirName)
+	//	append something to first line to change title
+	fileName := "README.md"
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	lines[0] += "updated title"
+
+	newContent := strings.Join(lines, "\n")
+
+	err = os.WriteFile(fileName, []byte(newContent), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
