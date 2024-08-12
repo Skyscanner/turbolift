@@ -17,6 +17,7 @@ package foreach
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -34,7 +35,15 @@ import (
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile string = "repos.txt"
+	repoFile = "repos.txt"
+
+	overallResultsDirectory string
+
+	successfulResultsDirectory string
+	successfulReposFileName    string
+
+	failedResultsDirectory string
+	failedReposFileName    string
 )
 
 func formatArguments(arguments []string) string {
@@ -49,8 +58,7 @@ func NewForeachCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "foreach [flags] -- COMMAND [ARGUMENT...]",
 		Short: "Run COMMAND against each working copy",
-		Long:
-`Run COMMAND against each working copy. Make sure to include a
+		Long: `Run COMMAND against each working copy. Make sure to include a
 double hyphen -- with space on both sides before COMMAND, as this
 marks that no further options should be interpreted by turbolift.`,
 		RunE: runE,
@@ -83,6 +91,10 @@ func runE(c *cobra.Command, args []string) error {
 	// the user something they could copy and paste.
 	prettyArgs := formatArguments(args)
 
+	setupOutputFiles(dir.Name, prettyArgs)
+
+	logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
+
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
@@ -99,9 +111,11 @@ func runE(c *cobra.Command, args []string) error {
 		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 		if err != nil {
+			emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithFailure(err)
 			errorCount++
 		} else {
+			emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
 			execActivity.EndWithSuccessAndEmitLogs()
 			doneCount++
 		}
@@ -113,5 +127,55 @@ func runE(c *cobra.Command, args []string) error {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 
+	logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
+	logger.Printf("Names of successful repos have been written to %s", successfulReposFileName)
+	logger.Printf("Names of failed repos have been written to %s", failedReposFileName)
+
 	return nil
+}
+
+// sets up a temporary directory to store success/failure logs etc
+func setupOutputFiles(campaignName string, command string) {
+	overallResultsDirectory, _ = os.MkdirTemp("", fmt.Sprintf("turbolift-foreach-%s-", campaignName))
+	successfulResultsDirectory = path.Join(overallResultsDirectory, "successful")
+	failedResultsDirectory = path.Join(overallResultsDirectory, "failed")
+	_ = os.MkdirAll(successfulResultsDirectory, 0755)
+	_ = os.MkdirAll(failedResultsDirectory, 0755)
+
+	successfulReposFileName = path.Join(successfulResultsDirectory, "repos.txt")
+	failedReposFileName = path.Join(failedResultsDirectory, "repos.txt")
+
+	// create the files
+	successfulReposFile, _ := os.Create(successfulReposFileName)
+	failedReposFile, _ := os.Create(failedReposFileName)
+	defer successfulReposFile.Close()
+	defer failedReposFile.Close()
+
+	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
+	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))
+}
+
+func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
+	// write the repo name to the repos file
+	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
+	defer reposFile.Close()
+	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
+	if err != nil {
+		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
+	}
+
+	// write logs to a file under the logsParent directory, in a directory structure that mirrors that of the work directory
+	logsDir := path.Join(logsDirectoryParent, repo.FullRepoName)
+	logsFile := path.Join(logsDir, "logs.txt")
+	err = os.MkdirAll(logsDir, 0755)
+	if err != nil {
+		logger.Errorf("Failed to create directory %s: %s", logsDir, err)
+	}
+
+	logs, _ := os.Create(logsFile)
+	defer logs.Close()
+	_, err = logs.WriteString(executionLogs)
+	if err != nil {
+		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
+	}
 }
