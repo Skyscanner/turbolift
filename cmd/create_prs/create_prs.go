@@ -142,7 +142,7 @@ func run(c *cobra.Command, _ []string) {
 }
 
 func prDescriptionUnchanged(dir *campaign.Campaign) bool {
-	originalPrTitleTodo := fmt.Sprintf("TODO: Title of Pull Request (%s)", dir.Name)
+	originalPrTitleTodo := "TODO: Title of Pull Request"
 	originalPrBodyTodo := "TODO: This file will serve as both a README and the description of the PR."
-	return dir.PrTitle == originalPrTitleTodo || strings.Contains(dir.PrBody, originalPrBodyTodo) || dir.PrTitle == ""
+	return strings.Contains(dir.PrTitle, originalPrTitleTodo) || strings.Contains(dir.PrBody, originalPrBodyTodo) || dir.PrTitle == ""
 }

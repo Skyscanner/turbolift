@@ -82,14 +82,14 @@ func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody str
 	}
 }
 
-func UseDefaultPrDescription(dirName string) {
-	originalPrTitleTodo := fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName)
+func UseDefaultPrDescription() {
+	originalPrTitleTodo := "TODO: Title of Pull Request"
 	originalPrBodyTodo := "TODO: This file will serve as both a README and the description of the PR."
 	CreateOrUpdatePrDescriptionFile("README.md", originalPrTitleTodo, originalPrBodyTodo)
 }
 
-func UsePrTitleTodoOnly(dirName string) {
-	CreateOrUpdatePrDescriptionFile("README.md", fmt.Sprintf("TODO: Title of Pull Request (%s)", dirName), "updated PR body")
+func UsePrTitleTodoOnly() {
+	CreateOrUpdatePrDescriptionFile("README.md", "TODO: Title of Pull Request", "updated PR body")
 }
 
 func UsePrBodyTodoOnly() {

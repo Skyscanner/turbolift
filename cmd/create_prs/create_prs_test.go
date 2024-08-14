@@ -22,7 +22,6 @@ import (
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
-	"path/filepath"
 	"testing"
 )
 
@@ -34,8 +33,8 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	fakePrompt := prompt.NewFakePromptNo()
 	p = fakePrompt
 
-	dirName := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrDescription(dirName)
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UseDefaultPrDescription()
 
 	out, err := runCommand()
 	assert.NoError(t, err)
@@ -55,8 +54,8 @@ func TestItWarnsIfOnlyPrTitleIsUnchanged(t *testing.T) {
 	fakePrompt := prompt.NewFakePromptNo()
 	p = fakePrompt
 
-	dirName := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UsePrTitleTodoOnly(filepath.Base(dirName))
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UsePrTitleTodoOnly()
 
 	out, err := runCommand()
 	assert.NoError(t, err)
