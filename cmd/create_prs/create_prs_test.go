@@ -43,7 +43,7 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	assert.NotContains(t, out, "turbolift create-prs completed")
 	assert.NotContains(t, out, "2 OK, 0 skipped")
 
-	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in README.md. Are you sure you want to proceed?")
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description may not have been updated in README.md. Are you sure you want to proceed?")
 }
 
 func TestItWarnsIfDescriptionFileIsEmpty(t *testing.T) {
@@ -66,7 +66,7 @@ func TestItWarnsIfDescriptionFileIsEmpty(t *testing.T) {
 	assert.NotContains(t, out, "turbolift create-prs completed")
 	assert.NotContains(t, out, "2 OK, 0 skipped")
 
-	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description has not been updated in custom.md. Are you sure you want to proceed?")
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description may not have been updated in custom.md. Are you sure you want to proceed?")
 }
 
 func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {

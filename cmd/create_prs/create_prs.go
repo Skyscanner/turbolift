@@ -20,6 +20,7 @@ import (
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -72,7 +73,7 @@ func run(c *cobra.Command, _ []string) {
 		return
 	}
 	if prDescriptionUnchanged(dir) {
-		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description has not been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
+		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description may not have been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
 			return
 		}
 	}
@@ -141,16 +142,7 @@ func run(c *cobra.Command, _ []string) {
 }
 
 func prDescriptionUnchanged(dir *campaign.Campaign) bool {
-	originalPrTitle := fmt.Sprintf("TODO: Title of Pull Request (%s)", dir.Name)
-	originalPrBody := `TODO: This file will serve as both a README and the description of the PR. Describe the pull request using markdown in this file. Make it clear why the change is being made, and make suggestions for anything that the reviewer may need to do.
-
-By approving this PR, you are confirming that you have adequately and effectively reviewed this change.
-
-## How this change was made
-TODO: Describe the approach that was used to select repositories for this change
-TODO: Describe any shell commands, scripts, manual operations, etc, that were used to make changes
-
-<!-- Please keep the footer below, to support turbolift usage tracking -->
-<sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>`
-	return dir.PrTitle == originalPrTitle || dir.PrBody == originalPrBody || dir.PrTitle == ""
+	originalPrTitleTodo := fmt.Sprintf("TODO: Title of Pull Request (%s)", dir.Name)
+	originalPrBodyTodo := "TODO: This file will serve as both a README and the description of the PR."
+	return dir.PrTitle == originalPrTitleTodo || strings.Contains(dir.PrBody, originalPrBodyTodo) || dir.PrTitle == ""
 }
