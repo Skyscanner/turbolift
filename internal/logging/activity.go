@@ -110,3 +110,7 @@ func (a *Activity) Writer() io.Writer {
 		activity: a,
 	}
 }
+
+func (a *Activity) Logs() string {
+	return strings.Join(a.logs, "\n")
+}
