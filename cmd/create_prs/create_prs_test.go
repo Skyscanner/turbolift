@@ -22,6 +22,7 @@ import (
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 )
 
@@ -33,8 +34,50 @@ func TestItWarnsIfDescriptionFileTemplateIsUnchanged(t *testing.T) {
 	fakePrompt := prompt.NewFakePromptNo()
 	p = fakePrompt
 
-	dir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
-	testsupport.UseDefaultPrDescription(dir)
+	dirName := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UseDefaultPrDescription(dirName)
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description may not have been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfOnlyPrTitleIsUnchanged(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	dirName := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UsePrTitleTodoOnly(filepath.Base(dirName))
+
+	out, err := runCommand()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Creating PR in org/repo1")
+	assert.NotContains(t, out, "Creating PR in org/repo2")
+	assert.NotContains(t, out, "turbolift create-prs completed")
+	assert.NotContains(t, out, "2 OK, 0 skipped")
+
+	fakePrompt.AssertCalledWith(t, "It looks like the PR title and/or description may not have been updated in README.md. Are you sure you want to proceed?")
+}
+
+func TestItWarnsIfOnlyPrBodyIsUnchanged(t *testing.T) {
+	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	testsupport.UsePrBodyTodoOnly()
 
 	out, err := runCommand()
 	assert.NoError(t, err)
