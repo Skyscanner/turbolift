@@ -3,7 +3,7 @@ module github.com/skyscanner/turbolift
 go 1.16
 
 require (
-	github.com/alessio/shellescape v1.4.2 // indirect
+	github.com/alessio/shellescape v1.4.2
 	github.com/briandowns/spinner v1.15.0
 	github.com/fatih/color v1.12.0
 	github.com/manifoldco/promptui v0.9.0
