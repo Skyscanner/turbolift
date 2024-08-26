@@ -16,8 +16,11 @@
 package create_prs
 
 import (
+	"fmt"
+	"github.com/skyscanner/turbolift/internal/prompt"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -32,6 +35,7 @@ import (
 var (
 	gh github.GitHub = github.NewRealGitHub()
 	g  git.Git       = git.NewRealGit()
+	p  prompt.Prompt = prompt.NewRealPrompt()
 )
 
 var (
@@ -67,6 +71,11 @@ func run(c *cobra.Command, _ []string) {
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
+	}
+	if prDescriptionUnchanged(dir) {
+		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description may not have been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
+			return
+		}
 	}
 	readCampaignActivity.EndWithSuccess()
 
@@ -130,4 +139,10 @@ func run(c *cobra.Command, _ []string) {
 	} else {
 		logger.Warnf("turbolift create-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
+}
+
+func prDescriptionUnchanged(dir *campaign.Campaign) bool {
+	originalPrTitleTodo := "TODO: Title of Pull Request"
+	originalPrBodyTodo := "TODO: This file will serve as both a README and the description of the PR."
+	return strings.Contains(dir.PrTitle, originalPrTitleTodo) || strings.Contains(dir.PrBody, originalPrBodyTodo) || dir.PrTitle == ""
 }

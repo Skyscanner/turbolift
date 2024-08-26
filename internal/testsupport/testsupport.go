@@ -24,6 +24,9 @@ import (
 	"strings"
 )
 
+var originalPrTitleTodo = "TODO: Title of Pull Request"
+var originalPrBodyTodo = "TODO: This file will serve as both a README and the description of the PR."
+
 func Pwd() string {
 	dir, _ := os.Getwd()
 	return filepath.Base(dir)
@@ -80,4 +83,16 @@ func CreateOrUpdatePrDescriptionFile(filename string, prTitle string, prBody str
 	if err != nil {
 		panic(err)
 	}
+}
+
+func UseDefaultPrDescription() {
+	CreateOrUpdatePrDescriptionFile("README.md", originalPrTitleTodo, originalPrBodyTodo)
+}
+
+func UsePrTitleTodoOnly() {
+	CreateOrUpdatePrDescriptionFile("README.md", originalPrTitleTodo, "updated PR body")
+}
+
+func UsePrBodyTodoOnly() {
+	CreateOrUpdatePrDescriptionFile("README.md", "updated PR title", originalPrBodyTodo)
 }
