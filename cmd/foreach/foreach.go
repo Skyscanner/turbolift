@@ -35,15 +35,19 @@ import (
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile = "repos.txt"
+	repoFile   string
+	successful bool
+	failed     bool
 
 	overallResultsDirectory string
 
 	successfulResultsDirectory string
 	successfulReposFileName    string
+	successfulReposSymlink     = ".latest_successful"
 
 	failedResultsDirectory string
 	failedReposFileName    string
+	failedReposSymlink     = ".latest_failed"
 )
 
 func formatArguments(arguments []string) string {
@@ -52,6 +56,17 @@ func formatArguments(arguments []string) string {
 		quotedArgs[i] = shellescape.Quote(arg)
 	}
 	return strings.Join(quotedArgs, " ")
+}
+
+func moreThanOne(args ...bool) bool {
+	b := map[bool]int{
+		false: 0,
+		true:  0,
+	}
+	for _, v := range args {
+		b[v] += 1
+	}
+	return b[true] > 1
 }
 
 func NewForeachCmd() *cobra.Command {
@@ -65,7 +80,9 @@ marks that no further options should be interpreted by turbolift.`,
 		Args: cobra.MinimumNArgs(1),
 	}
 
-	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+	cmd.Flags().StringVar(&repoFile, "repos", "", "A file containing a list of repositories to clone.")
+	cmd.Flags().BoolVar(&successful, "successful", false, "Indication of whether to run against previously successful repos only.")
+	cmd.Flags().BoolVar(&failed, "failed", false, "Indication of whether to run against previously failed repos only.")
 
 	return cmd
 }
@@ -77,6 +94,23 @@ func runE(c *cobra.Command, args []string) error {
 		return errors.New("Use -- to separate command")
 	}
 
+	customRepoFile := repoFile != ""
+	if moreThanOne(successful, failed, customRepoFile) {
+		return errors.New("only one repositories flag or option may be specified: either --successful; --failed; or --repos <file>")
+	}
+	if successful {
+		var err error
+		if repoFile, err = os.Readlink(successfulReposSymlink); err != nil {
+			return errors.New("no previous successful foreach logs found")
+		}
+	} else if failed {
+		var err error
+		if repoFile, err = os.Readlink(failedReposSymlink); err != nil {
+			return errors.New("no previous failed foreach logs found")
+		}
+	} else if !customRepoFile {
+		repoFile = "repos.txt"
+	}
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
@@ -91,7 +125,7 @@ func runE(c *cobra.Command, args []string) error {
 	// the user something they could copy and paste.
 	prettyArgs := formatArguments(args)
 
-	setupOutputFiles(dir.Name, prettyArgs)
+	setupOutputFiles(dir.Name, prettyArgs, logger)
 
 	logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
 
@@ -128,14 +162,14 @@ func runE(c *cobra.Command, args []string) error {
 	}
 
 	logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
-	logger.Printf("Names of successful repos have been written to %s", successfulReposFileName)
-	logger.Printf("Names of failed repos have been written to %s", failedReposFileName)
+	logger.Printf("Names of successful repos have been written to %s. Use --successful to run the next foreach command against these repos", successfulReposFileName)
+	logger.Printf("Names of failed repos have been written to %s. Use --failed to run the next foreach command against these repos", failedReposFileName)
 
 	return nil
 }
 
 // sets up a temporary directory to store success/failure logs etc
-func setupOutputFiles(campaignName string, command string) {
+func setupOutputFiles(campaignName string, command string, logger *logging.Logger) {
 	overallResultsDirectory, _ = os.MkdirTemp("", fmt.Sprintf("turbolift-foreach-%s-", campaignName))
 	successfulResultsDirectory = path.Join(overallResultsDirectory, "successful")
 	failedResultsDirectory = path.Join(overallResultsDirectory, "failed")
@@ -150,6 +184,27 @@ func setupOutputFiles(campaignName string, command string) {
 	failedReposFile, _ := os.Create(failedReposFileName)
 	defer successfulReposFile.Close()
 	defer failedReposFile.Close()
+
+	if _, err := os.Lstat(successfulReposSymlink); err == nil {
+		err := os.Remove(successfulReposSymlink)
+		if err != nil {
+			logger.Warnf("Failed to remove previous symlink for successful repos: %v", err)
+		}
+	}
+	err := os.Symlink(successfulReposFileName, successfulReposSymlink)
+	if err != nil {
+		logger.Warnf("Failed to create symlink for successful repos: %v", err)
+	}
+	if _, err := os.Lstat(failedReposSymlink); err == nil {
+		err := os.Remove(failedReposSymlink)
+		if err != nil {
+			logger.Warnf("Failed to remove previous symlink for failed repos: %v", err)
+		}
+	}
+	err = os.Symlink(failedReposFileName, failedReposSymlink)
+	if err != nil {
+		logger.Warnf("Failed to create symlink for failed repos: %v", err)
+	}
 
 	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
 	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))

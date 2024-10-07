@@ -96,3 +96,16 @@ func UsePrTitleTodoOnly() {
 func UsePrBodyTodoOnly() {
 	CreateOrUpdatePrDescriptionFile("README.md", "updated PR title", originalPrBodyTodo)
 }
+
+func CreateNewSymlink(target string, linkName string) {
+	if _, err := os.Lstat(linkName); err == nil {
+		err = os.Remove(linkName)
+		if err != nil {
+			panic(err)
+		}
+	}
+	err := os.Symlink(target, linkName)
+	if err != nil {
+		panic(err)
+	}
+}

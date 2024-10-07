@@ -204,8 +204,188 @@ func TestItCreatesLogFiles(t *testing.T) {
 	assert.NoError(t, err, "Expected the failure log file for org/repo2 to exist")
 }
 
+func TestItRunsAgainstSuccessfulReposOnly(t *testing.T) {
+	fakeExecutor := executor.NewAlternatingSuccessFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+	testsupport.CreateAnotherRepoFile("successful.txt", "org/repo1", "org/repo3")
+	testsupport.CreateNewSymlink("successful.txt", ".latest_successful")
+
+	out, err := runCommandReposSuccessful("--", "some", "command")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "1 OK, 0 skipped, 1 errored")
+	assert.Contains(t, out, "org/repo1")
+	assert.Contains(t, out, "org/repo3")
+	assert.NotContains(t, out, "org/repo2")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "some", "command"},
+		{"work/org/repo3", "some", "command"},
+	})
+
+	// check that the symlink has been updated
+	successfulRepoFile, err := os.Readlink(".latest_successful")
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEqual(t, successfulRepoFile, "successful.txt")
+}
+
+func TestItRunsAgainstFailedReposOnly(t *testing.T) {
+	fakeExecutor := executor.NewAlternatingSuccessFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+	testsupport.CreateAnotherRepoFile("failed.txt", "org/repo1", "org/repo3")
+	testsupport.CreateNewSymlink("failed.txt", ".latest_failed")
+
+	out, err := runCommandReposFailed("--", "some", "command")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "1 OK, 0 skipped, 1 errored")
+	assert.Contains(t, out, "org/repo1")
+	assert.Contains(t, out, "org/repo3")
+	assert.NotContains(t, out, "org/repo2")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "some", "command"},
+		{"work/org/repo3", "some", "command"},
+	})
+
+	// check that the symlink has been updated
+	failedRepoFile, err := os.Readlink(".latest_failed")
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEqual(t, failedRepoFile, "failed.txt")
+}
+
+func TestItCreatesSymlinksSuccessfully(t *testing.T) {
+	fakeExecutor := executor.NewAlternatingSuccessFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+
+	out, err := runCommand("--", "some", "command")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "2 OK, 0 skipped, 1 errored")
+
+	successfulRepoFile, err := os.Readlink(".latest_successful")
+	if err != nil {
+		panic(err)
+	}
+	successfulRepos, err := os.ReadFile(successfulRepoFile)
+	if err != nil {
+		panic(err)
+	}
+	assert.Contains(t, string(successfulRepos), "org/repo1")
+	assert.Contains(t, string(successfulRepos), "org/repo3")
+	assert.NotContains(t, string(successfulRepos), "org/repo2")
+
+	failedRepoFile, err := os.Readlink(".latest_failed")
+	if err != nil {
+		panic(err)
+	}
+	failedRepos, err := os.ReadFile(failedRepoFile)
+	if err != nil {
+		panic(err)
+	}
+	assert.Contains(t, string(failedRepos), "org/repo2")
+	assert.NotContains(t, string(failedRepos), "org/repo1")
+	assert.NotContains(t, string(failedRepos), "org/repo3")
+}
+
+func TestItRunsAgainstCustomReposFile(t *testing.T) {
+	fakeExecutor := executor.NewAlternatingSuccessFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+	testsupport.CreateAnotherRepoFile("custom_repofile.txt", "org/repo1", "org/repo3")
+
+	out, err := runCommandReposCustom("--", "some", "command")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift foreach completed")
+	assert.Contains(t, out, "1 OK, 0 skipped, 1 errored")
+	assert.Contains(t, out, "org/repo1")
+	assert.Contains(t, out, "org/repo3")
+	assert.NotContains(t, out, "org/repo2")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "some", "command"},
+		{"work/org/repo3", "some", "command"},
+	})
+}
+
+func TestItDoesNotAllowMultipleReposArguments(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	exec = fakeExecutor
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
+
+	_, err := runCommandReposMultiple("--", "some", "command")
+	assert.Error(t, err, "only one repositories flag or option may be specified: either --successful; --failed; or --repos <file>")
+
+	fakeExecutor.AssertCalledWith(t, [][]string{})
+}
+
 func runCommand(args ...string) (string, error) {
 	cmd := NewForeachCmd()
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	cmd.SetArgs(args)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandReposSuccessful(args ...string) (string, error) {
+	cmd := NewForeachCmd()
+	successful = true
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	cmd.SetArgs(args)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandReposFailed(args ...string) (string, error) {
+	cmd := NewForeachCmd()
+	failed = true
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	cmd.SetArgs(args)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandReposCustom(args ...string) (string, error) {
+	cmd := NewForeachCmd()
+	repoFile = "custom_repofile.txt"
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	cmd.SetArgs(args)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runCommandReposMultiple(args ...string) (string, error) {
+	cmd := NewForeachCmd()
+	successful = true
+	repoFile = "custom_repofile.txt"
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	cmd.SetArgs(args)
