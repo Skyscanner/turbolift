@@ -156,6 +156,17 @@ At any time, if you need to update your working copy branches from the upstream,
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
 
+#### Logging and re-running with foreach
+
+Every time a command is run with `turbolift foreach`, logging output for each repository is collected in a temporary directory
+divided into `successful` and `failed` subdirectories. Each of these also contains a separate file listing all the repositories that succeeded or failed.
+
+You can use `--successful` or `--failed` to run a foreach command only against the repositories that succeeded or failed in the preceding command.
+
+```
+turbolift foreach --failed -- make test
+```
+
 ### Committing changes
 
 When ready to commit changes across all repos, run:
