@@ -41,6 +41,7 @@ func TestIsPushableReturnsFalseForUnknownPermission(t *testing.T) {
 		`{"viewerPermission":"READ"}`,
 		`{"viewerPermission":"RANDOM"}`,
 		`{"viewerPermission":""}`,
+		`{"anotherParam":"WRITE"}`, // valid JSON but not the expected format
 	}
 
 	for _, testCase := range testCases {
@@ -52,7 +53,6 @@ func TestIsPushableReturnsFalseForUnknownPermission(t *testing.T) {
 
 func TestIsPushableReturnsErrorForInvalidJSON(t *testing.T) {
 	testCases := []string{
-		`{"anotherParam":"WRITE"`,     // valid JSON but not the expected format
 		`{"viewerPermission":"WRITE"`, // invalid JSON
 		`viewerPermission: WRITE`,     // invalid JSON
 		`{"viewerPermission": WRITE}`, // invalid JSON
