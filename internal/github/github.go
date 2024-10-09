@@ -170,6 +170,15 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 	return nil, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 }
 
+func (r *RealGitHub) IsPushable(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
+	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json", "viewerPermission")
+	if err != nil {
+		return false, err
+	}
+
+	return IsPushable(s)
+}
+
 func NewRealGitHub() *RealGitHub {
 	return &RealGitHub{}
 }
