@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsPushableReturnsTrueForAllCases(t *testing.T) {
+func TestuserHasPushPermissionReturnsTrueForAllCases(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"WRITE"}`,
 		`{"viewerPermission":"MAINTAIN"}`,
@@ -29,13 +29,13 @@ func TestIsPushableReturnsTrueForAllCases(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		pushable, err := IsPushable(testCase)
+		pushable, err := userHasPushPermission(testCase)
 		assert.NoError(t, err)
 		assert.True(t, pushable)
 	}
 }
 
-func TestIsPushableReturnsFalseForUnknownPermission(t *testing.T) {
+func TestuserHasPushPermissionReturnsFalseForUnknownPermission(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"UNKNOWN"}`,
 		`{"viewerPermission":"READ"}`,
@@ -45,13 +45,13 @@ func TestIsPushableReturnsFalseForUnknownPermission(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		pushable, err := IsPushable(testCase)
+		pushable, err := userHasPushPermission(testCase)
 		assert.NoError(t, err)
 		assert.False(t, pushable)
 	}
 }
 
-func TestIsPushableReturnsErrorForInvalidJSON(t *testing.T) {
+func TestuserHasPushPermissionReturnsErrorForInvalidJSON(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"WRITE"`, // invalid JSON
 		`viewerPermission: WRITE`,     // invalid JSON
@@ -59,7 +59,7 @@ func TestIsPushableReturnsErrorForInvalidJSON(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		_, err := IsPushable(testCase)
+		_, err := userHasPushPermission(testCase)
 		assert.Error(t, err)
 	}
 }

@@ -26,7 +26,7 @@ type ViewerPermission struct {
 // IsPushable checks the output of the viewerPermission API query
 // and returns true if the user has write, maintain or admin permissions
 
-func IsPushable(viewerPermissionOutput string) (bool, error) {
+func userHasPushPermission(viewerPermissionOutput string) (bool, error) {
 	var vp ViewerPermission
 
 	if err := json.Unmarshal([]byte(viewerPermissionOutput), &vp); err != nil {

@@ -42,6 +42,7 @@ type GitHub interface {
 	UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
+	IsPushable(output io.Writer, repoDir string) (bool, error)
 }
 
 type RealGitHub struct{}
@@ -170,13 +171,13 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 	return nil, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 }
 
-func (r *RealGitHub) IsPushable(output io.Writer, workingDir string, fullRepoName string) (bool, error) {
-	s, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", fullRepoName, "--json", "viewerPermission")
+func (r *RealGitHub) IsPushable(output io.Writer, repoDir string) (bool, error) {
+	s, err := execInstance.ExecuteAndCapture(output, repoDir, "gh", "repo", "view", "--json", "viewerPermission")
 	if err != nil {
 		return false, err
 	}
 
-	return IsPushable(s)
+	return userHasPushPermission(s)
 }
 
 func NewRealGitHub() *RealGitHub {

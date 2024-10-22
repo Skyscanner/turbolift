@@ -17,10 +17,23 @@ package github
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+)
+
+type Command int
+
+const (
+	ForkAndClone Command = iota
+	Clone
+	CreatePullRequest
+	ClosePullRequest
+	GetDefaultBranchName
+	UpdatePRDescription
+	IsPushable
 )
 
 type FakeGitHub struct {
@@ -47,6 +60,12 @@ func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) 
 	f.calls = append(f.calls, args)
 	_, err := f.handler(Clone, args)
 	return err
+}
+
+func (f *FakeGitHub) IsPushable(_ io.Writer, repoDir string) (bool, error) {
+	args := []string{repoDir}
+	f.calls = append(f.calls, args)
+	return f.handler(IsPushable, args)
 }
 
 func (f *FakeGitHub) ClosePullRequest(_ io.Writer, workingDir string, branchName string) error {
@@ -134,14 +153,3 @@ func NewAlwaysFailsOnGetDefaultBranchFakeGitHub() *FakeGitHub {
 		return PrStatus{}, nil
 	})
 }
-
-type Command int
-
-const (
-	ForkAndClone Command = iota
-	Clone
-	CreatePullRequest
-	ClosePullRequest
-	GetDefaultBranchName
-	UpdatePRDescription
-)

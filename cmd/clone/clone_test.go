@@ -17,14 +17,16 @@ package clone
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/testsupport"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestItAbortsIfReposFileNotFound(t *testing.T) {
@@ -48,7 +50,21 @@ func TestItAbortsIfReposFileNotFound(t *testing.T) {
 }
 
 func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
-	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
+	// this fakeGithub will tell the caller that the repo is pushable, but will fail to clone it
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable:
+			return true, nil
+		case github.Clone:
+			return false, errors.New("synthetic error")
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) {
+		return nil, errors.New("unexpected call")
+	})
+
+	// fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
@@ -63,7 +79,9 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org/repo1"},
 		{"work/org", "org/repo1"},
+		{"work/org/repo2"},
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{})
@@ -144,7 +162,18 @@ func TestItPullsFromUpstreamWhenCloningWithFork(t *testing.T) {
 }
 
 func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
-	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable, github.Clone:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) {
+		return nil, errors.New("unexpected call")
+	})
+
+	// fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
@@ -158,7 +187,9 @@ func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org1/repo1"},
 		{"work/org1", "org1/repo1"},
+		{"work/org2/repo2"},
 		{"work/org2", "org2/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
@@ -237,7 +268,9 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/org/repo1"},
 		{"work/org", "org/repo1"},
+		{"work/org/repo2"},
 		{"work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
@@ -258,7 +291,9 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/orgA/repo1"},
 		{"work/orgA", "orgA/repo1"},
+		{"work/orgB/repo2"},
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
@@ -279,7 +314,9 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"work/orgA/repo1"},
 		{"work/orgA", "mygitserver.com/orgA/repo1"},
+		{"work/orgB/repo2"},
 		{"work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
@@ -295,7 +332,7 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	g = fakeGit
 
 	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
-	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0755)
+	_ = os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0o755)
 
 	out, err := runCloneCommandWithFork()
 	assert.NoError(t, err)
@@ -315,7 +352,7 @@ func runCloneCommand() (string, error) {
 	cmd := NewCloneCmd()
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
-	nofork = true
+	forceFork = false
 	err := cmd.Execute()
 	if err != nil {
 		return outBuffer.String(), err
@@ -327,7 +364,7 @@ func runCloneCommandWithFork() (string, error) {
 	cmd := NewCloneCmd()
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
-	nofork = false
+	forceFork = true
 	err := cmd.Execute()
 	if err != nil {
 		return outBuffer.String(), err
