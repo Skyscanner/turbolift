@@ -17,7 +17,6 @@ package github
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"testing"
 
