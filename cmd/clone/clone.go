@@ -86,10 +86,10 @@ func run(c *cobra.Command, _ []string) {
 			}
 		}
 
-		if !fork {
-			cloneActivity = logger.StartActivity("Cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
-		} else {
+		if fork {
 			cloneActivity = logger.StartActivity("Forking and cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+		} else {
+			cloneActivity = logger.StartActivity("Cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
 		}
 
 		err := os.MkdirAll(orgDirPath, os.ModeDir|0o755)
@@ -106,10 +106,10 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		if !fork {
-			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
-		} else {
+		if fork {
 			err = gh.ForkAndClone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+		} else {
+			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
 		}
 
 		if err != nil {

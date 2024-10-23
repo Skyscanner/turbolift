@@ -42,40 +42,40 @@ type FakeGitHub struct {
 }
 
 func (f *FakeGitHub) CreatePullRequest(_ io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
-	args := []string{workingDir, metadata.Title}
+	args := []string{"create_pull_request", workingDir, metadata.Title}
 	f.calls = append(f.calls, args)
 	return f.handler(CreatePullRequest, args)
 }
 
 func (f *FakeGitHub) ForkAndClone(_ io.Writer, workingDir string, fullRepoName string) error {
-	args := []string{workingDir, fullRepoName}
+	args := []string{"fork_and_clone", workingDir, fullRepoName}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(ForkAndClone, args)
 	return err
 }
 
 func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) error {
-	args := []string{workingDir, fullRepoName}
+	args := []string{"clone", workingDir, fullRepoName}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(Clone, args)
 	return err
 }
 
 func (f *FakeGitHub) IsPushable(_ io.Writer, repoDir string) (bool, error) {
-	args := []string{repoDir}
+	args := []string{"user_can_push", repoDir}
 	f.calls = append(f.calls, args)
 	return f.handler(IsPushable, args)
 }
 
 func (f *FakeGitHub) ClosePullRequest(_ io.Writer, workingDir string, branchName string) error {
-	args := []string{workingDir, branchName}
+	args := []string{"close_pull_request", workingDir, branchName}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(ClosePullRequest, args)
 	return err
 }
 
 func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, _ string) (*PrStatus, error) {
-	f.calls = append(f.calls, []string{workingDir})
+	f.calls = append(f.calls, []string{"get_pr", workingDir})
 	result, err := f.returningHandler(workingDir)
 	if result == nil {
 		return nil, err
@@ -84,14 +84,14 @@ func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, _ string) (*PrStatus,
 }
 
 func (f *FakeGitHub) GetDefaultBranchName(_ io.Writer, workingDir string, fullRepoName string) (string, error) {
-	args := []string{workingDir, fullRepoName}
+	args := []string{"get_default_branch", workingDir, fullRepoName}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(GetDefaultBranchName, args)
 	return "main", err
 }
 
 func (f *FakeGitHub) UpdatePRDescription(_ io.Writer, workingDir string, title string, body string) error {
-	args := []string{workingDir, title, body}
+	args := []string{"update_pr_description", workingDir, title, body}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(UpdatePRDescription, args)
 	return err
@@ -127,7 +127,7 @@ func NewAlwaysFailsFakeGitHub() *FakeGitHub {
 
 func NewAlwaysThrowNoPRFound() *FakeGitHub {
 	return NewFakeGitHub(func(command Command, args []string) (bool, error) {
-		workingDir, branchName := args[0], args[1]
+		workingDir, branchName := args[1], args[2]
 		return false, &NoPRFoundError{Path: workingDir, BranchName: branchName}
 	}, func(workingDir string) (interface{}, error) {
 		panic("should not be invoked")

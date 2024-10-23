@@ -79,10 +79,10 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1"},
-		{"work/org", "org/repo1"},
-		{"work/org/repo2"},
-		{"work/org", "org/repo2"},
+		{"user_can_push", "work/org/repo1"},
+		{"clone", "work/org", "org/repo1"},
+		{"user_can_push", "work/org/repo2"},
+		{"clone", "work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{})
 }
@@ -103,8 +103,8 @@ func TestItLogsForkAndCloneErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org", "org/repo1"},
-		{"work/org", "org/repo2"},
+		{"fork_and_clone", "work/org", "org/repo1"},
+		{"fork_and_clone", "work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{})
 }
@@ -124,8 +124,8 @@ func TestItLogsCheckoutErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org", "org/repo1"},
-		{"work/org", "org/repo2"},
+		{"fork_and_clone", "work/org", "org/repo1"},
+		{"fork_and_clone", "work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org/repo1", testsupport.Pwd()},
@@ -148,10 +148,10 @@ func TestItPullsFromUpstreamWhenCloningWithFork(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org1", "org1/repo1"},
-		{"work/org1/repo1", "org1/repo1"},
-		{"work/org2", "org2/repo2"},
-		{"work/org2/repo2", "org2/repo2"},
+		{"fork_and_clone", "work/org1", "org1/repo1"},
+		{"get_default_branch", "work/org1/repo1", "org1/repo1"},
+		{"fork_and_clone", "work/org2", "org2/repo2"},
+		{"get_default_branch", "work/org2/repo2", "org2/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org1/repo1", testsupport.Pwd()},
@@ -187,11 +187,12 @@ func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org1/repo1"},
-		{"work/org1", "org1/repo1"},
-		{"work/org2/repo2"},
-		{"work/org2", "org2/repo2"},
+		{"user_can_push", "work/org1/repo1"},
+		{"clone", "work/org1", "org1/repo1"},
+		{"user_can_push", "work/org2/repo2"},
+		{"clone", "work/org2", "org2/repo2"},
 	})
+
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org1/repo1", testsupport.Pwd()},
 		{"checkout", "work/org2/repo2", testsupport.Pwd()},
@@ -213,10 +214,10 @@ func TestItLogsDefaultBranchErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org1", "org1/repo1"},
-		{"work/org1/repo1", "org1/repo1"},
-		{"work/org2", "org2/repo2"},
-		{"work/org2/repo2", "org2/repo2"},
+		{"fork_and_clone", "work/org1", "org1/repo1"},
+		{"get_default_branch", "work/org1/repo1", "org1/repo1"},
+		{"fork_and_clone", "work/org2", "org2/repo2"},
+		{"get_default_branch", "work/org2/repo2", "org2/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org1/repo1", testsupport.Pwd()},
@@ -241,10 +242,10 @@ func TestItLogsPullErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 repos errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org1", "org1/repo1"},
-		{"work/org1/repo1", "org1/repo1"},
-		{"work/org2", "org2/repo2"},
-		{"work/org2/repo2", "org2/repo2"},
+		{"fork_and_clone", "work/org1", "org1/repo1"},
+		{"get_default_branch", "work/org1/repo1", "org1/repo1"},
+		{"fork_and_clone", "work/org2", "org2/repo2"},
+		{"get_default_branch", "work/org2/repo2", "org2/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org1/repo1", testsupport.Pwd()},
@@ -268,10 +269,10 @@ func TestItClonesReposFoundInReposFile(t *testing.T) {
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1"},
-		{"work/org", "org/repo1"},
-		{"work/org/repo2"},
-		{"work/org", "org/repo2"},
+		{"user_can_push", "work/org/repo1"},
+		{"clone", "work/org", "org/repo1"},
+		{"user_can_push", "work/org/repo2"},
+		{"clone", "work/org", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/org/repo1", testsupport.Pwd()},
@@ -291,10 +292,10 @@ func TestItClonesReposInMultipleOrgs(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1"},
-		{"work/orgA", "orgA/repo1"},
-		{"work/orgB/repo2"},
-		{"work/orgB", "orgB/repo2"},
+		{"user_can_push", "work/orgA/repo1"},
+		{"clone", "work/orgA", "orgA/repo1"},
+		{"user_can_push", "work/orgB/repo2"},
+		{"clone", "work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
@@ -314,10 +315,10 @@ func TestItClonesReposFromOtherHosts(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/orgA/repo1"},
-		{"work/orgA", "mygitserver.com/orgA/repo1"},
-		{"work/orgB/repo2"},
-		{"work/orgB", "orgB/repo2"},
+		{"user_can_push", "work/orgA/repo1"},
+		{"clone", "work/orgA", "mygitserver.com/orgA/repo1"},
+		{"user_can_push", "work/orgB/repo2"},
+		{"clone", "work/orgB", "orgB/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"checkout", "work/orgA/repo1", testsupport.Pwd()},
@@ -339,10 +340,55 @@ func TestItSkipsCloningIfAWorkingCopyAlreadyExists(t *testing.T) {
 	assert.Contains(t, out, "Forking and cloning org/repo1")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org", "org/repo2"},
-		{"work/org/repo2", "org/repo2"},
+		{"fork_and_clone", "work/org", "org/repo2"},
+		{"get_default_branch", "work/org/repo2", "org/repo2"},
 	})
 	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org/repo2", "upstream", "main"},
+	})
+}
+
+func TestItForksIfUserHasNoPushPermission(t *testing.T) {
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable:
+			return false, nil
+		case github.ForkAndClone:
+			return true, nil
+		case github.GetDefaultBranchName:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) {
+		return nil, errors.New("unexpected call")
+	})
+
+	// fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
+
+	out, err := runCloneCommand()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Forking and cloning org/repo1")
+	assert.Contains(t, out, "Forking and cloning org/repo2")
+	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"user_can_push", "work/org/repo1"},
+		{"fork_and_clone", "work/org", "org/repo1"},
+		{"get_default_branch", "work/org/repo1", "org/repo1"},
+		{"user_can_push", "work/org/repo2"},
+		{"fork_and_clone", "work/org", "org/repo2"},
+		{"get_default_branch", "work/org/repo2", "org/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org/repo1", "upstream", "main"},
 		{"checkout", "work/org/repo2", testsupport.Pwd()},
 		{"pull", "--ff-only", "work/org/repo2", "upstream", "main"},
 	})
