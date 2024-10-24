@@ -61,8 +61,8 @@ func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) 
 	return err
 }
 
-func (f *FakeGitHub) IsPushable(_ io.Writer, repoDir string) (bool, error) {
-	args := []string{"user_can_push", repoDir}
+func (f *FakeGitHub) IsPushable(_ io.Writer, repo string) (bool, error) {
+	args := []string{"user_can_push", repo}
 	f.calls = append(f.calls, args)
 	return f.handler(IsPushable, args)
 }

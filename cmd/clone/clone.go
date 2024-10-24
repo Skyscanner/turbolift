@@ -77,7 +77,7 @@ func run(c *cobra.Command, _ []string) {
 		if forceFork {
 			fork = true
 		} else {
-			res, err := gh.IsPushable(logger.Writer(), repoDirPath)
+			res, err := gh.IsPushable(logger.Writer(), repo.FullRepoName)
 			if err != nil {
 				logger.Warnf("Unable to determine if we can push to %s: %s", orgDirPath, err)
 				fork = true
