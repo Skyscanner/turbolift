@@ -26,8 +26,8 @@ func TestItLogsClosePrErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", filepath.Base(tempDir)},
-		{"work/org/repo2", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo1", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo2", filepath.Base(tempDir)},
 	})
 }
 
@@ -46,8 +46,8 @@ func TestItClosesPrsSuccessfully(t *testing.T) {
 	assert.NotContains(t, out, "error")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", filepath.Base(tempDir)},
-		{"work/org/repo2", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo1", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo2", filepath.Base(tempDir)},
 	})
 }
 
@@ -65,8 +65,8 @@ func TestNoPRFound(t *testing.T) {
 	assert.Contains(t, out, "0 OK, 2 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", filepath.Base(tempDir)},
-		{"work/org/repo2", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo1", filepath.Base(tempDir)},
+		{"close_pull_request", "work/org/repo2", filepath.Base(tempDir)},
 	})
 }
 
@@ -102,8 +102,8 @@ func TestItLogsUpdateDescriptionErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "PR title", "PR body"},
-		{"work/org/repo2", "PR title", "PR body"},
+		{"update_pr_description", "work/org/repo1", "PR title", "PR body"},
+		{"update_pr_description", "work/org/repo2", "PR title", "PR body"},
 	})
 }
 
@@ -122,8 +122,8 @@ func TestItUpdatesDescriptionsSuccessfully(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "Updated PR title", "Updated PR body"},
-		{"work/org/repo2", "Updated PR title", "Updated PR body"},
+		{"update_pr_description", "work/org/repo1", "Updated PR title", "Updated PR body"},
+		{"update_pr_description", "work/org/repo2", "Updated PR title", "Updated PR body"},
 	})
 }
 
@@ -142,8 +142,8 @@ func TestItUpdatesDescriptionsFromAlternativeFile(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "custom PR title", "custom PR body"},
-		{"work/org/repo2", "custom PR title", "custom PR body"},
+		{"update_pr_description", "work/org/repo1", "custom PR title", "custom PR body"},
+		{"update_pr_description", "work/org/repo2", "custom PR title", "custom PR body"},
 	})
 }
 

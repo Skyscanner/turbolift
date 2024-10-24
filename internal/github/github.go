@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/skyscanner/turbolift/internal/executor"
@@ -42,6 +43,7 @@ type GitHub interface {
 	UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
+	IsPushable(output io.Writer, repo string) (bool, error)
 }
 
 type RealGitHub struct{}
@@ -168,6 +170,21 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 	}
 
 	return nil, &NoPRFoundError{Path: workingDir, BranchName: branchName}
+}
+
+func (r *RealGitHub) IsPushable(output io.Writer, repo string) (bool, error) {
+	// The command can be run from any repo
+	// so we use the current repository.
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return false, err
+	}
+	s, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "repo", "view", repo, "--json", "viewerPermission")
+	if err != nil {
+		return false, err
+	}
+
+	return userHasPushPermission(s)
 }
 
 func NewRealGitHub() *RealGitHub {
