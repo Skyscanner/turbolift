@@ -365,7 +365,6 @@ func TestItForksIfUserHasNoPushPermission(t *testing.T) {
 		return nil, errors.New("unexpected call")
 	})
 
-	// fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
@@ -375,6 +374,52 @@ func TestItForksIfUserHasNoPushPermission(t *testing.T) {
 	out, err := runCloneCommand()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "Forking and cloning org/repo1")
+	assert.Contains(t, out, "Forking and cloning org/repo2")
+	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"user_can_push", "org/repo1"},
+		{"fork_and_clone", "work/org", "org/repo1"},
+		{"get_default_branch", "work/org/repo1", "org/repo1"},
+		{"user_can_push", "org/repo2"},
+		{"fork_and_clone", "work/org", "org/repo2"},
+		{"get_default_branch", "work/org/repo2", "org/repo2"},
+	})
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"checkout", "work/org/repo1", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org/repo1", "upstream", "main"},
+		{"checkout", "work/org/repo2", testsupport.Pwd()},
+		{"pull", "--ff-only", "work/org/repo2", "upstream", "main"},
+	})
+}
+
+func TestItForksIfPermissionsCheckFails(t *testing.T) {
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable:
+			return false, errors.New("synthetic error")
+		case github.ForkAndClone:
+			return true, nil
+		case github.GetDefaultBranchName:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) {
+		return nil, errors.New("unexpected call")
+	})
+
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false, "org/repo1", "org/repo2")
+
+	out, err := runCloneCommand()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Unable to determine if we can push to org/repo1: synthetic error")
+	assert.Contains(t, out, "Forking and cloning org/repo1")
+	assert.Contains(t, out, "Unable to determine if we can push to org/repo2: synthetic error")
 	assert.Contains(t, out, "Forking and cloning org/repo2")
 	assert.Contains(t, out, "turbolift clone completed (2 repos cloned, 0 repos skipped)")
 
