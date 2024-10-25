@@ -64,7 +64,6 @@ func TestItLogsCloneErrorsButContinuesToTryAll(t *testing.T) {
 		return nil, errors.New("unexpected call")
 	})
 
-	// fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
 	fakeGit := git.NewAlwaysFailsFakeGit()
 	g = fakeGit
@@ -173,7 +172,6 @@ func TestItDoesNotPullFromUpstreamWhenCloningWithoutFork(t *testing.T) {
 		return nil, errors.New("unexpected call")
 	})
 
-	// fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub
 	fakeGit := git.NewAlwaysSucceedsFakeGit()
 	g = fakeGit
