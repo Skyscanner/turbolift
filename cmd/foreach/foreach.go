@@ -43,12 +43,12 @@ var (
 
 	successfulResultsDirectory string
 	successfulReposFileName    string
-	successfulReposSymlink     = ".latest_successful"
 
 	failedResultsDirectory string
 	failedReposFileName    string
-	failedReposSymlink     = ".latest_failed"
 )
+
+const previousResultsSymlink = ".previous_results"
 
 func formatArguments(arguments []string) string {
 	quotedArgs := make([]string, len(arguments))
@@ -99,18 +99,21 @@ func runE(c *cobra.Command, args []string) error {
 		return errors.New("only one repositories flag or option may be specified: either --successful; --failed; or --repos <file>")
 	}
 	if successful {
-		var err error
-		if repoFile, err = os.Readlink(successfulReposSymlink); err != nil {
-			return errors.New("no previous successful foreach logs found")
+		previousResults, err := os.Readlink(previousResultsSymlink)
+		if err != nil {
+			return errors.New("no previous foreach logs found")
 		}
+		repoFile = path.Join(previousResults, "successful", "repos.txt")
 	} else if failed {
-		var err error
-		if repoFile, err = os.Readlink(failedReposSymlink); err != nil {
-			return errors.New("no previous failed foreach logs found")
+		previousResults, err := os.Readlink(previousResultsSymlink)
+		if err != nil {
+			return errors.New("no previous foreach logs found")
 		}
+		repoFile = path.Join(previousResults, "failed", "repos.txt")
 	} else if !customRepoFile {
 		repoFile = "repos.txt"
 	}
+
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
@@ -185,25 +188,16 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 	defer successfulReposFile.Close()
 	defer failedReposFile.Close()
 
-	if _, err := os.Lstat(successfulReposSymlink); err == nil {
-		err := os.Remove(successfulReposSymlink)
+	// create symlink to the results
+	if _, err := os.Lstat(previousResultsSymlink); err == nil {
+		err := os.Remove(previousResultsSymlink)
 		if err != nil {
 			logger.Warnf("Failed to remove previous symlink for successful repos: %v", err)
 		}
 	}
-	err := os.Symlink(successfulReposFileName, successfulReposSymlink)
+	err := os.Symlink(overallResultsDirectory, previousResultsSymlink)
 	if err != nil {
-		logger.Warnf("Failed to create symlink for successful repos: %v", err)
-	}
-	if _, err := os.Lstat(failedReposSymlink); err == nil {
-		err := os.Remove(failedReposSymlink)
-		if err != nil {
-			logger.Warnf("Failed to remove previous symlink for failed repos: %v", err)
-		}
-	}
-	err = os.Symlink(failedReposFileName, failedReposSymlink)
-	if err != nil {
-		logger.Warnf("Failed to create symlink for failed repos: %v", err)
+		logger.Warnf("Failed to create symlink to foreach results: %v", err)
 	}
 
 	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))

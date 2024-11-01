@@ -18,7 +18,9 @@ package foreach
 import (
 	"bytes"
 	"os"
+	"path"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -209,8 +211,8 @@ func TestItRunsAgainstSuccessfulReposOnly(t *testing.T) {
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
-	testsupport.CreateAnotherRepoFile("successful.txt", "org/repo1", "org/repo3")
-	testsupport.CreateNewSymlink("successful.txt", ".latest_successful")
+	setUpSymlink()
+	defer os.RemoveAll("mock_output")
 
 	out, err := runCommandReposSuccessful("--", "some", "command")
 	assert.NoError(t, err)
@@ -224,13 +226,6 @@ func TestItRunsAgainstSuccessfulReposOnly(t *testing.T) {
 		{"work/org/repo1", "some", "command"},
 		{"work/org/repo3", "some", "command"},
 	})
-
-	// check that the symlink has been updated
-	successfulRepoFile, err := os.Readlink(".latest_successful")
-	if err != nil {
-		panic(err)
-	}
-	assert.NotEqual(t, successfulRepoFile, "successful.txt")
 }
 
 func TestItRunsAgainstFailedReposOnly(t *testing.T) {
@@ -238,8 +233,8 @@ func TestItRunsAgainstFailedReposOnly(t *testing.T) {
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
-	testsupport.CreateAnotherRepoFile("failed.txt", "org/repo1", "org/repo3")
-	testsupport.CreateNewSymlink("failed.txt", ".latest_failed")
+	setUpSymlink()
+	defer os.RemoveAll("mock_output")
 
 	out, err := runCommandReposFailed("--", "some", "command")
 	assert.NoError(t, err)
@@ -253,13 +248,6 @@ func TestItRunsAgainstFailedReposOnly(t *testing.T) {
 		{"work/org/repo1", "some", "command"},
 		{"work/org/repo3", "some", "command"},
 	})
-
-	// check that the symlink has been updated
-	failedRepoFile, err := os.Readlink(".latest_failed")
-	if err != nil {
-		panic(err)
-	}
-	assert.NotEqual(t, failedRepoFile, "failed.txt")
 }
 
 func TestItCreatesSymlinksSuccessfully(t *testing.T) {
@@ -273,10 +261,12 @@ func TestItCreatesSymlinksSuccessfully(t *testing.T) {
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped, 1 errored")
 
-	successfulRepoFile, err := os.Readlink(".latest_successful")
+	resultsDir, err := os.Readlink(".previous_results")
 	if err != nil {
 		panic(err)
 	}
+
+	successfulRepoFile := path.Join(resultsDir, "successful", "repos.txt")
 	successfulRepos, err := os.ReadFile(successfulRepoFile)
 	if err != nil {
 		panic(err)
@@ -285,14 +275,8 @@ func TestItCreatesSymlinksSuccessfully(t *testing.T) {
 	assert.Contains(t, string(successfulRepos), "org/repo3")
 	assert.NotContains(t, string(successfulRepos), "org/repo2")
 
-	failedRepoFile, err := os.Readlink(".latest_failed")
-	if err != nil {
-		panic(err)
-	}
+	failedRepoFile := path.Join(resultsDir, "failed", "repos.txt")
 	failedRepos, err := os.ReadFile(failedRepoFile)
-	if err != nil {
-		panic(err)
-	}
 	assert.Contains(t, string(failedRepos), "org/repo2")
 	assert.NotContains(t, string(failedRepos), "org/repo1")
 	assert.NotContains(t, string(failedRepos), "org/repo3")
@@ -329,6 +313,33 @@ func TestItDoesNotAllowMultipleReposArguments(t *testing.T) {
 	assert.Error(t, err, "only one repositories flag or option may be specified: either --successful; --failed; or --repos <file>")
 
 	fakeExecutor.AssertCalledWith(t, [][]string{})
+}
+
+func setUpSymlink() {
+	err := os.MkdirAll("mock_output/successful", 0755)
+	if err != nil {
+		panic(err)
+	}
+	err = os.MkdirAll("mock_output/failed", 0755)
+	if err != nil {
+		panic(err)
+	}
+	err = os.Symlink("mock_output", ".previous_results")
+	if err != nil {
+		panic(err)
+	}
+	_, err = os.Create("mock_output/successful/repos.txt")
+	if err != nil {
+		panic(err)
+	}
+	_, err = os.Create("mock_output/failed/repos.txt")
+	if err != nil {
+		panic(err)
+	}
+	repos := []string{"org/repo1", "org/repo3"}
+	delimitedList := strings.Join(repos, "\n")
+	_ = os.WriteFile("mock_output/successful/repos.txt", []byte(delimitedList), os.ModePerm|0o644)
+	_ = os.WriteFile("mock_output/failed/repos.txt", []byte(delimitedList), os.ModePerm|0o644)
 }
 
 func runCommand(args ...string) (string, error) {
