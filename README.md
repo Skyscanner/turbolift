@@ -176,7 +176,7 @@ temp-dir
                \ logs.txt # logs from the specific foreach execution on this repo
 ```
 
-You can use `--successful` or `--failed` to run a foreach command only against the repositories that succeeded or failed in the preceding command.
+You can use `--successful` or `--failed` to run a foreach command only against the repositories that succeeded or failed in the preceding foreach execution.
 
 ```
 turbolift foreach --failed -- make test
