@@ -34,8 +34,8 @@ var (
 )
 
 var (
-	nofork   bool
-	repoFile string
+	forceFork bool
+	repoFile  string
 )
 
 func NewCloneCmd() *cobra.Command {
@@ -45,7 +45,7 @@ func NewCloneCmd() *cobra.Command {
 		Run:   run,
 	}
 
-	cmd.Flags().BoolVar(&nofork, "no-fork", false, "Will not fork, just clone and create a branch.")
+	cmd.Flags().BoolVar(&forceFork, "fork", false, "Force forking, instead of turbolift choosing whether to fork/branch based on permissions")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
@@ -66,13 +66,30 @@ func run(c *cobra.Command, _ []string) {
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
-		orgDirPath := path.Join("work", repo.OrgName) // i.e. work/org
+		orgDirPath := path.Join("work", repo.OrgName)       // i.e. work/org
+		repoDirPath := path.Join(orgDirPath, repo.RepoName) // i.e. work/org/repo
 
 		var cloneActivity *logging.Activity
-		if nofork {
-			cloneActivity = logger.StartActivity("Cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+
+		// Determine whether we need to fork or clone
+		var fork bool
+
+		if forceFork {
+			fork = true
 		} else {
+			res, err := gh.IsPushable(logger.Writer(), repo.FullRepoName)
+			if err != nil {
+				logger.Warnf("Unable to determine if we can push to %s: %s", repo.FullRepoName, err)
+				fork = true
+			} else {
+				fork = !res
+			}
+		}
+
+		if fork {
 			cloneActivity = logger.StartActivity("Forking and cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
+		} else {
+			cloneActivity = logger.StartActivity("Cloning %s into %s/%s", repo.FullRepoName, orgDirPath, repo.RepoName)
 		}
 
 		err := os.MkdirAll(orgDirPath, os.ModeDir|0o755)
@@ -82,7 +99,6 @@ func run(c *cobra.Command, _ []string) {
 			break
 		}
 
-		repoDirPath := path.Join(orgDirPath, repo.RepoName) // i.e. work/org/repo
 		// skip if the working copy is already cloned
 		if _, err = os.Stat(repoDirPath); !os.IsNotExist(err) {
 			cloneActivity.EndWithWarningf("Directory already exists")
@@ -90,10 +106,10 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		if nofork {
-			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
-		} else {
+		if fork {
 			err = gh.ForkAndClone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+		} else {
+			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
 		}
 
 		if err != nil {
@@ -114,7 +130,7 @@ func run(c *cobra.Command, _ []string) {
 		}
 		createBranchActivity.EndWithSuccess()
 
-		if !nofork {
+		if fork {
 			pullFromUpstreamActivity := logger.StartActivity("Pulling latest changes from %s", repo.FullRepoName)
 			var defaultBranch string
 			defaultBranch, err = gh.GetDefaultBranchName(pullFromUpstreamActivity.Writer(), repoDirPath, repo.FullRepoName)
