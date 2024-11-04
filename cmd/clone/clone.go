@@ -45,7 +45,7 @@ func NewCloneCmd() *cobra.Command {
 		Run:   run,
 	}
 
-	cmd.Flags().BoolVar(&forceFork, "fork", false, "Force forking, instead of turbolift attempting to branch push")
+	cmd.Flags().BoolVar(&forceFork, "fork", false, "Force forking, instead of turbolift choosing whether to fork/branch based on permissions")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 
 	return cmd
