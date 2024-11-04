@@ -211,7 +211,10 @@ func TestItRunsAgainstSuccessfulReposOnly(t *testing.T) {
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
-	setUpSymlink()
+	err := setUpSymlink()
+	if err != nil {
+		t.Errorf("Error setting up symlink: %s", err)
+	}
 	defer os.RemoveAll("mock_output")
 
 	out, err := runCommandReposSuccessful("--", "some", "command")
@@ -233,7 +236,10 @@ func TestItRunsAgainstFailedReposOnly(t *testing.T) {
 	exec = fakeExecutor
 
 	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2", "org/repo3")
-	setUpSymlink()
+	err := setUpSymlink()
+	if err != nil {
+		t.Errorf("Error setting up symlink: %s", err)
+	}
 	defer os.RemoveAll("mock_output")
 
 	out, err := runCommandReposFailed("--", "some", "command")
@@ -263,13 +269,14 @@ func TestItCreatesSymlinksSuccessfully(t *testing.T) {
 
 	resultsDir, err := os.Readlink(".previous_results")
 	if err != nil {
-		panic(err)
+
+		t.Errorf("Error reading symlink: %s", err)
 	}
 
 	successfulRepoFile := path.Join(resultsDir, "successful", "repos.txt")
 	successfulRepos, err := os.ReadFile(successfulRepoFile)
 	if err != nil {
-		panic(err)
+		t.Errorf("Error reading successful repos: %s", err)
 	}
 	assert.Contains(t, string(successfulRepos), "org/repo1")
 	assert.Contains(t, string(successfulRepos), "org/repo3")
@@ -277,6 +284,9 @@ func TestItCreatesSymlinksSuccessfully(t *testing.T) {
 
 	failedRepoFile := path.Join(resultsDir, "failed", "repos.txt")
 	failedRepos, err := os.ReadFile(failedRepoFile)
+	if err != nil {
+		t.Errorf("Error reading failed repos: %s", err)
+	}
 	assert.Contains(t, string(failedRepos), "org/repo2")
 	assert.NotContains(t, string(failedRepos), "org/repo1")
 	assert.NotContains(t, string(failedRepos), "org/repo3")
@@ -315,31 +325,32 @@ func TestItDoesNotAllowMultipleReposArguments(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{})
 }
 
-func setUpSymlink() {
+func setUpSymlink() error {
 	err := os.MkdirAll("mock_output/successful", 0755)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = os.MkdirAll("mock_output/failed", 0755)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = os.Symlink("mock_output", ".previous_results")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	_, err = os.Create("mock_output/successful/repos.txt")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	_, err = os.Create("mock_output/failed/repos.txt")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	repos := []string{"org/repo1", "org/repo3"}
 	delimitedList := strings.Join(repos, "\n")
 	_ = os.WriteFile("mock_output/successful/repos.txt", []byte(delimitedList), os.ModePerm|0o644)
 	_ = os.WriteFile("mock_output/failed/repos.txt", []byte(delimitedList), os.ModePerm|0o644)
+	return nil
 }
 
 func runCommand(args ...string) (string, error) {

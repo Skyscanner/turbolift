@@ -159,7 +159,22 @@ It is highly recommended that you run tests against affected repos, if it will h
 #### Logging and re-running with foreach
 
 Every time a command is run with `turbolift foreach`, logging output for each repository is collected in a temporary directory
-divided into `successful` and `failed` subdirectories. Each of these also contains a separate file listing all the repositories that succeeded or failed.
+with the following structure:
+
+```
+temp-dir
+   \ successful
+       \ repos.txt        # a list of repos where the command succeeded
+       \ org
+           \ repo
+               \ logs.txt # logs from the specific foreach execution on this repo
+           ....
+   \ failed
+       \ repos.txt        # a list of repos where the command succeeded
+       \ org
+           \ repo
+               \ logs.txt # logs from the specific foreach execution on this repo
+```
 
 You can use `--successful` or `--failed` to run a foreach command only against the repositories that succeeded or failed in the preceding command.
 
