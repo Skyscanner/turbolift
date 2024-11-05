@@ -55,7 +55,7 @@ Making changes with turbolift is split into six main phases:
 
 1. `init` - getting set up
 2. Identifying the repos to operate upon
-3. Running a mass `clone` of the repos (by default, it will create a fork in your user space)
+3. Running a mass `clone` of the repos
 4. Making changes to every repo
 5. Committing changes to every repo
 6. Creating a PR for every repo
@@ -115,15 +115,17 @@ turbolift foreach --repos repoFile1.txt -- sed 's/pattern1/replacement1/g'
 turbolift foreach --repos repoFile2.txt -- sed 's/pattern2/replacement2/g'
 ```
 
-
 ### Running a mass `clone`
 
-```turbolift clone```
+`turbolift clone` clones all repositories listed in the `repos.txt` file into the `work` directory.
+By default the cloning policy is to create a branch to the target repository. If you do not have permissions to push a branch on the target repository, `turbolift` will fork it.
 
-This creates a fork and clones all repositories listed in the `repos.txt` file (or the specified alternative repo file) into the `work` directory.
-You may wish to skip the fork and work on the upstream repository branch directly with the flag `--no-fork`.
+If you do want to fork all the repositories instead of letting turbolift deciding for you, use the `--fork` flag.
 
-> NTLD: if one of the repositories in the list requires a fork to create a PR, omit the `--no-fork` flag and let all the repositories be forked. For now it's a all-or-nothing scenario.
+Usage:
+```console
+turbolift clone
+```
 
 ### Making changes
 

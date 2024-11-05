@@ -17,10 +17,12 @@ package github
 
 import (
 	"errors"
-	"github.com/skyscanner/turbolift/internal/executor"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/skyscanner/turbolift/internal/executor"
 )
 
 func TestItReturnsErrorOnFailedFork(t *testing.T) {
