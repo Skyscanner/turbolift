@@ -225,10 +225,7 @@ func runCommand() (string, error) {
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
-	if err != nil {
-		return outBuffer.String(), err
-	}
-	return outBuffer.String(), nil
+	return outBuffer.String(), err
 }
 
 func runCommandWithAlternativeDescriptionFile(fileName string) (string, error) {
@@ -237,10 +234,7 @@ func runCommandWithAlternativeDescriptionFile(fileName string) (string, error) {
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
-	if err != nil {
-		return outBuffer.String(), err
-	}
-	return outBuffer.String(), nil
+	return outBuffer.String(), err
 }
 
 func runCommandDraft() (string, error) {
@@ -249,8 +243,5 @@ func runCommandDraft() (string, error) {
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
-	if err != nil {
-		return outBuffer.String(), err
-	}
-	return outBuffer.String(), nil
+	return outBuffer.String(), err
 }
