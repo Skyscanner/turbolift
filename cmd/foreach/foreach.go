@@ -35,7 +35,7 @@ import (
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile   string
+	repoFile   = "repos.txt"
 	successful bool
 	failed     bool
 
@@ -48,7 +48,7 @@ var (
 	failedReposFileName    string
 )
 
-const previousResultsSymlink = ".previous_results"
+const previousResultsSymlink = "..turbolift_previous_results"
 
 func formatArguments(arguments []string) string {
 	quotedArgs := make([]string, len(arguments))
@@ -80,7 +80,7 @@ marks that no further options should be interpreted by turbolift.`,
 		Args: cobra.MinimumNArgs(1),
 	}
 
-	cmd.Flags().StringVar(&repoFile, "repos", "", "A file containing a list of repositories to clone.")
+	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 	cmd.Flags().BoolVar(&successful, "successful", false, "Indication of whether to run against previously successful repos only.")
 	cmd.Flags().BoolVar(&failed, "failed", false, "Indication of whether to run against previously failed repos only.")
 
@@ -94,9 +94,9 @@ func runE(c *cobra.Command, args []string) error {
 		return errors.New("Use -- to separate command")
 	}
 
-	customRepoFile := repoFile != ""
-	if moreThanOne(successful, failed, customRepoFile) {
-		return errors.New("only one repositories flag or option may be specified: either --successful; --failed; or --repos <file>")
+	isCustomRepoFile := repoFile != "repos.txt"
+	if moreThanOne(successful, failed, isCustomRepoFile) {
+		return errors.New("a maximum of one repositories flag / option may be specified: either --successful; --failed; or --repos <file>")
 	}
 	if successful {
 		previousResults, err := os.Readlink(previousResultsSymlink)
@@ -104,14 +104,14 @@ func runE(c *cobra.Command, args []string) error {
 			return errors.New("no previous foreach logs found")
 		}
 		repoFile = path.Join(previousResults, "successful", "repos.txt")
+		logger.Printf("Running against previously successful repos only")
 	} else if failed {
 		previousResults, err := os.Readlink(previousResultsSymlink)
 		if err != nil {
 			return errors.New("no previous foreach logs found")
 		}
 		repoFile = path.Join(previousResults, "failed", "repos.txt")
-	} else if !customRepoFile {
-		repoFile = "repos.txt"
+		logger.Printf("Running against previously failed repos only")
 	}
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
