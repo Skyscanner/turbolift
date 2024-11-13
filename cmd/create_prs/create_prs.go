@@ -17,11 +17,12 @@ package create_prs
 
 import (
 	"fmt"
-	"github.com/skyscanner/turbolift/internal/prompt"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/skyscanner/turbolift/internal/prompt"
 
 	"github.com/spf13/cobra"
 
@@ -72,12 +73,14 @@ func run(c *cobra.Command, _ []string) {
 		readCampaignActivity.EndWithFailure(err)
 		return
 	}
+	readCampaignActivity.EndWithSuccess()
+
+	// checking whether the description has changed
 	if prDescriptionUnchanged(dir) {
 		if !p.AskConfirm(fmt.Sprintf("It looks like the PR title and/or description may not have been updated in %s. Are you sure you want to proceed?", prDescriptionFile)) {
 			return
 		}
 	}
-	readCampaignActivity.EndWithSuccess()
 
 	doneCount := 0
 	skippedCount := 0
