@@ -17,7 +17,6 @@ package testsupport
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,7 +32,7 @@ func Pwd() string {
 }
 
 func CreateAndEnterTempDirectory() string {
-	tempDir, _ := ioutil.TempDir("", "turbolift-test-*")
+	tempDir, _ := os.MkdirTemp("", "turbolift-test-*")
 	err := os.Chdir(tempDir)
 	if err != nil {
 		panic(err)
@@ -45,7 +44,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 	tempDir := CreateAndEnterTempDirectory()
 
 	delimitedList := strings.Join(repos, "\n")
-	err := ioutil.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0o644)
+	err := os.WriteFile("repos.txt", []byte(delimitedList), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +60,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 	}
 
 	dummyPrDescription := "# PR title\nPR body"
-	err = ioutil.WriteFile("README.md", []byte(dummyPrDescription), os.ModePerm|0o644)
+	err = os.WriteFile("README.md", []byte(dummyPrDescription), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +70,7 @@ func PrepareTempCampaign(createDirs bool, repos ...string) string {
 
 func CreateAnotherRepoFile(filename string, repos ...string) {
 	delimitedList := strings.Join(repos, "\n")
-	err := ioutil.WriteFile(filename, []byte(delimitedList), os.ModePerm|0o644)
+	err := os.WriteFile(filename, []byte(delimitedList), os.ModePerm|0o644)
 	if err != nil {
 		panic(err)
 	}
