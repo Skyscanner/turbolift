@@ -86,11 +86,6 @@ func run(c *cobra.Command, _ []string) {
 	skippedCount := 0
 	errorCount := 0
 	for _, repo := range dir.Repos {
-		if sleep > 0 {
-			logger.Successf("Sleeping for %s", sleep)
-			time.Sleep(sleep)
-		}
-
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
 		pushActivity := logger.StartActivity("Pushing changes in %s to origin", repo.FullRepoName)
@@ -134,6 +129,11 @@ func run(c *cobra.Command, _ []string) {
 		} else {
 			createPrActivity.EndWithSuccess()
 			doneCount++
+		}
+
+		if sleep > 0 {
+			logger.Successf("Sleeping for %s", sleep)
+			time.Sleep(sleep)
 		}
 	}
 
