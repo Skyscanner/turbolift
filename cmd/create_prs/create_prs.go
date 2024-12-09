@@ -85,8 +85,8 @@ func run(c *cobra.Command, _ []string) {
 	doneCount := 0
 	skippedCount := 0
 	errorCount := 0
-	for _, repo := range dir.Repos {
-		if sleep > 0 {
+	for i, repo := range dir.Repos {
+		if i > 0 && sleep > 0 {
 			logger.Successf("Sleeping for %s", sleep)
 			time.Sleep(sleep)
 		}
