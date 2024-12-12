@@ -48,7 +48,7 @@ var (
 	failedReposFileName    string
 )
 
-const previousResultsSymlink = "..turbolift_previous_results"
+const previousResultsSymlink = ".turbolift_previous_results"
 
 func formatArguments(arguments []string) string {
 	quotedArgs := make([]string, len(arguments))
