@@ -267,7 +267,7 @@ func TestItCreatesSymlinksSuccessfully(t *testing.T) {
 	assert.Contains(t, out, "turbolift foreach completed")
 	assert.Contains(t, out, "2 OK, 0 skipped, 1 errored")
 
-	resultsDir, err := os.Readlink("..turbolift_previous_results")
+	resultsDir, err := os.Readlink(".turbolift_previous_results")
 	if err != nil {
 
 		t.Errorf("Error reading symlink: %s", err)
@@ -334,7 +334,7 @@ func setUpSymlink() error {
 	if err != nil {
 		return err
 	}
-	err = os.Symlink("mock_output", "..turbolift_previous_results")
+	err = os.Symlink("mock_output", ".turbolift_previous_results")
 	if err != nil {
 		return err
 	}
