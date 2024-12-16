@@ -115,7 +115,7 @@ func runClose(c *cobra.Command, _ []string) {
 	// Prompting for confirmation
 	if !yesFlag {
 		// TODO: add the number of PRs that it will actually close
-		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s?", dir.Name, repoFile)) {
+		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -172,7 +172,7 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 
 	// Prompting for confirmation
 	if !yesFlag {
-		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s?", dir.Name, repoFile)) {
+		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -228,7 +228,7 @@ func runPush(c *cobra.Command, _ []string) {
 
 	// Prompting for confirmation
 	if !yesFlag {
-		if !p.AskConfirm(fmt.Sprintf("Push new commits to %s campaign PRs for all repos in %s?", dir.Name, repoFile)) {
+		if !p.AskConfirm(fmt.Sprintf("Push new commits to %s campaign PRs for all repos in %s", dir.Name, repoFile)) {
 			return
 		}
 	}
