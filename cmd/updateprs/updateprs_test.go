@@ -187,6 +187,27 @@ func TestItPushesNewCommits(t *testing.T) {
 	})
 }
 
+func TestItLogsPushErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsFakeGit()
+	g = fakeGit
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runPushCommandAuto()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pushing changes in org/repo1 to origin")
+	assert.Contains(t, out, "Pushing changes in org/repo2 to origin")
+	assert.Contains(t, out, "turbolift update-prs completed with errors")
+	assert.Contains(t, out, "2 errored")
+
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"push", "work/org/repo1", filepath.Base(tempDir)},
+		{"push", "work/org/repo2", filepath.Base(tempDir)},
+	})
+}
+
 func TestItDoesNotPushIfNotConfirmed(t *testing.T) {
 	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
 	gh = fakeGitHub

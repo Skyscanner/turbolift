@@ -271,8 +271,7 @@ As always, use the `--repos` flag to specify an alternative repo file to the def
 
 ```turbolift update-prs --close [--yes]```
 ```turbolift update-prs --push [--yes]```
-```turbolift update-prs --amend-description [--yes]```
-```turblift update-prs --amend-description --description prDescriptionFile1.md```
+```turbolift update-prs --amend-description [--description prDescriptionFile1.md] [--yes]```
 
 Note that when updating PR descriptions, as when creating PRs, the `--description` flag can be used to specify an 
 alternative description file to the default `README.md`.
