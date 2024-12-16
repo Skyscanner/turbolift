@@ -260,23 +260,23 @@ redacted/redacted                                         OPEN    REVIEW_REQUIRE
 
 Use the `update-prs` command to update PRs after creating them. Current options for updating PRs are:
 
-##### Update PR titles and descriptions with `--amend-description`
+- `--push` to push new commits
+- `--amend-description` to update PR titles and descriptions
+- `--close` to close PRs
 
-```turbolift update-prs --amend-description [--yes]```
+If the flag `--yes` is not passed with an `update-prs` command, a confirmation prompt will be presented.
+As always, use the `--repos` flag to specify an alternative repo file to the default `repos.txt`.
 
-By default, turbolift will read a revised PR Title and Description from `README.md`. The title is taken from the first heading line, and the description is the remainder of the file contents.
-
-As with creating PRs, if you need Turbolift to read these values from an alternative file, use the flag `--description PATH_TO_FILE`.
-
-```turblift update-prs --amend-description --description prDescriptionFile1.md```
-
-##### Close PRs with the `--close` flag
+##### Examples
 
 ```turbolift update-prs --close [--yes]```
+```turbolift update-prs --push [--yes]```
+```turbolift update-prs --amend-description [--yes]```
+```turblift update-prs --amend-description --description prDescriptionFile1.md```
 
-If the flag `--yes` is not passed with an `update-prs` command, a confirmation prompt will be presented to the user.
-
-As always, use the `--repos` flag to specify an alternative repo file to repos.txt.
+Note that when updating PR descriptions, as when creating PRs, the `--description` flag can be used to specify an 
+alternative description file to the default `README.md`.
+The updated title is taken from the first line of the file, and the updated description is the remainder of the file contents.
 
 ## Status: Preview
 
