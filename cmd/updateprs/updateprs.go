@@ -18,6 +18,7 @@ package updateprs
 import (
 	"errors"
 	"fmt"
+	"github.com/skyscanner/turbolift/internal/git"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -31,12 +32,14 @@ import (
 
 var (
 	gh github.GitHub = github.NewRealGitHub()
+	g  git.Git       = git.NewRealGit()
 	p  prompt.Prompt = prompt.NewRealPrompt()
 )
 
 var (
 	closeFlag             bool
 	updateDescriptionFlag bool
+	pushFlag              bool
 	yesFlag               bool
 	repoFile              string
 	prDescriptionFile     string
@@ -51,6 +54,7 @@ func NewUpdatePRsCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&closeFlag, "close", false, "Close all generated PRs")
 	cmd.Flags().BoolVar(&updateDescriptionFlag, "amend-description", false, "Update PR titles and descriptions")
+	cmd.Flags().BoolVar(&pushFlag, "push", false, "Push new commits")
 	cmd.Flags().BoolVar(&yesFlag, "yes", false, "Skips the confirmation prompt")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 	cmd.Flags().StringVar(&prDescriptionFile, "description", "README.md", "A file containing the title and description for the PRs.")
@@ -71,8 +75,8 @@ func onlyOne(args ...bool) bool {
 	return b[true] == 1
 }
 
-func validateFlags(closeFlag bool, updateDescriptionFlag bool) error {
-	if !onlyOne(closeFlag, updateDescriptionFlag) {
+func validateFlags(closeFlag bool, updateDescriptionFlag bool, pushFlag bool) error {
+	if !onlyOne(closeFlag, updateDescriptionFlag, pushFlag) {
 		return errors.New("update-prs needs one and only one action flag")
 	}
 	return nil
@@ -81,7 +85,7 @@ func validateFlags(closeFlag bool, updateDescriptionFlag bool) error {
 // we keep the args as one of the subfunctions might need it one day.
 func run(c *cobra.Command, args []string) {
 	logger := logging.NewLogger(c)
-	if err := validateFlags(closeFlag, updateDescriptionFlag); err != nil {
+	if err := validateFlags(closeFlag, updateDescriptionFlag, pushFlag); err != nil {
 		logger.Errorf("Error while parsing the flags: %v", err)
 		return
 	}
@@ -90,6 +94,8 @@ func run(c *cobra.Command, args []string) {
 		runClose(c, args)
 	} else if updateDescriptionFlag {
 		runUpdatePrDescription(c, args)
+	} else if pushFlag {
+		runPush(c, args)
 	}
 }
 
@@ -109,7 +115,7 @@ func runClose(c *cobra.Command, _ []string) {
 	// Prompting for confirmation
 	if !yesFlag {
 		// TODO: add the number of PRs that it will actually close
-		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s?", dir.Name, repoFile)) {
+		if !p.AskConfirm(fmt.Sprintf("Close %s campaign PRs for all repos in %s", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -166,7 +172,7 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 
 	// Prompting for confirmation
 	if !yesFlag {
-		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s?", dir.Name, repoFile)) {
+		if !p.AskConfirm(fmt.Sprintf("Update %s campaign PR titles and descriptions for all repos listed in %s", dir.Name, repoFile)) {
 			return
 		}
 	}
@@ -198,6 +204,56 @@ func runUpdatePrDescription(c *cobra.Command, _ []string) {
 			updatePrActivity.EndWithSuccess()
 			doneCount++
 		}
+	}
+
+	if errorCount == 0 {
+		logger.Successf("turbolift update-prs completed %s(%s, %s)\n", colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"))
+	} else {
+		logger.Warnf("turbolift update-prs completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
+	}
+}
+
+func runPush(c *cobra.Command, _ []string) {
+	logger := logging.NewLogger(c)
+
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
+	if err != nil {
+		readCampaignActivity.EndWithFailure(err)
+		return
+	}
+	readCampaignActivity.EndWithSuccess()
+
+	// Prompting for confirmation
+	if !yesFlag {
+		if !p.AskConfirm(fmt.Sprintf("Push new commits to %s campaign PRs for all repos in %s", dir.Name, repoFile)) {
+			return
+		}
+	}
+
+	doneCount := 0
+	skippedCount := 0
+	errorCount := 0
+
+	for _, repo := range dir.Repos {
+		pushActivity := logger.StartActivity("Pushing changes in %s to origin", repo.FullRepoName)
+		// skip if the working copy does not exist
+		if _, err = os.Stat(repo.FullRepoPath()); os.IsNotExist(err) {
+			pushActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repo.FullRepoPath())
+			skippedCount++
+			continue
+		}
+
+		err := g.Push(pushActivity.Writer(), repo.FullRepoPath(), "origin", dir.Name)
+		if err != nil {
+			pushActivity.EndWithFailure(err)
+			errorCount++
+			continue
+		}
+		pushActivity.EndWithSuccess()
+		doneCount++
 	}
 
 	if errorCount == 0 {

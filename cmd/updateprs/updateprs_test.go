@@ -2,6 +2,7 @@ package updateprs
 
 import (
 	"bytes"
+	"github.com/skyscanner/turbolift/internal/git"
 	"path/filepath"
 	"testing"
 
@@ -165,6 +166,66 @@ func TestItDoesNotUpdateDescriptionsIfNotConfirmed(t *testing.T) {
 	fakeGitHub.AssertCalledWith(t, [][]string{})
 }
 
+func TestItPushesNewCommits(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runPushCommandAuto()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pushing changes in org/repo1 to origin")
+	assert.Contains(t, out, "Pushing changes in org/repo2 to origin")
+	assert.Contains(t, out, "turbolift update-prs completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"push", "work/org/repo1", filepath.Base(tempDir)},
+		{"push", "work/org/repo2", filepath.Base(tempDir)},
+	})
+}
+
+func TestItLogsPushErrorsButContinuesToTryAll(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysFailsFakeGit()
+	g = fakeGit
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runPushCommandAuto()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "Pushing changes in org/repo1 to origin")
+	assert.Contains(t, out, "Pushing changes in org/repo2 to origin")
+	assert.Contains(t, out, "turbolift update-prs completed with errors")
+	assert.Contains(t, out, "2 errored")
+
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"push", "work/org/repo1", filepath.Base(tempDir)},
+		{"push", "work/org/repo2", filepath.Base(tempDir)},
+	})
+}
+
+func TestItDoesNotPushIfNotConfirmed(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakePrompt := prompt.NewFakePromptNo()
+	p = fakePrompt
+
+	_ = testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runPushCommandConfirm()
+	assert.NoError(t, err)
+	assert.NotContains(t, out, "Pushing changes in org/repo1 to origin")
+	assert.NotContains(t, out, "Pushing changes in org/repo2 to origin")
+	assert.NotContains(t, out, "turbolift update-prs completed")
+	assert.NotContains(t, out, "2 OK")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{})
+}
+
 func runCloseCommandAuto() (string, error) {
 	cmd := NewUpdatePRsCmd()
 	closeFlag = true
@@ -208,6 +269,32 @@ func runUpdateDescriptionCommandAuto(descriptionFile string) (string, error) {
 func runUpdateDescriptionCommandConfirm() (string, error) {
 	cmd := NewUpdatePRsCmd()
 	updateDescriptionFlag = true
+	yesFlag = false
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runPushCommandAuto() (string, error) {
+	cmd := NewUpdatePRsCmd()
+	pushFlag = true
+	yesFlag = true
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	err := cmd.Execute()
+	if err != nil {
+		return outBuffer.String(), err
+	}
+	return outBuffer.String(), nil
+}
+
+func runPushCommandConfirm() (string, error) {
+	cmd := NewUpdatePRsCmd()
+	pushFlag = true
 	yesFlag = false
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
