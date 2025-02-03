@@ -16,19 +16,20 @@ jobs:
         with:
           go-version: ^1.23
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: go
-
-      - name: Build
-        run: make build
-
       - uses: actions/create-github-app-token@v1
         id: app-token
         with:
           app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: go
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Build
+        run: make build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
