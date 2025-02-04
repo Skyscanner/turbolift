@@ -37,10 +37,19 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           upload: never
 
+      # Workaround for parallel GitHub bugs
+      # * Can't use GHA token with IP allowlisting
+      #   https://docs.github.com/en/enterprise-cloud@latest/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization#using-github-actions-with-an-ip-allow-list
+      # * Can't use codeql-action/analyze with custom token
+      #   https://support.github.com/ticket/enterprise/3427/3214517
+      - name: Prepare CodeQL Results
+        run: |
+          gzip -c ../results/go.sarif | base64 -w0 > ./codeql-results.sarif.gz.b64
+
       - uses: actions/upload-artifact@v4
         with:
           name: codeql
-          path: ../results/go.sarif
+          path: codeql-results.sarif.gz.b64
 
       # Workaround for parallel GitHub bugs
       # * Can't use GHA token with IP allowlisting
@@ -49,9 +58,8 @@ jobs:
       #   https://support.github.com/ticket/enterprise/3427/3214517
       - name: Upload CodeQL Results
         run: |
-          gzip -c ../results/go.sarif | base64 -w0 > ../codeql-results.sarif.gz.b64
-
-          curl -X POST \
+          curl --fail-with-body \
+            -X POST \
             -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
             -H "Accept: application/vnd.github.v3+json" \
             -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "$(cat ./codeql-results.sarif.gz.b64)"}' \
