@@ -1,9 +1,8 @@
 ---
 name: CodeQL
 on:
-  pull_request:
   schedule:
-    - cron: '09 09 * * 1'
+    - cron: "09 09 * * 1"
 
 jobs:
   codeql:
@@ -16,13 +15,46 @@ jobs:
         with:
           go-version: ^1.23
 
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: go
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Build
         run: make build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          upload: never
+
+      # Workaround for parallel GitHub bugs
+      # * Can't use GHA token with IP allowlisting
+      #   https://docs.github.com/en/enterprise-cloud@latest/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization#using-github-actions-with-an-ip-allow-list
+      # * Can't use codeql-action/analyze with custom token
+      #   https://support.github.com/ticket/enterprise/3427/3214517
+      - name: Prepare CodeQL Results
+        run: |
+          echo "SARIF_RESULTS=$(gzip -c ../results/go.sarif | base64 -w0)" >> $GITHUB_ENV
+
+      # Workaround for parallel GitHub bugs
+      # * Can't use GHA token with IP allowlisting
+      #   https://docs.github.com/en/enterprise-cloud@latest/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization#using-github-actions-with-an-ip-allow-list
+      # * Can't use codeql-action/analyze with custom token
+      #   https://support.github.com/ticket/enterprise/3427/3214517
+      - name: Upload CodeQL Results
+        run: |
+          curl --fail-with-body \
+            -X POST \
+            -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "${{ env.SARIF_RESULTS }}"}' \
+            https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs
