@@ -35,3 +35,19 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           token: ${{ steps.app-token.outputs.token }}
+          upload: never
+
+      # Workaround for parallel GitHub bugs
+      # * Can't use GHA token with IP allowlisting
+      #   https://docs.github.com/en/enterprise-cloud@latest/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization#using-github-actions-with-an-ip-allow-list
+      # * Can't use codeql-action/analyze with custom token
+      #   https://support.github.com/ticket/enterprise/3427/3214517
+      - name: Upload CodeQL Results
+        run: |
+          gzip -c ../results/go.sarif | base64 -w0 > ../codeql-results.sarif.gz.b64
+
+          curl -X POST \
+            -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d @../codeql-results.sarif.gz.b64 \
+            https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs
