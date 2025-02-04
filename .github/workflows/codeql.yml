@@ -44,10 +44,8 @@ jobs:
       #   https://support.github.com/ticket/enterprise/3427/3214517
       - name: Upload CodeQL Results
         run: |
-          gzip -c ../results/go.sarif | base64 -w0 > ../codeql-results.sarif.gz.b64
-
           curl -X POST \
             -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "$(cat ../codeql-results.sarif.gz.b64)"}' \
+            -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "$(cat ../results/go.sarif)"}' \
             https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs
