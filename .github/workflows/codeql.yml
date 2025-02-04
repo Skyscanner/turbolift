@@ -44,12 +44,7 @@ jobs:
       #   https://support.github.com/ticket/enterprise/3427/3214517
       - name: Prepare CodeQL Results
         run: |
-          gzip -c ../results/go.sarif | base64 -w0 > ./codeql-results.sarif.gz.b64
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: codeql
-          path: codeql-results.sarif.gz.b64
+          echo "SARIF_RESULTS=$(gzip -c ../results/go.sarif | base64 -w0)" >> $GITHUB_ENV
 
       # Workaround for parallel GitHub bugs
       # * Can't use GHA token with IP allowlisting
@@ -62,5 +57,5 @@ jobs:
             -X POST \
             -H "Authorization: token ${{ steps.app-token.outputs.token }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "$(cat ./codeql-results.sarif.gz.b64)"}' \
+            -d '{"commit_sha": "${{ github.sha }}", "ref": "${{ github.ref }}", "sarif": "${{ env.SARIF_RESULTS }}"}' \
             https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs
