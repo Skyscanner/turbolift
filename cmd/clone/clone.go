@@ -160,7 +160,7 @@ func run(c *cobra.Command, _ []string) {
 	}
 	logger.Println("To continue:")
 	logger.Println("\t1. Make your changes in the cloned repositories within the", colors.Cyan("work"), "directory")
-	logger.Println("\t2. Add new files across all repos using", colors.Cyan(`turbolift foreach git add -A`))
+	logger.Println("\t2. Add new files across all repos using", colors.Cyan(`turbolift foreach -- git add -A`))
 	logger.Println("\t3. Commit changes across all repos using", colors.Cyan(`turbolift commit --message "Your commit message"`))
 	logger.Println("\t4. Change the PR title and description in the", colors.Cyan(`README.md`), "of a campaign")
 }
