@@ -44,6 +44,8 @@ type GitHub interface {
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 	IsPushable(output io.Writer, repo string) (bool, error)
+	IsFork(output io.Writer, repo string) (bool, error)
+	DeleteFork(output io.Writer, repo string) error
 }
 
 type RealGitHub struct{}
@@ -185,6 +187,26 @@ func (r *RealGitHub) IsPushable(output io.Writer, repo string) (bool, error) {
 	}
 
 	return userHasPushPermission(s)
+}
+
+func (r *RealGitHub) IsFork(output io.Writer, repo string) (bool, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return false, err
+	}
+	response, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "repo", "view", repo, "--json", "response")
+	if err != nil {
+		return false, err
+	}
+	if strings.Contains(response, "true") {
+		return true, err
+	} else {
+		return false, err
+	}
+}
+
+func (r *RealGitHub) DeleteFork(output io.Writer, repo string) error {
+	return execInstance.Execute(output, "gh", "repo", "--delete", repo, "--yes")
 }
 
 func NewRealGitHub() *RealGitHub {
