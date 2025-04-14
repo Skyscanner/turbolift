@@ -33,6 +33,8 @@ const (
 	GetDefaultBranchName
 	UpdatePRDescription
 	IsPushable
+	IsFork
+	DeleteFork
 )
 
 type FakeGitHub struct {
@@ -94,6 +96,19 @@ func (f *FakeGitHub) UpdatePRDescription(_ io.Writer, workingDir string, title s
 	args := []string{"update_pr_description", workingDir, title, body}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(UpdatePRDescription, args)
+	return err
+}
+
+func (f *FakeGitHub) IsFork(_ io.Writer, repo string) (bool, error) {
+	args := []string{"is_fork", repo}
+	f.calls = append(f.calls, args)
+	return f.handler(IsFork, args)
+}
+
+func (f *FakeGitHub) DeleteFork(_ io.Writer, repo string) error {
+	args := []string{"delete_fork", repo}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(DeleteFork, args)
 	return err
 }
 
