@@ -194,7 +194,7 @@ func (r *RealGitHub) IsFork(output io.Writer, repo string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	response, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "repo", "view", repo, "--json", "response")
+	response, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "repo", "view", repo, "--json", "isFork")
 	if err != nil {
 		return false, err
 	}
