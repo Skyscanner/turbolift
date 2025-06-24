@@ -185,16 +185,8 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 	// create the files
 	successfulReposFile, _ := os.Create(successfulReposFileName)
 	failedReposFile, _ := os.Create(failedReposFileName)
-	defer func() {
-		if err := successfulReposFile.Close(); err != nil {
-			logger.Warnf("Failed to close successfulReposFile: %v", err)
-		}
-	}()
-	defer func() {
-		if err := failedReposFile.Close(); err != nil {
-			logger.Warnf("Failed to close failedReposFile: %v", err)
-		}
-	}()
+	defer closeWithWarning(successfulReposFile, "successfulReposFile", logger)
+	defer closeWithWarning(failedReposFile, "failedReposFile", logger)
 
 	// create symlink to the results
 	if _, err := os.Lstat(previousResultsSymlink); err == nil {
@@ -215,11 +207,7 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
 	// write the repo name to the repos file
 	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
-	defer func() {
-		if err := reposFile.Close(); err != nil {
-			logger.Warnf("Failed to close reposFile: %v", err)
-		}
-	}()
+	defer closeWithWarning(reposFile, "reposFile", logger)
 	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
 	if err != nil {
 		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
@@ -234,11 +222,7 @@ func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryP
 	}
 
 	logs, _ := os.Create(logsFile)
-	defer func() {
-		if err := logs.Close(); err != nil {
-			logger.Warnf("Failed to close logs: %v", err)
-		}
-	}()
+	defer closeWithWarning(logs, "logs", logger)
 	_, err = logs.WriteString(executionLogs)
 	if err != nil {
 		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
