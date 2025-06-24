@@ -91,7 +91,7 @@ func runE(c *cobra.Command, args []string) error {
 	logger := logging.NewLogger(c)
 
 	if c.ArgsLenAtDash() != 0 {
-		return errors.New("Use -- to separate command")
+		return errors.New("use -- to separate command")
 	}
 
 	isCustomRepoFile := repoFile != "repos.txt"
@@ -185,8 +185,16 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 	// create the files
 	successfulReposFile, _ := os.Create(successfulReposFileName)
 	failedReposFile, _ := os.Create(failedReposFileName)
-	defer successfulReposFile.Close()
-	defer failedReposFile.Close()
+	defer func() {
+		if err := successfulReposFile.Close(); err != nil {
+			logger.Warnf("Failed to close successfulReposFile: %v", err)
+		}
+	}()
+	defer func() {
+		if err := failedReposFile.Close(); err != nil {
+			logger.Warnf("Failed to close failedReposFile: %v", err)
+		}
+	}()
 
 	// create symlink to the results
 	if _, err := os.Lstat(previousResultsSymlink); err == nil {
@@ -200,14 +208,18 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 		logger.Warnf("Failed to create symlink to foreach results: %v", err)
 	}
 
-	_, _ = successfulReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command))
-	_, _ = failedReposFile.WriteString(fmt.Sprintf("# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command))
+	fmt.Fprintf(successfulReposFile, "# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command)
+	fmt.Fprintf(failedReposFile, "# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command)
 }
 
 func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
 	// write the repo name to the repos file
 	reposFile, _ := os.OpenFile(reposFileName, os.O_RDWR|os.O_APPEND, 0644)
-	defer reposFile.Close()
+	defer func() {
+		if err := reposFile.Close(); err != nil {
+			logger.Warnf("Failed to close reposFile: %v", err)
+		}
+	}()
 	_, err := reposFile.WriteString(repo.FullRepoName + "\n")
 	if err != nil {
 		logger.Errorf("Failed to write repo name to %s: %s", reposFile.Name(), err)
@@ -222,7 +234,11 @@ func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryP
 	}
 
 	logs, _ := os.Create(logsFile)
-	defer logs.Close()
+	defer func() {
+		if err := logs.Close(); err != nil {
+			logger.Warnf("Failed to close logs: %v", err)
+		}
+	}()
 	_, err = logs.WriteString(executionLogs)
 	if err != nil {
 		logger.Errorf("Failed to write logs to %s: %s", logsFile, err)
