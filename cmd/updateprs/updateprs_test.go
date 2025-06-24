@@ -13,6 +13,23 @@ import (
 	"github.com/skyscanner/turbolift/internal/testsupport"
 )
 
+func TestValidateFlagsNoneSet(t *testing.T) {
+	err := validateFlags(false, false, false)
+	assert.Error(t, err)
+	assert.Equal(t, "update-prs needs one and only one action flag", err.Error())
+}
+
+func TestValidateFlagsMultipleSet(t *testing.T) {
+	err := validateFlags(true, false, true)
+	assert.Error(t, err)
+	assert.Equal(t, "update-prs needs one and only one action flag", err.Error())
+}
+
+func TestValidateFlagsSingleSet(t *testing.T) {
+	err := validateFlags(true, false, false)
+	assert.NoError(t, err)
+}
+
 func TestItLogsClosePrErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGitHub := github.NewAlwaysFailsFakeGitHub()
 	gh = fakeGitHub
