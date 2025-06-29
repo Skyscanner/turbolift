@@ -206,7 +206,7 @@ Next, to push and raise PRs against changed repos, run:
 
 Use `turbolift create-prs --sleep 30s` to, for example, force a 30s pause between creation of each PR. This can be helpful in reducing load on shared infrastructure.
 
-> Important: if raising many PRs, you may generate load on shared infrastucture such as CI. It is *highly* recommended that you:
+> Important: if raising many PRs, you may generate load on shared infrastructure such as CI. It is *highly* recommended that you:
 > * slow the rate of PR creation by making Turbolift sleep in between PRs
 > * create PRs in batches, for example by commenting out repositories in `repos.txt`
 > * Use the `--draft` flag to create the PRs as Draft
