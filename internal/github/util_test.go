@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestuserHasPushPermissionReturnsTrueForAllCases(t *testing.T) {
+func TestUserHasPushPermissionReturnsTrueForAllCases(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"WRITE"}`,
 		`{"viewerPermission":"MAINTAIN"}`,
@@ -35,7 +35,7 @@ func TestuserHasPushPermissionReturnsTrueForAllCases(t *testing.T) {
 	}
 }
 
-func TestuserHasPushPermissionReturnsFalseForUnknownPermission(t *testing.T) {
+func TestUserHasPushPermissionReturnsFalseForUnknownPermission(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"UNKNOWN"}`,
 		`{"viewerPermission":"READ"}`,
@@ -51,7 +51,7 @@ func TestuserHasPushPermissionReturnsFalseForUnknownPermission(t *testing.T) {
 	}
 }
 
-func TestuserHasPushPermissionReturnsErrorForInvalidJSON(t *testing.T) {
+func TestUserHasPushPermissionReturnsErrorForInvalidJSON(t *testing.T) {
 	testCases := []string{
 		`{"viewerPermission":"WRITE"`, // invalid JSON
 		`viewerPermission: WRITE`,     // invalid JSON
