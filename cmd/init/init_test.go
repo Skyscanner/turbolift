@@ -18,7 +18,7 @@ package init
 import (
 	"github.com/skyscanner/turbolift/internal/testsupport"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -38,7 +38,7 @@ func TestTemplatedFilesHaveExpectedContent(t *testing.T) {
 	testsupport.CreateAndEnterTempDirectory()
 	runCommand()
 
-	readmeContents, err := ioutil.ReadFile("foo/README.md")
+	readmeContents, err := os.ReadFile("foo/README.md")
 	if err != nil {
 		panic(err)
 	}
