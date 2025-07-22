@@ -265,19 +265,7 @@ func TestBranchNamePrefixLogic(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		result := ApplyBranchNamePrefix(c.input)
+		result := ApplyCampaignNamePrefix(c.input)
 		assert.Equal(t, c.expected, result)
 	}
-}
-
-// ApplyBranchNamePrefix is a helper function to simulate the branch name prefix logic.
-func ApplyBranchNamePrefix(name string) string {
-	const prefix = "turbolift-"
-	if name == "" {
-		return prefix
-	}
-	if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
-		return name
-	}
-	return prefix + name
 }

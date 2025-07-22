@@ -10,7 +10,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package campaign
@@ -55,6 +54,17 @@ func NewCampaignOptions() *CampaignOptions {
 	}
 }
 
+func ApplyCampaignNamePrefix(name string) string {
+	const prefix = "turbolift-"
+	if name == "" {
+		return prefix
+	}
+	if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
+		return name
+	}
+	return prefix + name
+}
+
 func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 	dir, _ := os.Getwd()
 	dirBasename := filepath.Base(dir)
@@ -70,7 +80,7 @@ func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 	}
 
 	return &Campaign{
-		Name:    "turbolift-" + strings.TrimPrefix(dirBasename, "turbolift-"),
+		Name:    ApplyCampaignNamePrefix(dirBasename),
 		Repos:   repos,
 		PrTitle: prTitle,
 		PrBody:  prBody,
