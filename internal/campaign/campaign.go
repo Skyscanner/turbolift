@@ -70,7 +70,7 @@ func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 	}
 
 	return &Campaign{
-		Name:    dirBasename,
+		Name:    "turbolift-" + strings.TrimPrefix(dirBasename, "turbolift-"),
 		Repos:   repos,
 		PrTitle: prTitle,
 		PrBody:  prBody,

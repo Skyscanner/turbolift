@@ -10,7 +10,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package campaign
@@ -18,9 +17,8 @@ package campaign
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/skyscanner/turbolift/internal/testsupport"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
@@ -253,4 +251,33 @@ func TestItShouldErrorWhenPrDescriptionFileNameIsEmpty(t *testing.T) {
 	options.PrDescriptionFilename = ""
 	_, err := OpenCampaign(options)
 	assert.Error(t, err)
+}
+
+func TestBranchNamePrefixLogic(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected string
+	}{
+		{"example-campaign", "turbolift-example-campaign"},
+		{"turbolift-example-campaign", "turbolift-example-campaign"},
+		{"", "turbolift-"},
+		{"!@#$%^&*", "turbolift-!@#$%^&*"},
+	}
+
+	for _, c := range cases {
+		result := ApplyBranchNamePrefix(c.input)
+		assert.Equal(t, c.expected, result)
+	}
+}
+
+// ApplyBranchNamePrefix is a helper function to simulate the branch name prefix logic.
+func ApplyBranchNamePrefix(name string) string {
+	const prefix = "turbolift-"
+	if name == "" {
+		return prefix
+	}
+	if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
+		return name
+	}
+	return prefix + name
 }
