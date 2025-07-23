@@ -4,3 +4,4 @@
 coverage.txt
 .vscode
 .idea
+*.test
