@@ -215,7 +215,11 @@ func TestItRunsAgainstSuccessfulReposOnly(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error setting up symlink: %s", err)
 	}
-	defer os.RemoveAll("mock_output")
+	defer func() {
+		if err := os.RemoveAll("mock_output"); err != nil {
+			t.Logf("Failed to remove mock_output: %v", err)
+		}
+	}()
 
 	out, err := runCommandReposSuccessful("--", "some", "command")
 	assert.NoError(t, err)
@@ -240,7 +244,11 @@ func TestItRunsAgainstFailedReposOnly(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error setting up symlink: %s", err)
 	}
-	defer os.RemoveAll("mock_output")
+	defer func() {
+		if err := os.RemoveAll("mock_output"); err != nil {
+			t.Logf("Failed to remove mock_output: %v", err)
+		}
+	}()
 
 	out, err := runCommandReposFailed("--", "some", "command")
 	assert.NoError(t, err)
