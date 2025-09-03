@@ -1,6 +1,6 @@
 [tools]
 go = "1.23"
-golangci-lint = "v1.42.1"
+golangci-lint = "v1.64.8"
 
 [tasks.mod]
 description = "Download and tidy Go modules"
