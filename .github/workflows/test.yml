@@ -13,9 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ^1.23
+      - name: Install mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
 
       - name: Run tests
-        run: make test
+        run: mise run test
