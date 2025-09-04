@@ -200,8 +200,8 @@ func setupOutputFiles(campaignName string, command string, logger *logging.Logge
 		logger.Warnf("Failed to create symlink to foreach results: %v", err)
 	}
 
-	fmt.Fprintf(successfulReposFile, "# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command)
-	fmt.Fprintf(failedReposFile, "# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command)
+	_, _ = fmt.Fprintf(successfulReposFile, "# This file contains the list of repositories that were successfully processed by turbolift foreach\n# for the command: %s\n", command)
+	_, _ = fmt.Fprintf(failedReposFile, "# This file contains the list of repositories that failed to be processed by turbolift foreach\n# for the command: %s\n", command)
 }
 
 func emitOutcomeToFiles(repo campaign.Repo, reposFileName string, logsDirectoryParent string, executionLogs string, logger *logging.Logger) {
