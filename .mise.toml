@@ -1,6 +1,6 @@
 [tools]
 go = "1.23"
-golangci-lint = "v1.42.1"
+golangci-lint = "v2.1.5"
 
 [tasks.mod]
 description = "Download and tidy Go modules"
@@ -11,12 +11,12 @@ run = [
 
 [tasks.lint]
 description = "Lint all the things"
-run = "golangci-lint run ./..."
+run = "golangci-lint run"
 depends = ["mod"]
 
 [tasks.fix]
 description = "Format and fix all the things"
-run = "golangci-lint run --fix ./..."
+run = "golangci-lint run --fix"
 depends = ["mod"]
 
 [tasks.fmt]
