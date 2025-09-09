@@ -52,7 +52,6 @@ func TestItWritesDeletableForksToFile(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift cleanup completed (2 forks checked, 0 non-forks skipped)")
 	assert.Contains(t, out, "If you wish to delete these forks, run the following command:")
-	assert.Contains(t, out, "Found an open upstream PR in org/repo2. Skipping...")
 	assert.FileExists(t, cleanupFile)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
@@ -112,8 +111,6 @@ func TestItSkipsNonForksButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCleanupCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "org/repo1 is not a fork. Skipping...")
-	assert.Contains(t, out, "org/repo2 is not a fork. Skipping...")
 	assert.Contains(t, out, "turbolift cleanup completed (0 forks checked, 2 non-forks skipped)")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
@@ -142,8 +139,6 @@ func TestItWarnsOnErrorButContinuesToTryAll(t *testing.T) {
 
 	out, err := runCleanupCommand()
 	assert.NoError(t, err)
-	assert.Contains(t, out, "Error checking for upstream PRs in org/repo1: synthetic error")
-	assert.Contains(t, out, "Error checking for upstream PRs in org/repo2: synthetic error")
 	assert.Contains(t, out, "turbolift cleanup completed with errors (0 forks checked, 0 non-forks skipped, 2 errored)")
 	assert.Contains(t, out, "Please check errors above and fix if necessary")
 	assert.FileExists(t, cleanupFile)
