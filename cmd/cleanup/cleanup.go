@@ -1,8 +1,23 @@
+/*
+ * Copyright 2021 Skyscanner Limited.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package cleanup
 
 import (
-	"bufio"
 	"github.com/skyscanner/turbolift/internal/campaign"
+	"github.com/skyscanner/turbolift/internal/colors"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/logging"
 	"github.com/spf13/cobra"
@@ -13,7 +28,6 @@ import (
 var (
 	gh          github.GitHub = github.NewRealGitHub()
 	cleanupFile               = ".cleanup.txt"
-	apply       bool
 	repoFile    string
 )
 
@@ -24,84 +38,86 @@ func NewCleanupCmd() *cobra.Command {
 		Run:   run,
 	}
 
-	cmd.Flags().BoolVar(&apply, "apply", false, "Delete unused forks rather than just listing them")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to cleanup.")
 
 	return cmd
 }
 
 func run(c *cobra.Command, _ []string) {
-	if apply {
-		logger := logging.NewLogger(c)
-		if _, err := os.Stat(cleanupFile); os.IsNotExist(err) {
-			logger.Errorf("The file %s does not exist. Please run `turbolift cleanup` without the --apply flag first.", cleanupFile)
-		}
-		readFileActivity := logger.StartActivity("Reading cleanup file")
-		cleanupContents, err := os.Open(cleanupFile)
-		if err != nil {
-			readFileActivity.EndWithFailure(err)
-			return
-		}
-		defer func(reposToDelete *os.File) {
-			err := reposToDelete.Close()
-			if err != nil {
-				readFileActivity.EndWithFailure(err)
-			}
-		}(cleanupContents)
-		scanner := bufio.NewScanner(cleanupContents)
-		for scanner.Scan() {
-			err = gh.DeleteFork(logger.Writer(), scanner.Text())
-			if err != nil {
-				readFileActivity.EndWithFailure(err)
-				return
-			}
-		}
-	} else {
-		logger := logging.NewLogger(c)
-		readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
-		options := campaign.NewCampaignOptions()
-		options.RepoFilename = repoFile
-		dir, err := campaign.OpenCampaign(options)
-		if err != nil {
-			readCampaignActivity.EndWithFailure(err)
-			return
-		}
-		readCampaignActivity.EndWithSuccess()
+	logger := logging.NewLogger(c)
+	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
+	options := campaign.NewCampaignOptions()
+	options.RepoFilename = repoFile
+	dir, err := campaign.OpenCampaign(options)
+	deletableForksFound := false
+	if err != nil {
+		readCampaignActivity.EndWithFailure(err)
+		return
+	}
+	readCampaignActivity.EndWithSuccess()
 
-		deletableForksActivity := logger.StartActivity("Checking for deletable forks")
-		deletableForks, err := os.Create(cleanupFile)
+	deletableForksActivity := logger.StartActivity("Checking for deletable forks")
+	deletableForks, err := os.Create(cleanupFile)
+	if err != nil {
+		deletableForksActivity.EndWithFailure(err)
+		return
+	}
+	defer func(deletableForks *os.File) {
+		err := deletableForks.Close()
 		if err != nil {
 			deletableForksActivity.EndWithFailure(err)
-			return
 		}
-		defer func(deletableForks *os.File) {
-			err := deletableForks.Close()
+	}(deletableForks)
+	var doneCount, errorCount, skippedCount int
+	for _, repo := range dir.Repos {
+		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName)
+		isFork, err := gh.IsFork(logger.Writer(), repoDirPath)
+		if err != nil {
+			logger.Errorf("Error checking %s: %s", repo.FullRepoName, err)
+			errorCount++
+			continue
+		}
+		if !isFork {
+			logger.Printf("%s is not a fork. Skipping...", repo.FullRepoName)
+			skippedCount++
+			continue
+		}
+
+		openUpstreamPR, err := gh.UserHasOpenUpstreamPRs(logger.Writer(), repo.FullRepoName)
+		if err != nil {
+			logger.Errorf("Error checking for upstream PRs in %s: %s", repo.FullRepoName, err)
+			errorCount++
+			continue
+		}
+		if openUpstreamPR {
+			logger.Printf("Found an open upstream PR in %s. Skipping...", repo.FullRepoName)
+		} else {
+			_, err = deletableForks.WriteString(repo.FullRepoName + "\n")
+			deletableForksFound = true
 			if err != nil {
-				deletableForksActivity.EndWithFailure(err)
-			}
-		}(deletableForks)
-		var doneCount, errorCount int
-		for _, repo := range dir.Repos {
-			isFork, err := gh.IsFork(logger.Writer(), repo.FullRepoName)
-			if err != nil {
-				deletableForksActivity.EndWithFailure(err)
+				logger.Errorf("Error writing to cleanup file for %s: %s", repo.FullRepoName, err)
 				errorCount++
 				continue
 			}
-			repoDirPath := path.Join("work", repo.OrgName, repo.RepoName)
-			pr, err := gh.GetPR(logger.Writer(), repoDirPath, dir.Name)
-			if err != nil {
-				deletableForksActivity.EndWithFailure(err)
-				errorCount++
-				continue
-			}
-			prClosed := pr.Closed == true
-			if isFork && prClosed {
-				deletableForks.WriteString(repo.FullRepoName + "\n")
-			}
-			doneCount++
 		}
-		logger.Printf("A list of forks used in this campaign has been written to %s. Check these carefully and run `turbolift cleanup --apply` in order to delete them.", cleanupFile)
+		doneCount++
+	}
+
+	if errorCount == 0 {
+		logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
+		if deletableForksFound {
+			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
+			logger.Println("If you wish to delete these forks, run the following command:")
+			logger.Printf("    for f in $(cat %s); do", cleanupFile)
+			logger.Println("         gh repo delete --yes $f")
+			logger.Println("         sleep 1")
+			logger.Println("         done")
+		} else {
+			logger.Printf("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
+		}
 		deletableForksActivity.EndWithSuccess()
+	} else {
+		logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
+		logger.Println("Please check errors above and fix if necessary")
 	}
 }

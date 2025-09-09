@@ -34,7 +34,7 @@ const (
 	UpdatePRDescription
 	IsPushable
 	IsFork
-	DeleteFork
+	UserHasOpenUpstreamPRs
 )
 
 type FakeGitHub struct {
@@ -99,17 +99,16 @@ func (f *FakeGitHub) UpdatePRDescription(_ io.Writer, workingDir string, title s
 	return err
 }
 
-func (f *FakeGitHub) IsFork(_ io.Writer, repo string) (bool, error) {
-	args := []string{"is_fork", repo}
+func (f *FakeGitHub) IsFork(_ io.Writer, workingDir string) (bool, error) {
+	args := []string{"is_fork", workingDir}
 	f.calls = append(f.calls, args)
 	return f.handler(IsFork, args)
 }
 
-func (f *FakeGitHub) DeleteFork(_ io.Writer, repo string) error {
-	args := []string{"delete_fork", repo}
+func (f *FakeGitHub) UserHasOpenUpstreamPRs(_ io.Writer, fullRepoName string) (bool, error) {
+	args := []string{"user_has_open_upstream_prs", fullRepoName}
 	f.calls = append(f.calls, args)
-	_, err := f.handler(DeleteFork, args)
-	return err
+	return f.handler(UserHasOpenUpstreamPRs, args)
 }
 
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
