@@ -73,29 +73,24 @@ func run(c *cobra.Command, _ []string) {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName)
 		isFork, err := gh.IsFork(logger.Writer(), repoDirPath)
 		if err != nil {
-			logger.Errorf("Error checking %s: %s", repo.FullRepoName, err)
 			errorCount++
 			continue
 		}
 		if !isFork {
-			logger.Printf("%s is not a fork. Skipping...", repo.FullRepoName)
 			skippedCount++
 			continue
 		}
 
 		openUpstreamPR, err := gh.UserHasOpenUpstreamPRs(logger.Writer(), repo.FullRepoName)
 		if err != nil {
-			logger.Errorf("Error checking for upstream PRs in %s: %s", repo.FullRepoName, err)
 			errorCount++
 			continue
 		}
 		if openUpstreamPR {
-			logger.Printf("Found an open upstream PR in %s. Skipping...", repo.FullRepoName)
 		} else {
 			_, err = deletableForks.WriteString(repo.FullRepoName + "\n")
 			deletableForksFound = true
 			if err != nil {
-				logger.Errorf("Error writing to cleanup file for %s: %s", repo.FullRepoName, err)
 				errorCount++
 				continue
 			}
@@ -104,6 +99,7 @@ func run(c *cobra.Command, _ []string) {
 	}
 
 	if errorCount == 0 {
+		deletableForksActivity.EndWithSuccess()
 		logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
 		if deletableForksFound {
 			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
@@ -115,8 +111,8 @@ func run(c *cobra.Command, _ []string) {
 		} else {
 			logger.Printf("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
 		}
-		deletableForksActivity.EndWithSuccess()
 	} else {
+		deletableForksActivity.EndWithFailure("turbolift cleanup completed with errors")
 		logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
 		logger.Println("Please check errors above and fix if necessary")
 	}
