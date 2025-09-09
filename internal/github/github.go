@@ -17,6 +17,7 @@ package github
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -42,10 +43,10 @@ type GitHub interface {
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
 	UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
+	UserHasOpenUpstreamPRs(output io.Writer, fullRepoName string) (bool, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 	IsPushable(output io.Writer, repo string) (bool, error)
-	IsFork(output io.Writer, repo string) (bool, error)
-	DeleteFork(output io.Writer, repo string) error
+	IsFork(output io.Writer, workingDir string) (bool, error)
 }
 
 type RealGitHub struct{}
@@ -189,24 +190,30 @@ func (r *RealGitHub) IsPushable(output io.Writer, repo string) (bool, error) {
 	return userHasPushPermission(s)
 }
 
-func (r *RealGitHub) IsFork(output io.Writer, repo string) (bool, error) {
+func (r *RealGitHub) UserHasOpenUpstreamPRs(output io.Writer, fullRepoName string) (bool, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return false, err
 	}
-	response, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "repo", "view", repo, "--json", "isFork")
+	s, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "pr", "list", "--repo", fullRepoName, "--author", "@me", "--state", "open")
+	if err != nil {
+		return true, err
+	}
+	return !strings.Contains(s, "no pull requests match your search"), nil
+}
+
+func (r *RealGitHub) IsFork(output io.Writer, workingDir string) (bool, error) {
+	response, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", "--json", "isFork")
 	if err != nil {
 		return false, err
 	}
 	if strings.Contains(response, "true") {
 		return true, err
-	} else {
+	} else if strings.Contains(response, "false") {
 		return false, err
+	} else {
+		return false, errors.New("unable to determine whether repo is a fork")
 	}
-}
-
-func (r *RealGitHub) DeleteFork(output io.Writer, repo string) error {
-	return execInstance.Execute(output, "gh", "repo", "--delete", repo, "--yes")
 }
 
 func NewRealGitHub() *RealGitHub {
