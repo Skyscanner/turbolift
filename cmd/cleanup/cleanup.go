@@ -93,26 +93,26 @@ func run(c *cobra.Command, _ []string) {
 				errorCount++
 				continue
 			}
-			doneCount++
 		}
+		doneCount++
+	}
 
-		if errorCount == 0 {
-			deletableForksActivity.EndWithSuccess()
-			logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
-			if deletableForksFound {
-				logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
-				logger.Println("If you wish to delete these forks, run the following command:")
-				logger.Printf("    for f in $(cat %s); do", cleanupFile)
-				logger.Println("         gh repo delete --yes $f")
-				logger.Println("         sleep 1")
-				logger.Println("         done")
-			} else {
-				logger.Printf("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
-			}
+	if errorCount == 0 {
+		deletableForksActivity.EndWithSuccess()
+		logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
+		if deletableForksFound {
+			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
+			logger.Println("If you wish to delete these forks, run the following command:")
+			logger.Printf("    for f in $(cat %s); do", cleanupFile)
+			logger.Println("         gh repo delete --yes $f")
+			logger.Println("         sleep 1")
+			logger.Println("         done")
 		} else {
-			deletableForksActivity.EndWithFailure("turbolift cleanup completed with errors")
-			logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
-			logger.Println("Please check errors above and fix if necessary")
+			logger.Printf("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
 		}
+	} else {
+		deletableForksActivity.EndWithFailure("turbolift cleanup completed with errors")
+		logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
+		logger.Println("Please check errors above and fix if necessary")
 	}
 }
