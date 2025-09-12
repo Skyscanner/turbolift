@@ -124,7 +124,7 @@ func run(c *cobra.Command, _ []string) {
 	if errorCount == 0 {
 		logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
 		if deletableForksFound {
-			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
+			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact safe to delete.", cleanupFile)
 			logger.Println("If you wish to delete these forks, run the following command:")
 			logger.Printf("    for f in $(cat %s); do", cleanupFile)
 			logger.Println("         gh repo delete --yes $f")
