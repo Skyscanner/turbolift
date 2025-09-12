@@ -141,6 +141,7 @@ func TestItWarnsOnErrorButContinuesToTryAll(t *testing.T) {
 	out, err := runCleanupCommand()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift cleanup completed with errors (0 forks checked, 0 non-forks skipped, 2 errored)")
+	assert.Contains(t, out, "Please check errors above and fix if necessary")
 	assert.FileExists(t, cleanupFile)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
