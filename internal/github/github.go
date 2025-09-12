@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/skyscanner/turbolift/internal/git"
 	"io"
 	"os"
 	"strings"
@@ -26,7 +27,10 @@ import (
 	"github.com/skyscanner/turbolift/internal/executor"
 )
 
-var execInstance executor.Executor = executor.NewRealExecutor()
+var (
+	execInstance executor.Executor = executor.NewRealExecutor()
+	g            git.Git           = git.NewRealGit()
+)
 
 type PullRequest struct {
 	Title          string
@@ -47,6 +51,7 @@ type GitHub interface {
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 	IsPushable(output io.Writer, repo string) (bool, error)
 	IsFork(output io.Writer, workingDir string) (bool, error)
+	GetOriginRepoName(output io.Writer, workingDir string) (string, error)
 }
 
 type RealGitHub struct{}
@@ -193,13 +198,19 @@ func (r *RealGitHub) IsPushable(output io.Writer, repo string) (bool, error) {
 func (r *RealGitHub) UserHasOpenUpstreamPRs(output io.Writer, fullRepoName string) (bool, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		return false, err
+		return true, err
 	}
-	s, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "pr", "list", "--repo", fullRepoName, "--author", "@me", "--state", "open")
+	s, err := execInstance.ExecuteAndCapture(output, currentDir, "gh", "pr", "list", "--repo", fullRepoName, "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0")
 	if err != nil {
 		return true, err
 	}
-	return !strings.Contains(s, "no pull requests match your search"), nil
+	if strings.TrimSpace(s) == "true" {
+		return true, nil
+	} else if strings.TrimSpace(s) == "false" {
+		return false, nil
+	} else {
+		return true, errors.New("unable to check for open upstream PRs")
+	}
 }
 
 func (r *RealGitHub) IsFork(output io.Writer, workingDir string) (bool, error) {
@@ -214,6 +225,18 @@ func (r *RealGitHub) IsFork(output io.Writer, workingDir string) (bool, error) {
 	} else {
 		return false, errors.New("unable to determine whether repo is a fork")
 	}
+}
+
+func (r *RealGitHub) GetOriginRepoName(output io.Writer, workingDir string) (string, error) {
+	originUrl, err := g.GetOriginUrl(output, workingDir)
+	if err != nil {
+		return "", err
+	}
+	fullOriginRepoName, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", originUrl, "--json", "nameWithOwner", "--jq", ".nameWithOwner")
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(fullOriginRepoName, "\n"), nil
 }
 
 func NewRealGitHub() *RealGitHub {

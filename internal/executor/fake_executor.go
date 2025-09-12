@@ -108,11 +108,3 @@ func NewAlwaysSucceedsAndReturnsFalseFakeExecutor() *FakeExecutor {
 		return "false", nil
 	})
 }
-
-func NewAlwaysSucceedsAndReturnsNoPullRequestsFakeExecutor() *FakeExecutor {
-	return NewFakeExecutor(func(s string, s2 string, s3 ...string) error {
-		return nil
-	}, func(s string, s2 string, s3 ...string) (string, error) {
-		return "no pull requests match your search", nil
-	})
-}
