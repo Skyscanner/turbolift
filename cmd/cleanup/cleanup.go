@@ -45,71 +45,83 @@ func NewCleanupCmd() *cobra.Command {
 
 func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
+
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
 	dir, err := campaign.OpenCampaign(options)
-
-	forksFound := false
-	deletableForksFound := false
-
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
 	}
 	readCampaignActivity.EndWithSuccess()
 
-	deletableForksActivity := logger.StartActivity("Checking for deletable forks")
+	cleanupFileActivity := logger.StartActivity("Creating cleanup file (%s)", cleanupFile)
 	deletableForks, err := os.Create(cleanupFile)
 	if err != nil {
-		deletableForksActivity.EndWithFailure(err)
+		cleanupFileActivity.EndWithFailure(err)
 		return
 	}
+	cleanupFileActivity.EndWithSuccess()
+
 	defer func(deletableForks *os.File) {
 		err := deletableForks.Close()
 		if err != nil {
-			deletableForksActivity.EndWithFailure(err)
+			logger.Errorf("Error closing cleanup file: %s", err)
 		}
 	}(deletableForks)
+
+	forksFound := false
+	deletableForksFound := false
 	var doneCount, errorCount, skippedCount int
 	for _, repo := range dir.Repos {
+
+		forkStatusActivity := logger.StartActivity("Checking whether %s is a fork", repo.FullRepoName)
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName)
 		isFork, err := gh.IsFork(logger.Writer(), repoDirPath)
 		if err != nil {
 			errorCount++
+			forkStatusActivity.EndWithFailure(err)
 			continue
 		}
 		if !isFork {
 			skippedCount++
+			forkStatusActivity.EndWithSuccess()
 			continue
 		}
+		forkStatusActivity.EndWithSuccess()
 
 		forksFound = true
 
+		prCheckActivity := logger.StartActivity("Checking for open PRs in %s", repo.FullRepoName)
 		openUpstreamPR, err := gh.UserHasOpenUpstreamPRs(logger.Writer(), repo.FullRepoName)
 		if err != nil {
 			errorCount++
-
+			prCheckActivity.EndWithFailure(err)
 			continue
 		}
+		prCheckActivity.EndWithSuccess()
 		if !openUpstreamPR {
+			deletableForkActivity := logger.StartActivity("Adding fork of %s to cleanup file", repo.FullRepoName)
 			originRepoName, err := gh.GetOriginRepoName(logger.Writer(), repoDirPath)
 			if err != nil {
 				errorCount++
+				deletableForkActivity.EndWithFailure(err)
 				continue
 			}
 			_, err = deletableForks.WriteString(originRepoName + "\n")
-			deletableForksFound = true
 			if err != nil {
 				errorCount++
+				deletableForkActivity.EndWithFailure(err)
 				continue
 			}
+			deletableForkActivity.EndWithSuccess()
+			deletableForksFound = true
 		}
 		doneCount++
 	}
 
 	if errorCount == 0 {
-		deletableForksActivity.EndWithSuccess()
 		logger.Successf("turbolift cleanup completed %s(%s forks checked, %s non-forks skipped)\n", colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount))
 		if deletableForksFound {
 			logger.Printf(" %s contains a list of forks used in this campaign that do not currently have an upstream PR open. Please check over these carefully. It is your responsibility to ensure that they are in fact to safe to delete.", cleanupFile)
@@ -126,7 +138,8 @@ func run(c *cobra.Command, _ []string) {
 			}
 		}
 	} else {
-		deletableForksActivity.EndWithFailure("turbolift cleanup completed with errors")
+		logger.Errorf("turbolift cleanup completed with errors")
 		logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
+		logger.Println("Please check errors above and fix if necessary")
 	}
 }
