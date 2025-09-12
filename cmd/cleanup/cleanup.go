@@ -49,7 +49,10 @@ func run(c *cobra.Command, _ []string) {
 	options := campaign.NewCampaignOptions()
 	options.RepoFilename = repoFile
 	dir, err := campaign.OpenCampaign(options)
+
+	forksFound := false
 	deletableForksFound := false
+
 	if err != nil {
 		readCampaignActivity.EndWithFailure(err)
 		return
@@ -81,13 +84,21 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
+		forksFound = true
+
 		openUpstreamPR, err := gh.UserHasOpenUpstreamPRs(logger.Writer(), repo.FullRepoName)
 		if err != nil {
 			errorCount++
+
 			continue
 		}
 		if !openUpstreamPR {
-			_, err = deletableForks.WriteString(repo.FullRepoName + "\n")
+			originRepoName, err := gh.GetOriginRepoName(logger.Writer(), repoDirPath)
+			if err != nil {
+				errorCount++
+				continue
+			}
+			_, err = deletableForks.WriteString(originRepoName + "\n")
 			deletableForksFound = true
 			if err != nil {
 				errorCount++
@@ -108,11 +119,14 @@ func run(c *cobra.Command, _ []string) {
 			logger.Println("         sleep 1")
 			logger.Println("         done")
 		} else {
-			logger.Printf("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
+			if forksFound {
+				logger.Println("All forks used in this campaign appear to have an open upstream PR. No cleanup can be done at this time.")
+			} else {
+				logger.Println("No forks found in this campaign.")
+			}
 		}
 	} else {
 		deletableForksActivity.EndWithFailure("turbolift cleanup completed with errors")
 		logger.Warnf("turbolift cleanup completed with %s %s(%s forks checked, %s non-forks skipped, %s errored)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount), colors.Yellow(skippedCount), colors.Red(errorCount))
-		logger.Println("Please check errors above and fix if necessary")
 	}
 }

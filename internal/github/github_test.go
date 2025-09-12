@@ -17,6 +17,7 @@ package github
 
 import (
 	"errors"
+	"github.com/skyscanner/turbolift/internal/git"
 	"os"
 	"strings"
 	"testing"
@@ -227,12 +228,12 @@ func TestItReturnsTrueAndNilErrorWhenUserHasOpenUpstreamPRs(t *testing.T) {
 	currentDir, _ := os.Getwd()
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open"},
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
 	})
 }
 
 func TestItReturnsFalseAndNilErrorWhenUserHasNoOpenUpstreamPRs(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsNoPullRequestsFakeExecutor()
+	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsFalseFakeExecutor()
 	execInstance = fakeExecutor
 
 	hasOpenPRs, _, err := runUserHasOpenUpstreamPRsAndCaptureOutput()
@@ -242,7 +243,7 @@ func TestItReturnsFalseAndNilErrorWhenUserHasNoOpenUpstreamPRs(t *testing.T) {
 	currentDir, _ := os.Getwd()
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open"},
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
 	})
 }
 
@@ -256,7 +257,31 @@ func TestItReturnsErrorOnFailedUserHasOpenUpstreamPRs(t *testing.T) {
 	currentDir, _ := os.Getwd()
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open"},
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
+	})
+}
+
+func TestItReturnsErrorOnFailedGetOriginRepoName(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, _, err := runGetOriginRepoNameAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "dummyUrl", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulGetOriginRepoName(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, _, err := runGetOriginRepoNameAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "dummyUrl", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
 	})
 }
 
@@ -319,4 +344,12 @@ func runUserHasOpenUpstreamPRsAndCaptureOutput() (bool, string, error) {
 	sb := strings.Builder{}
 	hasOpenPRs, err := NewRealGitHub().UserHasOpenUpstreamPRs(&sb, "org/repo1")
 	return hasOpenPRs, sb.String(), err
+}
+
+func runGetOriginRepoNameAndCaptureOutput() (string, string, error) {
+	sb := strings.Builder{}
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	_, err := NewRealGitHub().GetOriginRepoName(&sb, "work/org/repo1")
+	return "", sb.String(), err
 }

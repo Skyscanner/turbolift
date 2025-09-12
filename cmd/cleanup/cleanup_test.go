@@ -41,7 +41,7 @@ func TestItWritesDeletableForksToFile(t *testing.T) {
 			return false, errors.New("unexpected command")
 		}
 	}, func(workingDir string) (interface{}, error) {
-		return nil, errors.New("unexpected call")
+		return "org/repo", nil
 	})
 
 	gh = fakeGitHub
@@ -57,6 +57,7 @@ func TestItWritesDeletableForksToFile(t *testing.T) {
 	fakeGitHub.AssertCalledWith(t, [][]string{
 		{"is_fork", "work/org/repo1"},
 		{"user_has_open_upstream_prs", "org/repo1"},
+		{"get_origin_repo_name", "work/org/repo1"},
 		{"is_fork", "work/org/repo2"},
 		{"user_has_open_upstream_prs", "org/repo2"},
 	})
@@ -140,7 +141,6 @@ func TestItWarnsOnErrorButContinuesToTryAll(t *testing.T) {
 	out, err := runCleanupCommand()
 	assert.NoError(t, err)
 	assert.Contains(t, out, "turbolift cleanup completed with errors (0 forks checked, 0 non-forks skipped, 2 errored)")
-	assert.Contains(t, out, "Please check errors above and fix if necessary")
 	assert.FileExists(t, cleanupFile)
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
