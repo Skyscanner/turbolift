@@ -219,9 +219,9 @@ func (r *RealGitHub) IsFork(output io.Writer, workingDir string) (bool, error) {
 		return false, err
 	}
 	if strings.Contains(response, "true") {
-		return true, err
+		return true, nil
 	} else if strings.Contains(response, "false") {
-		return false, err
+		return false, nil
 	} else {
 		return false, errors.New("unable to determine whether repo is a fork")
 	}
