@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/skyscanner/turbolift/internal/executor"
 )
@@ -31,6 +32,7 @@ type Git interface {
 	Commit(output io.Writer, workingDir string, message string) error
 	IsRepoChanged(output io.Writer, workingDir string) (bool, error)
 	Pull(output io.Writer, workingDir string, remote string, branchName string) error
+	GetOriginUrl(output io.Writer, workingDir string) (string, error)
 }
 
 type RealGit struct{}
@@ -70,6 +72,14 @@ func (r *RealGit) IsRepoChanged(output io.Writer, workingDir string) (bool, erro
 
 func (r *RealGit) Pull(output io.Writer, workingDir string, remote string, branchName string) error {
 	return execInstance.Execute(output, workingDir, "git", "pull", "--ff-only", remote, branchName)
+}
+
+func (r *RealGit) GetOriginUrl(output io.Writer, workingDir string) (string, error) {
+	originUrl, err := execInstance.ExecuteAndCapture(output, workingDir, "git", "remote", "get-url", "origin")
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(originUrl, "\n"), nil
 }
 
 func NewRealGit() *RealGit {

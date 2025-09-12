@@ -111,6 +111,13 @@ func (f *FakeGitHub) UserHasOpenUpstreamPRs(_ io.Writer, fullRepoName string) (b
 	return f.handler(UserHasOpenUpstreamPRs, args)
 }
 
+func (f *FakeGitHub) GetOriginRepoName(_ io.Writer, workingDir string) (string, error) {
+	args := []string{"get_origin_repo_name", workingDir}
+	f.calls = append(f.calls, args)
+	_, err := f.returningHandler(workingDir)
+	return "", err
+}
+
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {
 	assert.Equal(t, expected, f.calls)
 }
