@@ -1,0 +1,3 @@
+Skyscanner/dependabot-core
+Skyscanner/kubernetes.platform.terraform
+Skyscanner/terraform-aws-cluster-deployment
