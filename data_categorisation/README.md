@@ -54,6 +54,7 @@ The tag values are stored as **SSM parameters** in each AWS account/region. Choo
 Please review the resources in this repository and replace the placeholder `CHANGE_ME` values for `data_classification` and `data_category` with the correct ones for your service.
 
 Guidance on selecting the right values can be found here:
+- [Baseline Data Governance for critical AWS Operational Data Stores](https://skyscanner.atlassian.net/browse/DATAGOV-239)
 - [Data Classification Framework](https://skyscanner.atlassian.net/wiki/spaces/GOV/pages/22516568/Data+Classification+Framework)
 - [Skyscanner Data Categorisation](https://skyscanner.atlassian.net/wiki/spaces/GOV/pages/103072170/Skyscanner+Data+Categorisation)
 
@@ -71,6 +72,6 @@ Properties:
 - Ensure only **one value** is selected for `data_classification`.
 - Select **one or more** appropriate values for `data_category`.
 
-If you are unsure which values to apply, please consult the **Data Governance Slack channel**.
+If you are unsure which values to apply, please consult [#data-governance-for-aws-operational-data-stores](https://skyscanner.slack.com/archives/C09GZ0MKKPF).
 
 <sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>
