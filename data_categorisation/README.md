@@ -43,6 +43,7 @@ The tag values are stored as **SSM parameters** in each AWS account/region. Choo
 
 - **`data_category`** (choose one or more):
   - `inventory_data`
+  - `service_internal_data`
   - `traveller_profile_data`
   - `service_analytical_data`
   - `business_analytical_data`
@@ -71,6 +72,9 @@ Properties:
 
 - Ensure only **one value** is selected for `data_classification`.
 - Select **one or more** appropriate values for `data_category`.
+
+> **⚠️ Important:** Slingshot will fail if the Value does not match one of the options in the list of Tag values.
+
 
 If you are unsure which values to apply, please consult [#data-governance-for-aws-operational-data-stores](https://skyscanner.slack.com/archives/C09GZ0MKKPF).
 
