@@ -13,8 +13,8 @@ ALLOWED_R_TYPES = {
 
 TAG_KEY_CLASS = "data_classification"
 TAG_KEY_CAT   = "data_category"
-TAG_VAL_CLASS = "{{resolve:ssm:/DataClassification/CHANGE_ME}}"
-TAG_VAL_CAT   = "{{resolve:ssm:/DataCategory/CHANGE_ME}}"
+TAG_VAL_CLASS = "CHANGE_ME"
+TAG_VAL_CAT   = "CHANGE_ME"
 
 # ------------------ newline helpers ------------------
 def _pick_write_newline(seen: Union[None, str, tuple]) -> str:

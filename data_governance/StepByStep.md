@@ -57,7 +57,7 @@ turbolift create-prs --repos repo_lists/team_cf_repos.txt
 ### 8. Update Github Project for Tracking
 Update Github Project to track the pull requests:
 ```bash
-./script/gh_project_import.sh
+./scripts/gh_project_import.sh
 ```
 
 

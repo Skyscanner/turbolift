@@ -12,8 +12,8 @@ ALLOWED_TYPES = {
 
 TAG_KEY_CLASS = "data_classification"
 TAG_KEY_CAT   = "data_category"
-TAG_VAL_CLASS = "{{resolve:ssm:/DataClassification/CHANGE_ME}}"
-TAG_VAL_CAT   = "{{resolve:ssm:/DataCategory/CHANGE_ME}}"
+TAG_VAL_CLASS = "CHANGE_ME"
+TAG_VAL_CAT   = "CHANGE_ME"
 
 def _indent_len(s: str) -> int:
     return len(s) - len(s.lstrip(" "))
@@ -44,10 +44,13 @@ def _unquote_yaml_scalar(s: str) -> str:
 def _yaml_block_end(lines, start_idx, parent_indent, max_look=5000):
     end = start_idx + 1
     limit = min(len(lines), start_idx + max_look)
+    parent_len = len(parent_indent)
     while end < limit:
-        if lines[end].strip() == "":
-            break
-        if not lines[end].startswith(parent_indent + " "):
+        l = lines[end]
+        if l.strip() == "" or l.lstrip().startswith("#"):
+            end += 1
+            continue
+        if _indent_len(l) <= parent_len:
             break
         end += 1
     return end

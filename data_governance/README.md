@@ -3,7 +3,7 @@
 ## Description
 
 This PR is part of a Skyscanner-wide Turbolift campaign to apply baseline Data Governance tags to critical AWS data stores.  
-The campaign supports the **2025 data governance objective** and helps reduce audit risks by ensuring consistent tagging and clear ownership of data resources.
+The campaign supports the **2025 data governance objective** and helps address cybersecurity risks by ensuring consistent tagging and clear ownership of data resources.
 
 ## Changes
 
@@ -19,29 +19,23 @@ The following tags have been added to the resource definitions:
 Properties:
     Tags:
         - Key: data_classification
-          Value: '{{resolve:ssm:/DataClassification/CHANGE_ME}}'
+          Value: 'CHANGE_ME'
         - Key: data_category
-          Value: '{{resolve:ssm:/DataCategory/CHANGE_ME}}'
-```
-
-Teams may optionally add more than one `data_category` by comma-separating values, for example:
-
-```bash
-Value: '{{resolve:ssm:/DataCategory/value1}},{{resolve:ssm:/DataCategory/value2}}'
+          Value: 'CHANGE_ME'
 ```
 
 ### Tag Values
 
-The tag values are stored as **SSM parameters** in each AWS account/region. Choose from the following values:
+Choose from the following values for each tag:
 
-- **`data_classification`** (choose one):
+- **`data_classification`**:
   - `public`
   - `internal`
   - `confidential`
   - `restricted`
 
 
-- **`data_category`** (choose one or more):
+- **`data_category`**:
   - `inventory_data`
   - `service_internal_data`
   - `traveller_profile_data`
@@ -52,7 +46,7 @@ The tag values are stored as **SSM parameters** in each AWS account/region. Choo
 
 ### Action Required
 
-Please review the resources in this repository and replace the placeholder `CHANGE_ME` values for `data_classification` and `data_category` with the correct ones for your service.
+Please review the changes in this PR and replace the placeholder `CHANGE_ME` values for `data_classification` and `data_category` with the correct ones for your resource.
 
 Guidance on selecting the right values can be found here:
 - [Baseline Data Governance for critical AWS Operational Data Stores](https://skyscanner.atlassian.net/browse/DATAGOV-239)
@@ -65,16 +59,23 @@ When you have chosen the appropriate values, update the tags. For example:
 Properties:
     Tags:
         - Key: data_classification
-          Value: '{{resolve:ssm:/DataClassification/internal}}'
+          Value: 'internal'
         - Key: data_category
-          Value: '{{resolve:ssm:/DataCategory/service_analytical_data}}'
+          Value: 'service_analytical_data'
 ```
 
-- Ensure only **one value** is selected for `data_classification`.
-- Select **one or more** appropriate values for `data_category`.
+Teams may optionally add `data_subcategory` tag in a case more than 1 `data_category` applies:
 
-> **⚠️ Important:** Slingshot will fail if the Value does not match one of the options in the list of Tag values.
-
+```bash
+Properties:
+    Tags:
+        - Key: data_classification
+          Value: 'internal'
+        - Key: data_category
+          Value: 'service_analytical_data'
+        - Key: data_subcategory
+          Value: 'business_analytical_data'
+```
 
 If you are unsure which values to apply, please consult [#data-governance-for-aws-operational-data-stores](https://skyscanner.slack.com/archives/C09GZ0MKKPF).
 
