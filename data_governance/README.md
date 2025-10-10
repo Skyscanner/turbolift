@@ -30,19 +30,30 @@ Choose from the following values for each tag:
 
 - **`data_classification`**:
   - `public`
+      - Safe to share externally, no risk to Skyscanner. Includes public content and marketing materials.
   - `internal`
+      - For Skyscanner employees/contractors only, low risk if disclosed. Examples: internal docs or configs.
   - `confidential`
+      - Limited to specific teams, disclosure could harm operations or compliance. Examples: partner terms, service logs.
   - `restricted`
+      - Highly sensitive, strict access control required. Disclosure could cause legal or financial harm. Examples: traveller or payroll data.
 
 
 - **`data_category`**:
   - `inventory_data`
+      - Core service data Skyscanner defines and manages, representing business objects used to provide travel search results. Examples: flight timetables, quotes, hotel inventory.
   - `service_internal_data`
+      - Configuration or build-time data that supports service operation but is not exposed externally (e.g., feature toggles, deployment metadata, service configurations).
   - `traveller_profile_data`
+      - Data describing a traveller’s preferences or characteristics (language, currency, market, consent choices).
   - `service_analytical_data`
+      - Data about service performance, reliability, and operational excellence. Includes logs, metrics, traces, and cost tracking.
   - `business_analytical_data`
+      - Data used to understand business performance and drive decision-making. Examples: revenue, conversion rate, ABPC metrics.
   - `user_behaviour_data`
+      - Data describing what users see, click, or interact with. It requires consent and is used to improve user experience.
   - `service_snapshot_data`
+      - Captures the state of a service or inventory at a specific time. Used for debugging, auditing, testing, or training models.
 
 ### Action Required
 
