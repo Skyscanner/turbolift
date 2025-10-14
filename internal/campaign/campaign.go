@@ -24,6 +24,8 @@ import (
 	"strings"
 )
 
+const CampaignPrefix = "turbolift-"
+
 type Repo struct {
 	Host         string
 	OrgName      string
@@ -55,14 +57,10 @@ func NewCampaignOptions() *CampaignOptions {
 }
 
 func ApplyCampaignNamePrefix(name string) string {
-	const prefix = "turbolift-"
-	if name == "" {
-		return prefix
-	}
-	if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
+	if strings.HasPrefix(name, CampaignPrefix) {
 		return name
 	}
-	return prefix + name
+	return fmt.Sprintf("%s%s", CampaignPrefix, name)
 }
 
 func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
