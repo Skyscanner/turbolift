@@ -287,12 +287,40 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Local development
 
-To build locally:
-```
-make build
-```
+This project uses [mise-en-place](https://mise.jdx.dev/) for development environment management. Mise automatically manages Go versions and development tools.
 
-To run tests locally:
-```
-make test
-```
+### Prerequisites
+
+1. Install mise-en-place:
+   ```shell
+   # macOS
+   brew install mise
+
+   # Or using curl
+   curl https://mise.run | sh
+   ```
+
+2. Install the GitHub CLI:
+   ```shell
+   brew install gh
+   ```
+
+### Getting Started
+
+1. Clone the repository and navigate to the project directory
+2. Run `mise install` to install the required Go version and tools (defined in `.mise.toml`)
+3. Run `mise run dev` to set up the development environment
+4. Use mise tasks with `mise run <task>` to perform development operations
+
+### Available Development Tasks
+
+- `mise run mod` - Download and tidy Go modules
+- `mise run lint` - Run linting
+- `mise run fix` - Auto-fix linting issues
+- `mise run build` - Build the application
+- `mise run install` - Install the application locally
+- `mise run test` - Run tests
+- `mise run clean` - Clean build artifacts
+- `mise run dev` - Run development setup
+
+All tools and dependencies are automatically managed by mise-en-place based on the `.mise.toml` configuration.

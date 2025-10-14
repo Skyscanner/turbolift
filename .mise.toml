@@ -1,0 +1,47 @@
+[tools]
+go = "1.23"
+golangci-lint = "v2.1.5"
+
+[tasks.mod]
+description = "Download and tidy Go modules"
+run = [
+    "go mod download",
+    "go mod tidy"
+]
+
+[tasks.lint]
+description = "Lint all the things"
+run = "golangci-lint run"
+depends = ["mod"]
+
+[tasks.fix]
+description = "Format and fix all the things"
+run = "golangci-lint run --fix"
+depends = ["mod"]
+
+[tasks.fmt]
+description = "Alias for fix task"
+depends = ["fix"]
+
+[tasks.build]
+description = "Build the application"
+run = "go build ."
+depends = ["mod"]
+
+[tasks.install]
+description = "Install the application"
+run = "go install ."
+depends = ["mod"]
+
+[tasks.clean]
+description = "Clean dist directory"
+run = "rm -fr ./dist"
+
+[tasks.test]
+description = "Test all the things"
+run = "go test -race -cover ./..."
+depends = ["lint"]
+
+[tasks.dev]
+description = "Run development setup"
+depends = ["mod", "lint"]
