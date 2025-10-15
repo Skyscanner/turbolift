@@ -88,6 +88,16 @@ Properties:
           Value: 'business_analytical_data'
 ```
 
+### Tracking
+You can monitor your team’s progress in this campaign through the [Data Governance Turbolift Campaign GitHub Project](https://github.com/orgs/Skyscanner/projects/13).
+This project allows you to track all open PRs associated with your team and view their current status.
+To narrow down the view to your team’s PRs, use the search filter: `owner:<your-team-name>`.
+
+In addition, you can track the number of tagged resources using [Wiz](https://app.wiz.io/inventory/cloud-resources#%7E%28filters%7E%28cloudPlatform%7E%28equals%7E%28%7E%27AWS%29%29%7Etechnology%7E%28equals%7E%28%7E%273032%7E%273031%7E%277037%7E%276870%7E%277038%7E%277042%7E%277045%7E%2711259%7E%273038%7E%276871%7E%277041%7E%276873%7E%277040%7E%2710014%7E%276874%7E%277044%7E%276872%7E%2710015%7E%273136%29%29%7Etag%7E%28TAG_CONTAINS_ALL%7E%28%7E%28key%7E%27data_category%29%7E%28key%7E%27data_classification%29%29%29%29%7Eentity%7E%28%7E%29%29)
+and selecting your Tribe or Team in the `Top Projects` filters.
+
+---
+
 If you are unsure which values to apply, please consult [#data-governance-for-aws-operational-data-stores](https://skyscanner.slack.com/archives/C09GZ0MKKPF).
 
 <sub>This PR was generated using [turbolift](https://github.com/Skyscanner/turbolift).</sub>
