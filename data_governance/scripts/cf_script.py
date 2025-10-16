@@ -6,6 +6,7 @@ from typing import Union
 ALLOWED_TYPES = {
     "AWS::S3::Bucket",
     "AWS::DynamoDB::Table",
+    "AWS::DynamoDB::GlobalTable",
     "AWS::RDS::DBInstance",
     "AWS::RDS::DBCluster",
 }
@@ -31,6 +32,7 @@ def _had_final_newline(raw_text: str) -> bool:
 YAML_PROPS_LINE_RE = re.compile(r'^(?P<indent>[ \t]*)Properties\s*:\s*$')
 YAML_TYPE_LINE_RE  = re.compile(r'^(?P<indent>[ \t]*)Type\s*:\s*(?P<rtype>.+?)\s*$')
 YAML_TAGS_LINE_RE  = re.compile(r'^(?P<indent>[ \t]*)Tags\s*:\s*$')
+YAML_REPLICAS_LINE_RE = re.compile(r'^(?P<indent>[ \t]*)Replicas\s*:\s*$')
 
 YAML_ITEM_KEY_RE   = re.compile(r'^(?P<indent>[ \t]*)-\s*Key\s*:\s*')
 YAML_LIST_ITEM_RE  = re.compile(r'^(?P<indent>[ \t]*)-\s+')
@@ -119,10 +121,12 @@ def _yaml_has_key(line: str, key: str) -> bool:
     pat = rf'^\s*-\s*Key\s*:\s*(?:"{re.escape(key)}"|\'{re.escape(key)}\'|{re.escape(key)})\s*$'
     return re.match(pat, line) is not None
 
-def _yaml_patch_or_create_tags(window, props_indent):
-    desired_tags_indent = props_indent + "  "
-
-    # Locate an existing `Tags:` at the child level of Properties
+def _yaml_patch_or_create_tags_at_indent(window, desired_tags_indent):
+    """
+    Ensure a Tags: list exists at desired_tags_indent inside the given window, and inject our two tag pairs if missing.
+    Returns (new_window, changed).
+    """
+    # Locate an existing `Tags:` at the desired indent
     tags_idx = None
     for j, w in enumerate(window):
         mt = YAML_TAGS_LINE_RE.match(w)
@@ -174,6 +178,87 @@ def _yaml_patch_or_create_tags(window, props_indent):
     new_window = window[:sub_start] + to_insert + existing + window[sub_end:]
     return new_window, True
 
+def _yaml_patch_or_create_tags(window, props_indent):
+    # Properties-level Tags:
+    desired_tags_indent = props_indent + "  "
+    return _yaml_patch_or_create_tags_at_indent(window, desired_tags_indent)
+
+def _yaml_collect_list_item_block(lines, start_idx, item_indent):
+    """
+    Collect a single list item block beginning at start_idx where lines[start_idx] starts with item_indent + '-'.
+    Returns the end index (exclusive).
+    """
+    end = start_idx + 1
+    n = len(lines)
+    while end < n:
+        l = lines[end]
+        if l.strip() == "" or l.lstrip().startswith("#"):
+            end += 1
+            continue
+        # next sibling item
+        if l.startswith(item_indent + "-"):
+            break
+        # dedent out of the list
+        if _indent_len(l) < len(item_indent):
+            break
+        end += 1
+    return end
+
+def _yaml_patch_replicas_tags(window, props_indent):
+    """
+    Find `Replicas:` under Properties, then ensure each replica item has Tags list with our keys.
+    """
+    child_indent = props_indent + "  "
+    replicas_idx = None
+    for j, w in enumerate(window):
+        mr = YAML_REPLICAS_LINE_RE.match(w)
+        if mr and mr.group("indent") == child_indent:
+            replicas_idx = j
+            break
+    if replicas_idx is None:
+        return window, False
+
+    # Determine list item indent under `Replicas:`
+    item_indent = child_indent + "  "
+    k = replicas_idx + 1
+    while k < len(window):
+        l = window[k]
+        if not l.strip() or l.lstrip().startswith("#"):
+            k += 1
+            continue
+        if l.startswith(child_indent + "  -"):
+            item_indent = child_indent + "  "
+        elif l.startswith(child_indent + "-"):
+            item_indent = child_indent
+        break
+
+    # Iterate each replica list item
+    i = replicas_idx + 1
+    changed = False
+    out = window[:replicas_idx+1]
+    while i < len(window):
+        l = window[i]
+        if not l.strip() or l.lstrip().startswith("#"):
+            out.append(l); i += 1; continue
+        if not l.startswith(item_indent + "-"):
+            # left the Replicas list
+            out.extend(window[i:])
+            break
+
+        li_start = i
+        li_end = _yaml_collect_list_item_block(window, li_start, item_indent)
+        replica_block = window[li_start:li_end]
+
+        # A replica item has its child mapping at one indent deeper than item_indent
+        replica_child_indent = item_indent + "  "
+        patched_block, did = _yaml_patch_or_create_tags_at_indent(replica_block, replica_child_indent)
+        if did:
+            changed = True
+        out.extend(patched_block)
+        i = li_end
+
+    return out, changed
+
 def patch_yaml(path: str) -> bool:
     try:
         with open(path, "r", encoding="utf-8", newline=None) as fh:
@@ -199,7 +284,12 @@ def patch_yaml(path: str) -> bool:
         if rtype not in ALLOWED_TYPES:
             out.append(lines[i]); out.extend(window); i = end; continue
 
-        new_window, did_change = _yaml_patch_or_create_tags(window, props_indent)
+        # For GlobalTable, tags live under each replica item, not at Properties root
+        if rtype == "AWS::DynamoDB::GlobalTable":
+            new_window, did_change = _yaml_patch_replicas_tags(window, props_indent)
+        else:
+            new_window, did_change = _yaml_patch_or_create_tags(window, props_indent)
+
         out.append(lines[i]); out.extend(new_window)
         changed |= did_change
         i = end
@@ -219,6 +309,7 @@ JSON_PROPS_OPEN_RE = re.compile(r'^(?P<indent>[ \t]*)"Properties"\s*:\s*\{\s*$')
 JSON_TYPE_LINE_RE  = re.compile(r'^(?P<indent>[ \t]*)"Type"\s*:\s*"(?P<rtype>[^"]+)"\s*,?\s*$')
 JSON_TAGS_OPEN_RE  = re.compile(r'^(?P<indent>[ \t]*)"Tags"\s*:\s*\[\s*$')
 
+JSON_REPLICAS_OPEN_RE = re.compile(r'^(?P<indent>[ \t]*)"Replicas"\s*:\s*\[\s*$')
 JSON_OBJ_OPEN_RE   = re.compile(r'^(?P<indent>[ \t]*)\{')
 
 def _json_obj_end(lines, start_idx):
@@ -343,6 +434,65 @@ def _json_patch_or_create_tags(window, child_indent):
     new_body.extend(body)
     return window[:tags_open+1] + new_body + window[arr_end:], True
 
+def _json_patch_or_create_tags_in_obj(obj_body, obj_child_indent):
+    """
+    Ensure "Tags": [ ... ] exists inside a JSON object body with keys at obj_child_indent.
+    obj_body excludes the surrounding { } lines.
+    """
+    return _json_patch_or_create_tags(obj_body, obj_child_indent)
+
+def _json_patch_replicas_tags(window, child_indent):
+    """
+    Under Properties window, find "Replicas": [ ... ], then ensure each object inside has Tags.
+    """
+    rep_open = None
+    for j, w in enumerate(window):
+        mr = JSON_REPLICAS_OPEN_RE.match(w)
+        if mr and mr.group("indent") == child_indent:
+            rep_open = j
+            break
+    if rep_open is None:
+        return window, False
+
+    rep_end = _json_array_end(window, rep_open)
+    if rep_end is None:
+        return window, False
+
+    body = window[rep_open+1:rep_end]
+    out = []
+    i = 0
+    changed = False
+    while i < len(body):
+        l = body[i]
+        if not l.strip():
+            out.append(l); i += 1; continue
+        mm = JSON_OBJ_OPEN_RE.match(l)
+        if not mm:
+            out.append(l); i += 1; continue
+        # collect object
+        obj_start = i
+        depth, j = 1, i + 1
+        while j < len(body) and depth > 0:
+            depth += body[j].count("{")
+            depth -= body[j].count("}")
+            j += 1
+        obj_end = j  # index after closing brace
+        obj = body[obj_start:obj_end]
+
+        open_line = obj[0]
+        close_line = obj[-1]
+        obj_inner = obj[1:-1]
+        obj_indent = mm.group("indent")
+        obj_child_indent = obj_indent + "  "
+        patched_inner, did = _json_patch_or_create_tags_in_obj(obj_inner, obj_child_indent)
+        if did:
+            changed = True
+        out.extend([open_line] + patched_inner + [close_line])
+        i = obj_end
+
+    new_window = window[:rep_open+1] + out + window[rep_end:]
+    return new_window, changed
+
 def patch_json(path: str) -> bool:
     try:
         with open(path, "r", encoding="utf-8", newline=None) as fh:
@@ -368,11 +518,13 @@ def patch_json(path: str) -> bool:
         rtype = _json_nearest_type(lines, i, props_indent, props_end)
         window = lines[i+1:props_end]
 
-        if rtype not in ALLOWED_TYPES:
-            out.append(lines[i]); out.extend(window); out.append(lines[props_end]); i = props_end + 1; continue
-
         child_indent = props_indent + "  "
-        new_window, did_change = _json_patch_or_create_tags(window, child_indent)
+        # For GlobalTable, the Tags live under each replica object
+        if rtype == "AWS::DynamoDB::GlobalTable":
+            new_window, did_change = _json_patch_replicas_tags(window, child_indent)
+        else:
+            new_window, did_change = _json_patch_or_create_tags(window, child_indent)
+
         out.append(lines[i]); out.extend(new_window); out.append(lines[props_end])
         changed |= did_change
         i = props_end + 1
@@ -391,6 +543,9 @@ def main(paths):
     any_changed = False
     for p in paths:
         lp = p.lower()
+        if "test" in lp:
+            print(f'Skip (path contains "test"): {p}')
+            continue
         if lp.endswith((".yml", ".yaml")):
             any_changed |= patch_yaml(p)
         elif lp.endswith(".json"):
@@ -398,6 +553,7 @@ def main(paths):
         else:
             print(f"Skip (unknown type): {p}")
     return 0
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

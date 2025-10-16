@@ -14,8 +14,10 @@ gh-search "org:Skyscanner filename:catalog.yml $TEAM" -l \
   | grep -E '^Skyscanner/[[:alnum:]_.-]+$' > "$TMP"
 
 if [ -f "$BASEDIR/cf_repos.txt" ]; then
-  grep -Fxf "$TMP" "$BASEDIR/cf_repos.txt" | sort -u > "$BASEDIR/team_cf_repos.txt" || true
-  echo "CloudFormation: $(grep -c '^Skyscanner/' "$BASEDIR/team_cf_repos.txt" || echo 0) repos"
+  MATCH_COUNT=$(grep -Fxf "$TMP" "$BASEDIR/cf_repos.txt" | sort -u | tee -a "$BASEDIR/team_cf_repos.txt" | wc -l)
+  echo "CloudFormation: $MATCH_COUNT repos"
+else
+  echo "No cf_repos.txt found."
 fi
 
 rm -f "$TMP"

@@ -8,13 +8,13 @@ turbolift foreach --repos repo_lists/team_cf_repos.txt -- bash -lc '
   MATCH_JSON="$(mktemp)"
 
   # Find YAML files
-  rg -l -S "AWS::(S3::Bucket|DynamoDB::Table|RDS::DBInstance|RDS::DBCluster)" \
+  rg -l -S "AWS::(S3::Bucket|DynamoDB::Table|DynamoDB::GlobalTable|RDS::DBInstance|RDS::DBCluster)" \
      -g "**/*.yml" -g "**/*.yaml" \
      -g "!**/.git/**" -g "!**/node_modules/**" \
      > "$MATCH_YAML" || true
 
   # Find JSON files
-  rg -l -S "AWS::(S3::Bucket|DynamoDB::Table|RDS::DBInstance|RDS::DBCluster)" \
+  rg -l -S "AWS::(S3::Bucket|DynamoDB::Table|DynamoDB::GlobalTable|RDS::DBInstance|RDS::DBCluster)" \
      -g "**/*.json" \
      -g "!**/.git/**" -g "!**/node_modules/**" \
      > "$MATCH_JSON" || true

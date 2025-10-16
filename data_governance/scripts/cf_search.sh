@@ -10,6 +10,7 @@ gh-search 'org:Skyscanner "AWS::RDS::DBInstance"' -l >> "$OUTFILE"
 gh-search 'org:Skyscanner "AWS::RDS::DBCluster"' -l >> "$OUTFILE"
 # DynamoDB
 gh-search 'org:Skyscanner "AWS::DynamoDB::Table"' -l >> "$OUTFILE"
+gh-search 'org:Skyscanner "AWS::DynamoDB::GlobalTable"' -l >> "$OUTFILE"
 
 sort -u -o "$OUTFILE" "$OUTFILE"
 echo "Saved repo list to $OUTFILE ($(grep -c '^Skyscanner/' "$OUTFILE") repos)"

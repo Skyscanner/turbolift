@@ -19,6 +19,7 @@ Skyscanner/alternatives-inventory
 Skyscanner/ankipan
 Skyscanner/ankipan-consumer
 Skyscanner/argo-runbooks
+Skyscanner/arthas
 Skyscanner/ask-skyscanner
 Skyscanner/astral-infrastructure
 Skyscanner/astro-dag-deploy
@@ -55,7 +56,6 @@ Skyscanner/braze-user-data-sync
 Skyscanner/buffet-api
 Skyscanner/bulgaria-time-tracking-infrastructure
 Skyscanner/bumblebee
-Skyscanner/bws-self-service
 Skyscanner/byleth-batch
 Skyscanner/bynder-replication-infra
 Skyscanner/carhire-indicative-price-pipeline
@@ -125,10 +125,11 @@ Skyscanner/fivetran-tf
 Skyscanner/flight-amenities-infra
 Skyscanner/flight-availability-spark
 Skyscanner/flight-data-dump-job
-Skyscanner/flights-etl-core
+Skyscanner/flight-status-alerts
 Skyscanner/flightsconnect-legacy-cloudformation-stacks
 Skyscanner/flying-circus
 Skyscanner/fresh-quote-store-service
+Skyscanner/gandalf
 Skyscanner/gdpr-deletion-sweeper
 Skyscanner/geo-data-quality-poc
 Skyscanner/gha-aws-oidc-sample
@@ -180,6 +181,7 @@ Skyscanner/kaleidoscope-attribute-metadata-service
 Skyscanner/kaleidoscope-infrastructure
 Skyscanner/ketch-consent-data-exporter-poc
 Skyscanner/kubernetes-infx
+Skyscanner/kuppa
 Skyscanner/landing-pages-api
 Skyscanner/lightcone
 Skyscanner/lighthouse-ci
@@ -199,8 +201,10 @@ Skyscanner/mario-download
 Skyscanner/marketing-capture
 Skyscanner/marketing-performance-metrics
 Skyscanner/master-archive-cloudformation
+Skyscanner/mis-splunk-logs-backup
 Skyscanner/modelops-poc-portkey
 Skyscanner/modern-ads-data-infrastructure
+Skyscanner/mojito
 Skyscanner/monalisa
 Skyscanner/monitoring-office
 Skyscanner/mr-alchemy-infra
@@ -227,6 +231,7 @@ Skyscanner/partner-data-batch-job
 Skyscanner/partner-portal
 Skyscanner/partnerportal-events
 Skyscanner/pc-download-daily-job
+Skyscanner/pc-price-accuracy
 Skyscanner/pe-routes-tolomuco
 Skyscanner/pennyworth-dag
 Skyscanner/pitstop
@@ -262,6 +267,7 @@ Skyscanner/routes-collector
 Skyscanner/routeswho-core
 Skyscanner/s3-infrastructure
 Skyscanner/sandbox-innovation
+Skyscanner/saved-domain-service
 Skyscanner/saved-event-player
 Skyscanner/sbs-api
 Skyscanner/schema-bot
@@ -274,6 +280,7 @@ Skyscanner/shared-static-content
 Skyscanner/similarweb-data-pipeline
 Skyscanner/skipjaq-archive-infra
 Skyscanner/skyai-configs
+Skyscanner/skyfinder-data-generator
 Skyscanner/skyfinder-iac
 Skyscanner/skyfinder-os-ingestion
 Skyscanner/skymetrics-deploymentsupport
@@ -295,6 +302,7 @@ Skyscanner/static-strings-scanner
 Skyscanner/stork
 Skyscanner/strata-config
 Skyscanner/stream-ranking-loader
+Skyscanner/streaming-process-budget-cap
 Skyscanner/string-transformation
 Skyscanner/strings-data-api
 Skyscanner/subscription-store
@@ -309,6 +317,7 @@ Skyscanner/targeted-destinations-report-spark
 Skyscanner/tepra
 Skyscanner/tepra-write
 Skyscanner/terra-db
+Skyscanner/test-databricks-tf
 Skyscanner/test-newrelic-tf
 Skyscanner/test-service-definitions
 Skyscanner/ti-reports-external-access
@@ -326,7 +335,7 @@ Skyscanner/trusted-data-pipeline-kinesis-delta-streams
 Skyscanner/trusted-datasets-infrastructure
 Skyscanner/trustpilot-bookings-exporter
 Skyscanner/ums-backup-restore
-Skyscanner/unified-packages-svc
+Skyscanner/uqs-cache-rule-generator
 Skyscanner/url-management-service
 Skyscanner/url-mgmt-service-maintenance-lambda
 Skyscanner/user-identification-pipeline

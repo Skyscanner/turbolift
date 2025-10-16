@@ -59,6 +59,9 @@ Update Github Project to track the pull requests:
 ```bash
 ./scripts/gh_project_import.sh
 ```
+```bash
+./scripts/gh_project_set_fields.sh
+```
 
 
 ### 9. Update pull request descriptions (if needed)
