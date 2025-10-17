@@ -6,17 +6,15 @@ err(){ printf '%s\n' "[$(date +%H:%M:%S)] ERROR: $*" >&2; }
 need(){ command -v "$1" >/dev/null 2>&1 || { err "missing tool: $1"; exit 1; }; }
 b64d(){ if base64 --help 2>&1 | grep -q '\-d'; then base64 -d; else base64 -D; fi; }
 
-# Constants identical to your original
+# Config
 ORG="Skyscanner"
 PROJECT_NUMBER=13
 TITLE='TurboLift Campaign: Data Governance'
-STATE_FIELD_NAME="State"
-OWNER_FIELD_NAME="Owners"
 CATALOG_PATH=".catalog.yml"
 
-need gh; need jq; need yq
+need gh; need jq; need yq; need awk; need sed; need sort; need tr
 
-# --- helpers copied unchanged from your original ---
+# Helpers
 fetch_catalog(){ # decode .catalog.yml from repo default branch
   repo="$1"
   ref="$(gh api "repos/$repo" --jq '.default_branch')" || { err "cannot read default_branch for $repo"; return 1; }
@@ -49,8 +47,8 @@ normalize_owner_list(){ # normalize comma-separated list, title-case tokens
         gsub(/^[[:space:]]+|[[:space:]]+$/, "", s);
         gsub(/[[:space:]]+/, " ", s);
         gsub(/"/, "", s);
-        gsub(/\011/, "", s); # tab
-        gsub(/\015/, "", s); # carriage return
+        gsub(/\011/, "", s);
+        gsub(/\015/, "", s);
         if (length(s)>0){
           s = toupper(substr(s,1,1)) substr(s,2)
           if (out=="") out=s; else out=out", "s
@@ -108,25 +106,11 @@ get_option_id(){ # resolve option id by normalized name
     ' \
   | head -n1
 }
-# --- end helpers ---
 
 log "Project $ORG/$PROJECT_NUMBER, Title match: $TITLE"
 
-# 4) ensure fields exist and capture ids
-STATE_FIELD_ID="$(
-  gh project field-list "$PROJECT_NUMBER" --owner "$ORG" --format json \
-  --jq '.fields[]? | select(.name=="'"$STATE_FIELD_NAME"'") | .id'
-)"
-[ -n "${STATE_FIELD_ID:-}" ] || gh project field-create "$PROJECT_NUMBER" --owner "$ORG" \
-  --name "$STATE_FIELD_NAME" --data-type "SINGLE_SELECT" \
-  --single-select-options "Open,Merged,Closed" >/dev/null
-
 PROJECT_ID="$(gh project view "$PROJECT_NUMBER" --owner "$ORG" --format json --jq '.id')"
 FIELDS_JSON="$(gh project field-list "$PROJECT_NUMBER" --owner "$ORG" --format json)"
-STATE_FIELD_ID="$(printf %s "$FIELDS_JSON" | jq -r '.fields[] | select(.name=="'"$STATE_FIELD_NAME"'") | .id')"
-OPT_OPEN="$(printf %s "$FIELDS_JSON"   | jq -r '.fields[]|select(.name=="'"$STATE_FIELD_NAME"'")|.options[]|select(.name=="Open").id')"
-OPT_MERGED="$(printf %s "$FIELDS_JSON" | jq -r '.fields[]|select(.name=="'"$STATE_FIELD_NAME"'")|.options[]|select(.name=="Merged").id')"
-OPT_CLOSED="$(printf %s "$FIELDS_JSON" | jq -r '.fields[]|select(.name=="'"$STATE_FIELD_NAME"'")|.options[]|select(.name=="Closed").id')"
 
 EXISTING_OWNERS_ID="$(printf %s "$FIELDS_JSON" | jq -r '.fields[]? | select(.name=="Owners") | .id')"
 EXISTING_OWNER_ID="$(printf %s "$FIELDS_JSON"  | jq -r '.fields[]? | select(.name=="Owner")  | .id')"
@@ -139,10 +123,9 @@ else
   OWNER_FIELD_NAME="Owners"
 fi
 
-# 5) build a complete option list for Owner by scanning catalogs
+# Build option list by scanning repo catalogs referenced by wanted.txt and current items
 : > __owners_all.txt
 
-# Prefer the files produced by the import script
 if [ -f wanted.txt ]; then
   cat wanted.txt > __urls_for_owner_scan.txt
 else
@@ -178,6 +161,7 @@ done
 sort -u __owners_all.txt | sed '/^$/d' > __owners_unique.txt || true
 OWNER_OPTIONS_CSV="$(paste -sd, __owners_unique.txt || true)"
 
+# Ensure Owner or Owners field exists with discovered options
 OWNER_FIELD_ID="$(
   printf %s "$FIELDS_JSON" \
   | jq -r '.fields[]? | select(.name=="'"$OWNER_FIELD_NAME"'") | .id'
@@ -196,7 +180,7 @@ if [ -z "${OWNER_FIELD_ID:-}" ]; then
   fi
 fi
 
-# refresh field metadata after possible creation
+# Refresh field metadata and compute alternate field
 FIELDS_JSON="$(gh project field-list "$PROJECT_NUMBER" --owner "$ORG" --format json)"
 OWNER_FIELD_ID="$(printf %s "$FIELDS_JSON" | jq -r '.fields[] | select(.name=="'"$OWNER_FIELD_NAME"'") | .id')"
 
@@ -207,7 +191,7 @@ else
 fi
 ALT_OWNER_FIELD_ID="$(printf %s "$FIELDS_JSON" | jq -r '.fields[]? | select(.name=="'"$ALT_OWNER_FIELD_NAME"'") | .id')"
 
-# 6) iterate items and set State + Owner
+# Iterate items and set Owner value
 : > __missing_owner_options.txt
 
 gh project item-list "$PROJECT_NUMBER" --owner "$ORG" --format json --limit 5000 \
@@ -216,25 +200,11 @@ gh project item-list "$PROJECT_NUMBER" --owner "$ORG" --format json --limit 5000
   REPO="$(printf "%s" "$PR_URL" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')"
   NUM="$(printf "%s" "$PR_URL" | sed -E 's#.*/pull/([0-9]+).*#\1#')"
 
-  # state
-  line="$(gh pr view "$NUM" -R "$REPO" --json state,mergedAt --jq '[.state, .mergedAt] | @tsv' 2>/dev/null || true)"
-  if [ -z "$line" ]; then
-    state="$(gh api /search/issues -f q="repo:$REPO is:pr number:$NUM" --jq '.items[0].state' 2>/dev/null || echo "CLOSED")"
-    line="$state\tnull"
-  fi
-  state="$(printf "%s" "$line" | cut -f1)"
-  merged_at="$(printf "%s" "$line" | cut -f2)"
-  if [ "$state" = "OPEN" ]; then opt="$OPT_OPEN"
-  elif [ "$merged_at" != "null" ] && [ -n "$merged_at" ]; then opt="$OPT_MERGED"
-  else opt="$OPT_CLOSED"; fi
-  gh project item-edit --id "$ITEM_ID" --project-id "$PROJECT_ID" \
-    --field-id "$STATE_FIELD_ID" --single-select-option-id "$opt" >/dev/null
-
-  # owner
   YAML="$(fetch_catalog "$REPO" 2>/dev/null || true)" || true
   [ -n "$YAML" ] || { err "cannot fetch $CATALOG_PATH for $REPO"; continue; }
   OWNER_RAW="$(extract_owner "$YAML")"
   [ -n "$OWNER_RAW" ] || { err "component.owner missing in $CATALOG_PATH for $REPO"; continue; }
+
   OWNER_VAL="$(normalize_owner_list "$OWNER_RAW")"
   OWNER_ONE="$(printf "%s" "$OWNER_VAL" | awk -F'[,\n]' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $1); print $1}')"
   OWNER_ONE_CANON="$(canonicalize_owner_label "$OWNER_ONE")"
@@ -263,8 +233,8 @@ gh project item-list "$PROJECT_NUMBER" --owner "$ORG" --format json --limit 5000
 done
 
 if [ -s __missing_owner_options.txt ]; then
-  printf "\nOwners missing as options (add in the UI, then rerun):\n" >&2
+  printf "\nOwners missing as options. Add these in the UI, then rerun:\n" >&2
   sort -u __missing_owner_options.txt >&2
 fi
 
-log "Field update complete"
+log "Owner update complete"
