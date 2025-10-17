@@ -60,7 +60,10 @@ Update Github Project to track the pull requests:
 ./scripts/gh_project_import.sh
 ```
 ```bash
-./scripts/gh_project_set_fields.sh
+./scripts/gh_project_update_state.sh
+```
+```bash
+./scripts/gh_project_update_owners.sh
 ```
 
 
