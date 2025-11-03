@@ -1,6 +1,7 @@
 [tools]
 go = "1.23"
 golangci-lint = "v2.1.5"
+goreleaser = "v2.12.7"
 
 [tasks.mod]
 description = "Download and tidy Go modules"
@@ -45,3 +46,9 @@ depends = ["lint"]
 [tasks.dev]
 description = "Run development setup"
 depends = ["mod", "lint"]
+
+[tasks.release]
+# Define a release task so developers and CI both exercise GoReleaser through the mise-managed binary.
+description = "Build release artifacts with GoReleaser"
+run = "goreleaser release --clean"
+depends = ["mod"]  # Pre-fetch modules so GoReleaser does not fail when caches are empty.

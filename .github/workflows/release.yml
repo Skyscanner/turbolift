@@ -18,6 +18,9 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
 
+      - name: Provision toolchain
+        run: mise install
+
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
@@ -25,9 +28,7 @@ jobs:
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
-        with:
-          args: release --clean
+        run: mise run release # Reuse the mise task so local runs and CI share the same flow.
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
