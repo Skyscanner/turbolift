@@ -9,7 +9,7 @@ on:
 
 jobs:
   update_release_draft:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-medium
     if: ${{ github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - uses: actions/create-github-app-token@v2

@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: GoReleaser build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-medium
 
     steps:
       - uses: actions/checkout@v5
