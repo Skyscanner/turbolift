@@ -21,7 +21,7 @@ jobs:
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: go
           token: ${{ steps.app-token.outputs.token }}
@@ -30,7 +30,7 @@ jobs:
         run: mise run build
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           upload: never
