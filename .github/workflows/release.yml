@@ -26,9 +26,12 @@ jobs:
         with:
           app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repositories: |
+            turbolift
+            homebrew-tools
 
       - name: Run GoReleaser
         run: mise run release # Reuse the mise task so local runs and CI share the same flow.
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
