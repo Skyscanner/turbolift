@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0 # See: https://goreleaser.com/ci/actions/
 
       - name: Install mise
-        uses: jdx/mise-action@5ac50f778e26fac95da98d50503682459e86d566 # v3.2.0
+        uses: jdx/mise-action@be3be2260bc02bc3fbf94c5e2fed8b7964baf074 # v3.4.0
 
       - name: Provision toolchain
         run: mise install
