@@ -309,7 +309,7 @@ This project uses [mise-en-place](https://mise.jdx.dev/) for development environ
 
 1. Clone the repository and navigate to the project directory
 2. Run `mise install` to install the required Go version and tools (defined in `.mise.toml`)
-3. Run `mise run dev` to set up the development environment
+3. Run `mise run dev` to run the basic setup (downloads modules and lints)
 4. Use mise tasks with `mise run <task>` to perform development operations
 
 ### Available Development Tasks
@@ -317,10 +317,13 @@ This project uses [mise-en-place](https://mise.jdx.dev/) for development environ
 - `mise run mod` - Download and tidy Go modules
 - `mise run lint` - Run linting
 - `mise run fix` - Auto-fix linting issues
+- `mise run fmt` - Alias for `fix`
 - `mise run build` - Build the application
 - `mise run install` - Install the application locally
 - `mise run test` - Run tests
 - `mise run clean` - Clean build artifacts
-- `mise run dev` - Run development setup
+- `mise run dev` - Run development setup (runs `mod` then `lint`)
+- `mise run release` - Build release artifacts with GoReleaser
 
 All tools and dependencies are automatically managed by mise-en-place based on the `.mise.toml` configuration.
+Note: `mise run test` depends on `lint`, so linting will run automatically before tests.
