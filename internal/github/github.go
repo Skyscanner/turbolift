@@ -28,6 +28,8 @@ import (
 var execInstance executor.Executor = executor.NewRealExecutor()
 
 const TurboliftLabel = "turbolift"
+const turboliftLabelColor = "0366d6"
+const turboliftLabelDescription = "Created by turbolift automation"
 
 type PullRequest struct {
 	Title          string
@@ -52,6 +54,14 @@ type GitHub interface {
 type RealGitHub struct{}
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
+	if len(pr.Labels) > 0 {
+		for _, label := range pr.Labels {
+			if err := r.ensureLabelExists(output, workingDir, pr.UpstreamRepo, label); err != nil {
+				return false, err
+			}
+		}
+	}
+
 	gh_args := []string{
 		"pr",
 		"create",
@@ -79,6 +89,30 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *RealGitHub) ensureLabelExists(output io.Writer, workingDir string, repo string, label string) error {
+	args := []string{
+		"label",
+		"create",
+		label,
+		"--repo",
+		repo,
+		"--color",
+		turboliftLabelColor,
+		"--description",
+		turboliftLabelDescription,
+	}
+
+	stdErr, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", args...)
+	if err != nil {
+		if strings.Contains(stdErr, "already exists") || strings.Contains(err.Error(), "already exists") {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {

@@ -74,7 +74,16 @@ func TestItReturnsNilErrorOnSuccessfulClone(t *testing.T) {
 }
 
 func TestItReturnsErrorOnFailedCreatePr(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	calls := 0
+	fakeExecutor := executor.NewFakeExecutor(func(workingDir string, name string, args ...string) error {
+		return nil
+	}, func(workingDir string, name string, args ...string) (string, error) {
+		calls++
+		if calls == 1 {
+			return "", nil // label create succeeds
+		}
+		return "", errors.New("synthetic error") // pr create fails
+	})
 	execInstance = fakeExecutor
 
 	didCreatePr, _, err := runCreatePrAndCaptureOutput()
@@ -82,14 +91,20 @@ func TestItReturnsErrorOnFailedCreatePr(t *testing.T) {
 	assert.False(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
 
 func TestItReturnsFalseAndNilErrorOnNoOpCreatePr(t *testing.T) {
+	calls := 0
 	fakeExecutor := executor.NewFakeExecutor(func(workingDir string, name string, args ...string) error {
 		return nil
 	}, func(workingDir string, name string, args ...string) (string, error) {
+		calls++
+		if calls == 1 {
+			return "", nil // label create succeeds
+		}
 		return "... GraphQL error: No commits between A and B ...", errors.New("synthetic error")
 	})
 	execInstance = fakeExecutor
@@ -99,6 +114,7 @@ func TestItReturnsFalseAndNilErrorOnNoOpCreatePr(t *testing.T) {
 	assert.False(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
@@ -112,6 +128,7 @@ func TestItSuccessfulCreatesADraftPr(t *testing.T) {
 	assert.True(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift", "--draft"},
 	})
 }
@@ -125,6 +142,7 @@ func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	assert.True(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
@@ -139,6 +157,29 @@ func TestItCreatesPrWithoutLabelsWhenNoneProvided(t *testing.T) {
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
+	})
+}
+
+func TestItIgnoresExistingLabelError(t *testing.T) {
+	calls := 0
+	fakeExecutor := executor.NewFakeExecutor(func(workingDir string, name string, args ...string) error {
+		return nil
+	}, func(workingDir string, name string, args ...string) (string, error) {
+		calls++
+		if calls == 1 {
+			return "label already exists", errors.New("synthetic error")
+		}
+		return "", nil
+	})
+	execInstance = fakeExecutor
+
+	didCreatePr, _, err := runCreatePrAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, didCreatePr)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
 
