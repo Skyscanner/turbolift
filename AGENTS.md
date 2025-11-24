@@ -1,10 +1,9 @@
 # Repository Guidelines
 
-`README.md` is the source of truth for installation, usage, and development. Use the links below to jump to the right sections.
+`README.md` is the source of truth for installation, usage, and development. Use these anchors: Philosophy, Basic usage, Detailed usage, Caveats, Local development, Available Development Tasks.
 
-- Usage & workflow: `README.md` sections on Philosophy, Basic usage, Detailed usage, and Caveats.
-- Development setup: `README.md#local-development` and `#available-development-tasks` outline mise tasks; run `mise install` then `mise run dev`/`mise run test`.
-- Project structure: CLI entrypoint `main.go`; commands in `cmd/`; shared logic under `internal/<domain>`; tests co-located as `_test.go`; demo asset `docs/demo.gif`; local release artifacts land in `dist/`.
-- Style & linting: standard Go formatting; prefer `mise run fix` for gofmt/golangci-lint; package names lower_snakecase; add the Apache 2.0 header from `CONTRIBUTING.md` when creating files.
-- Testing tips: keep table-driven tests near code; use `mise run test` for lint + race/cover; fakes live in `internal/testsupport` for Git/GitHub/filesystem interactions.
-- Operational notes: authenticate `gh` (`gh auth login`, `GH_HOST` for GHE); when running turbolift across many repos, use `repos.txt` subsets and `turbolift foreach --failed/--successful` (see usage/caveats in `README.md`) to reduce blast radius.
+- Tooling: pinned via `.mise.toml` (Go 1.23, golangci-lint v2.1.5, goreleaser v2.12.7). Run `mise install`; `mise run dev` prepares deps + lint; `mise run test` runs lint + race/cover; `mise run fix` applies gofmt/golangci-lint fixes.
+- Project structure: CLI entrypoint `main.go`; commands in `cmd/`; shared logic under `internal/<domain>`; tests co-located as `_test.go`; demo asset `docs/demo.gif`; release artifacts in `dist/` (clean with `mise run clean`); fakes for git/GitHub/filesystem interactions in `internal/testsupport`.
+- Style: standard Go formatting; package names lower_snakecase; include the Apache 2.0 header from `CONTRIBUTING.md` when creating files.
+- Usage workflow: follow README sections noted above; when operating turbolift across many repos, use `repos.txt` subsets and `turbolift foreach --failed/--successful` to reduce blast radius (see Caveats).
+- Operational notes: authenticate GitHub CLI (`gh auth login`; set `GH_HOST` for GHE). Use `mise run build`/`mise run install` for local binaries; `mise run release` drives GoReleaser via the managed binary.
