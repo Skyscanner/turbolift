@@ -82,7 +82,7 @@ func TestItReturnsErrorOnFailedCreatePr(t *testing.T) {
 	assert.False(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
 
@@ -99,7 +99,7 @@ func TestItReturnsFalseAndNilErrorOnNoOpCreatePr(t *testing.T) {
 	assert.False(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
 
@@ -112,7 +112,7 @@ func TestItSuccessfulCreatesADraftPr(t *testing.T) {
 	assert.True(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--draft"},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift", "--draft"},
 	})
 }
 
@@ -125,7 +125,7 @@ func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	assert.True(t, didCreatePr)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
 	})
 }
 

@@ -27,6 +27,8 @@ import (
 
 var execInstance executor.Executor = executor.NewRealExecutor()
 
+const turboliftLabel = "turbolift"
+
 type PullRequest struct {
 	Title          string
 	Body           string
@@ -58,6 +60,8 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		pr.Body,
 		"--repo",
 		pr.UpstreamRepo,
+		"--label",
+		turboliftLabel,
 	}
 
 	if pr.IsDraft {
