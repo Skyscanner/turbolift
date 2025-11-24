@@ -27,13 +27,14 @@ import (
 
 var execInstance executor.Executor = executor.NewRealExecutor()
 
-const turboliftLabel = "turbolift"
+const TurboliftLabel = "turbolift"
 
 type PullRequest struct {
 	Title          string
 	Body           string
 	UpstreamRepo   string
 	IsDraft        bool
+	Labels         []string
 	ReviewDecision string
 }
 
@@ -60,8 +61,10 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		pr.Body,
 		"--repo",
 		pr.UpstreamRepo,
-		"--label",
-		turboliftLabel,
+	}
+
+	for _, label := range pr.Labels {
+		gh_args = append(gh_args, "--label", label)
 	}
 
 	if pr.IsDraft {

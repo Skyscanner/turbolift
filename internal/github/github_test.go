@@ -129,6 +129,19 @@ func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	})
 }
 
+func TestItCreatesPrWithoutLabelsWhenNoneProvided(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	didCreatePr, _, err := runCreatePrWithoutLabelsAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, didCreatePr)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
+	})
+}
+
 func TestItReturnsErrorOnFailedGetDefaultBranchName(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
 	execInstance = fakeExecutor
@@ -197,6 +210,7 @@ func runCreatePrAndCaptureOutput() (bool, string, error) {
 		Title:        "some title",
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
+		Labels:       []string{TurboliftLabel},
 	})
 
 	return didCreatePr, sb.String(), err
@@ -209,6 +223,18 @@ func runCreateDraftPrAndCaptureOutput() (bool, string, error) {
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
 		IsDraft:      true,
+		Labels:       []string{TurboliftLabel},
+	})
+
+	return didCreatePr, sb.String(), err
+}
+
+func runCreatePrWithoutLabelsAndCaptureOutput() (bool, string, error) {
+	sb := strings.Builder{}
+	didCreatePr, err := NewRealGitHub().CreatePullRequest(&sb, "work/org/repo1", PullRequest{
+		Title:        "some title",
+		Body:         "some body",
+		UpstreamRepo: "org/repo1",
 	})
 
 	return didCreatePr, sb.String(), err
