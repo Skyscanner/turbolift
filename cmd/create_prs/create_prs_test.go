@@ -129,8 +129,8 @@ func TestItLogsCreatePrErrorsButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "2 errored")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"create_pull_request", "work/org/repo1", "PR title"},
-		{"create_pull_request", "work/org/repo2", "PR title"},
+		{"create_pull_request", "work/org/repo1", "PR title", "turbolift"},
+		{"create_pull_request", "work/org/repo2", "PR title", "turbolift"},
 	})
 }
 
@@ -150,8 +150,8 @@ func TestItLogsCreatePrSkippedButContinuesToTryAll(t *testing.T) {
 	assert.Contains(t, out, "0 OK, 2 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"create_pull_request", "work/org/repo1", "PR title"},
-		{"create_pull_request", "work/org/repo2", "PR title"},
+		{"create_pull_request", "work/org/repo1", "PR title", "turbolift"},
+		{"create_pull_request", "work/org/repo2", "PR title", "turbolift"},
 	})
 }
 
@@ -169,8 +169,8 @@ func TestItLogsCreatePrsSucceeds(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"create_pull_request", "work/org/repo1", "PR title"},
-		{"create_pull_request", "work/org/repo2", "PR title"},
+		{"create_pull_request", "work/org/repo1", "PR title", "turbolift"},
+		{"create_pull_request", "work/org/repo2", "PR title", "turbolift"},
 	})
 }
 
@@ -190,8 +190,8 @@ func TestItLogsCreateDraftPr(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"create_pull_request", "work/org/repo1", "PR title"},
-		{"create_pull_request", "work/org/repo2", "PR title"},
+		{"create_pull_request", "work/org/repo1", "PR title", "turbolift"},
+		{"create_pull_request", "work/org/repo2", "PR title", "turbolift"},
 	})
 }
 
@@ -215,13 +215,41 @@ func TestItCreatesPrsFromAlternativeDescriptionFile(t *testing.T) {
 	assert.Contains(t, out, "2 OK, 0 skipped")
 
 	fakeGitHub.AssertCalledWith(t, [][]string{
-		{"create_pull_request", "work/org/repo1", "custom PR title"},
-		{"create_pull_request", "work/org/repo2", "custom PR title"},
+		{"create_pull_request", "work/org/repo1", "custom PR title", "turbolift"},
+		{"create_pull_request", "work/org/repo2", "custom PR title", "turbolift"},
+	})
+}
+
+func TestItCanSkipApplyingLabels(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+
+	out, err := runCommandNoLabels()
+	assert.NoError(t, err)
+	assert.Contains(t, out, "turbolift create-prs completed")
+	assert.Contains(t, out, "2 OK, 0 skipped")
+
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"create_pull_request", "work/org/repo1", "PR title", ""},
+		{"create_pull_request", "work/org/repo2", "PR title", ""},
 	})
 }
 
 func runCommand() (string, error) {
 	cmd := NewCreatePRsCmd()
+	outBuffer := bytes.NewBufferString("")
+	cmd.SetOut(outBuffer)
+	err := cmd.Execute()
+	return outBuffer.String(), err
+}
+
+func runCommandNoLabels() (string, error) {
+	cmd := NewCreatePRsCmd()
+	cmd.SetArgs([]string{"--no-apply-labels"})
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()

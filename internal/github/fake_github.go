@@ -18,6 +18,7 @@ package github
 import (
 	"errors"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +43,8 @@ type FakeGitHub struct {
 }
 
 func (f *FakeGitHub) CreatePullRequest(_ io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
-	args := []string{"create_pull_request", workingDir, metadata.Title}
+	labelList := strings.Join(metadata.Labels, ",")
+	args := []string{"create_pull_request", workingDir, metadata.Title, labelList}
 	f.calls = append(f.calls, args)
 	return f.handler(CreatePullRequest, args)
 }
