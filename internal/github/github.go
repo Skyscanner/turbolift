@@ -29,7 +29,7 @@ var execInstance executor.Executor = executor.NewRealExecutor()
 
 const TurboliftLabel = "turbolift"
 const turboliftLabelColor = "0366d6"
-const turboliftLabelDescription = "Created by turbolift automation"
+const turboliftLabelDescription = "Created using turbolift (github.com/Skyscanner/turbolift)"
 
 type PullRequest struct {
 	Title          string
