@@ -84,7 +84,7 @@ marks that no further options should be interpreted by turbolift.`,
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 	cmd.Flags().BoolVar(&successful, "successful", false, "Indication of whether to run against previously successful repos only.")
 	cmd.Flags().BoolVar(&failed, "failed", false, "Indication of whether to run against previously failed repos only.")
-	cmd.Flags().BoolVar(&interactive, "interactive", false, "Run commands in fully interactive mode with stdin/TTY passthrough. Logs will not be captured.")
+	cmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Run commands in fully interactive mode with stdin/TTY passthrough. Logs will not be captured.")
 
 	return cmd
 }

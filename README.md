@@ -160,11 +160,11 @@ It is highly recommended that you run tests against affected repos, if it will h
 
 #### Interactive mode
 
-If you need to run a command that requires user interaction (such as an interactive editor, prompts for input, or commands that need full terminal control), you can use the `--interactive` flag:
+If you need to run a command that requires user interaction (such as an interactive editor, prompts for input, or commands that need full terminal control), you can use the `--interactive` (or `-i`) flag:
 
 ```
 turbolift foreach --interactive -- vim somefile.txt
-turbolift foreach --interactive -- your-interactive-script.sh
+turbolift foreach -i -- your-interactive-script.sh
 ```
 
 In interactive mode:
