@@ -36,7 +36,7 @@ type PullRequest struct {
 	Body           string
 	UpstreamRepo   string
 	IsDraft        bool
-	Labels         []string
+	ApplyLabels    bool
 	ReviewDecision string
 }
 
@@ -54,7 +54,7 @@ type GitHub interface {
 type RealGitHub struct{}
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
-	if len(pr.Labels) > 0 {
+	if pr.ApplyLabels {
 		if err := r.ensureTurboliftLabelExists(output, workingDir, pr.UpstreamRepo); err != nil {
 			return false, err
 		}
@@ -71,8 +71,8 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		pr.UpstreamRepo,
 	}
 
-	for _, label := range pr.Labels {
-		gh_args = append(gh_args, "--label", label)
+	if pr.ApplyLabels {
+		gh_args = append(gh_args, "--label", TurboliftLabel)
 	}
 
 	if pr.IsDraft {

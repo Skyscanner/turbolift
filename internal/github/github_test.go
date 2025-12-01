@@ -251,7 +251,7 @@ func runCreatePrAndCaptureOutput() (bool, string, error) {
 		Title:        "some title",
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
-		Labels:       []string{TurboliftLabel},
+		ApplyLabels:  true,
 	})
 
 	return didCreatePr, sb.String(), err
@@ -264,7 +264,7 @@ func runCreateDraftPrAndCaptureOutput() (bool, string, error) {
 		Body:         "some body",
 		UpstreamRepo: "org/repo1",
 		IsDraft:      true,
-		Labels:       []string{TurboliftLabel},
+		ApplyLabels:  true,
 	})
 
 	return didCreatePr, sb.String(), err

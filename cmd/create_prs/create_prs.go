@@ -118,17 +118,12 @@ func run(c *cobra.Command, _ []string) {
 			createPrActivity = logger.StartActivity("Creating PR in %s", repo.FullRepoName)
 		}
 
-		labels := []string{github.TurboliftLabel}
-		if noApplyLabels {
-			labels = nil
-		}
-
 		pullRequest := github.PullRequest{
 			Title:        dir.PrTitle,
 			Body:         dir.PrBody,
 			UpstreamRepo: repo.FullRepoName,
 			IsDraft:      isDraft,
-			Labels:       labels,
+			ApplyLabels:  !noApplyLabels,
 		}
 
 		didCreate, err := gh.CreatePullRequest(createPrActivity.Writer(), repoDirPath, pullRequest)
