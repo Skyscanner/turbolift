@@ -55,10 +55,8 @@ type RealGitHub struct{}
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
 	if len(pr.Labels) > 0 {
-		for _, label := range pr.Labels {
-			if err := r.ensureLabelExists(output, workingDir, pr.UpstreamRepo, label); err != nil {
-				return false, err
-			}
+		if err := r.ensureTurboliftLabelExists(output, workingDir, pr.UpstreamRepo); err != nil {
+			return false, err
 		}
 	}
 
@@ -91,11 +89,11 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 	return true, nil
 }
 
-func (r *RealGitHub) ensureLabelExists(output io.Writer, workingDir string, repo string, label string) error {
+func (r *RealGitHub) ensureTurboliftLabelExists(output io.Writer, workingDir string, repo string) error {
 	args := []string{
 		"label",
 		"create",
-		label,
+		TurboliftLabel,
 		"--repo",
 		repo,
 		"--color",
