@@ -18,12 +18,14 @@ package executor
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 )
 
 type Executor interface {
 	Execute(output io.Writer, workingDir string, name string, args ...string) error
 	ExecuteAndCapture(output io.Writer, workingDir string, name string, args ...string) (string, error)
+	ExecuteInteractive(workingDir string, name string, args ...string) error
 	SetVerbose(bool)
 }
 
@@ -74,6 +76,24 @@ func (e *RealExecutor) ExecuteAndCapture(output io.Writer, workingDir string, na
 	}
 
 	return string(commandOutput), nil
+}
+
+func (e *RealExecutor) ExecuteInteractive(workingDir string, name string, args ...string) error {
+	command := exec.Command(name, args...)
+	command.Dir = workingDir
+	command.Stdin = os.Stdin
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+
+	if e.Verbose {
+		fmt.Fprintf(os.Stderr, "Executing (interactive): %s %v in %s\n", name, summarizedArgs(args), workingDir)
+	}
+
+	if err := command.Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *RealExecutor) SetVerbose(verbose bool) {

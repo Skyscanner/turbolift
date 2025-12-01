@@ -41,6 +41,12 @@ func (e *FakeExecutor) ExecuteAndCapture(_ io.Writer, workingDir string, name st
 	return e.ReturningHandler(workingDir, name, args...)
 }
 
+func (e *FakeExecutor) ExecuteInteractive(workingDir string, name string, args ...string) error {
+	allArgs := append([]string{workingDir, name}, args...)
+	e.calls = append(e.calls, allArgs)
+	return e.Handler(workingDir, name, args...)
+}
+
 func (e *FakeExecutor) SetVerbose(_ bool) {}
 
 func (e *FakeExecutor) AssertCalledWith(t *testing.T, expected [][]string) {

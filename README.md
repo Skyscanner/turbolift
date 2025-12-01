@@ -158,6 +158,23 @@ At any time, if you need to update your working copy branches from the upstream,
 
 It is highly recommended that you run tests against affected repos, if it will help validate the changes you have made.
 
+#### Interactive mode
+
+If you need to run a command that requires user interaction (such as an interactive editor, prompts for input, or commands that need full terminal control), you can use the `--interactive` flag:
+
+```
+turbolift foreach --interactive -- vim somefile.txt
+turbolift foreach --interactive -- your-interactive-script.sh
+```
+
+In interactive mode:
+- The command runs with full stdin/TTY passthrough, allowing normal interactive behavior
+- The command executes sequentially in each repository, waiting for completion before moving to the next
+- Output is not captured to log files
+- The `--successful` and `--failed` flags are not available for subsequent runs
+
+**Note:** Interactive mode sacrifices log capture for full interactivity. Use regular mode for non-interactive commands when you want to keep logs.
+
 #### Logging and re-running with foreach
 
 Every time a command is run with `turbolift foreach`, logging output for each repository is collected in a temporary directory

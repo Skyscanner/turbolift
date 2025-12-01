@@ -35,9 +35,10 @@ import (
 var exec executor.Executor = executor.NewRealExecutor()
 
 var (
-	repoFile   = "repos.txt"
-	successful bool
-	failed     bool
+	repoFile    = "repos.txt"
+	successful  bool
+	failed      bool
+	interactive bool
 
 	overallResultsDirectory string
 
@@ -83,6 +84,7 @@ marks that no further options should be interpreted by turbolift.`,
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 	cmd.Flags().BoolVar(&successful, "successful", false, "Indication of whether to run against previously successful repos only.")
 	cmd.Flags().BoolVar(&failed, "failed", false, "Indication of whether to run against previously failed repos only.")
+	cmd.Flags().BoolVar(&interactive, "interactive", false, "Run commands in fully interactive mode with stdin/TTY passthrough. Logs will not be captured.")
 
 	return cmd
 }
@@ -128,33 +130,51 @@ func runE(c *cobra.Command, args []string) error {
 	// the user something they could copy and paste.
 	prettyArgs := formatArguments(args)
 
-	setupOutputFiles(dir.Name, prettyArgs, logger)
-
-	logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
+	if !interactive {
+		setupOutputFiles(dir.Name, prettyArgs, logger)
+		logger.Printf("Logs for all executions will be stored under %s", overallResultsDirectory)
+	} else {
+		logger.Printf("Running in interactive mode - logs will not be captured")
+	}
 
 	var doneCount, skippedCount, errorCount int
 	for _, repo := range dir.Repos {
 		repoDirPath := path.Join("work", repo.OrgName, repo.RepoName) // i.e. work/org/repo
 
-		execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
-
 		// skip if the working copy does not exist
 		if _, err = os.Stat(repoDirPath); os.IsNotExist(err) {
-			execActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
+			if interactive {
+				logger.Warnf("Directory %s does not exist - has it been cloned?", repoDirPath)
+			} else {
+				execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
+				execActivity.EndWithWarningf("Directory %s does not exist - has it been cloned?", repoDirPath)
+			}
 			skippedCount++
 			continue
 		}
 
-		err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
-
-		if err != nil {
-			emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
-			execActivity.EndWithFailure(err)
-			errorCount++
+		if interactive {
+			logger.Printf("==> Executing { %s } in %s", prettyArgs, repoDirPath)
+			err := exec.ExecuteInteractive(repoDirPath, args[0], args[1:]...)
+			if err != nil {
+				logger.Errorf("Command failed in %s: %v", repoDirPath, err)
+				errorCount++
+			} else {
+				doneCount++
+			}
 		} else {
-			emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
-			execActivity.EndWithSuccessAndEmitLogs()
-			doneCount++
+			execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
+			err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
+
+			if err != nil {
+				emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
+				execActivity.EndWithFailure(err)
+				errorCount++
+			} else {
+				emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
+				execActivity.EndWithSuccessAndEmitLogs()
+				doneCount++
+			}
 		}
 	}
 
@@ -164,9 +184,11 @@ func runE(c *cobra.Command, args []string) error {
 		logger.Warnf("turbolift foreach completed with %s %s(%s, %s, %s)\n", colors.Red("errors"), colors.Normal(), colors.Green(doneCount, " OK"), colors.Yellow(skippedCount, " skipped"), colors.Red(errorCount, " errored"))
 	}
 
-	logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
-	logger.Printf("Names of successful repos have been written to %s. Use --successful to run the next foreach command against these repos", successfulReposFileName)
-	logger.Printf("Names of failed repos have been written to %s. Use --failed to run the next foreach command against these repos", failedReposFileName)
+	if !interactive {
+		logger.Printf("Logs for all executions have been stored under %s", overallResultsDirectory)
+		logger.Printf("Names of successful repos have been written to %s. Use --successful to run the next foreach command against these repos", successfulReposFileName)
+		logger.Printf("Names of failed repos have been written to %s. Use --failed to run the next foreach command against these repos", failedReposFileName)
+	}
 
 	return nil
 }
