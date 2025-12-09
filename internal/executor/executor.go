@@ -89,11 +89,7 @@ func (e *RealExecutor) ExecuteInteractive(workingDir string, name string, args .
 		fmt.Fprintf(os.Stderr, "Executing (interactive): %s %v in %s\n", name, summarizedArgs(args), workingDir)
 	}
 
-	if err := command.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return command.Run()
 }
 
 func (e *RealExecutor) SetVerbose(verbose bool) {

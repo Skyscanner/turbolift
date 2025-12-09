@@ -153,28 +153,30 @@ func runE(c *cobra.Command, args []string) error {
 			continue
 		}
 
+		var err error
 		if interactive {
 			logger.Printf("==> Executing { %s } in %s", prettyArgs, repoDirPath)
-			err := exec.ExecuteInteractive(repoDirPath, args[0], args[1:]...)
+			err = exec.ExecuteInteractive(repoDirPath, args[0], args[1:]...)
 			if err != nil {
 				logger.Errorf("Command failed in %s: %v", repoDirPath, err)
-				errorCount++
-			} else {
-				doneCount++
 			}
 		} else {
 			execActivity := logger.StartActivity("Executing { %s } in %s", prettyArgs, repoDirPath)
-			err := exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
+			err = exec.Execute(execActivity.Writer(), repoDirPath, args[0], args[1:]...)
 
 			if err != nil {
 				emitOutcomeToFiles(repo, failedReposFileName, failedResultsDirectory, execActivity.Logs(), logger)
 				execActivity.EndWithFailure(err)
-				errorCount++
 			} else {
 				emitOutcomeToFiles(repo, successfulReposFileName, successfulResultsDirectory, execActivity.Logs(), logger)
 				execActivity.EndWithSuccessAndEmitLogs()
-				doneCount++
 			}
+		}
+
+		if err != nil {
+			errorCount++
+		} else {
+			doneCount++
 		}
 	}
 
