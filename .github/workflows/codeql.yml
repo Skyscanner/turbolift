@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: "09 09 * * 1"
 
+permissions: {}
+
 jobs:
   codeql:
     name: codeql
@@ -46,11 +48,6 @@ jobs:
         run: |
           echo "SARIF_RESULTS=$(gzip -c ../results/go.sarif | base64 -w0)" >> $GITHUB_ENV
 
-      # Workaround for parallel GitHub bugs
-      # * Can't use GHA token with IP allowlisting
-      #   https://docs.github.com/en/enterprise-cloud@latest/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/managing-allowed-ip-addresses-for-your-organization#using-github-actions-with-an-ip-allow-list
-      # * Can't use codeql-action/analyze with custom token
-      #   https://support.github.com/ticket/enterprise/3427/3214517
       - name: Upload CodeQL Results
         run: |
           curl --fail-with-body \

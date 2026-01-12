@@ -7,6 +7,8 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+permissions: {}
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
