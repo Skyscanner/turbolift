@@ -66,7 +66,7 @@ func (f *FakeGit) GetOriginUrl(output io.Writer, workingDir string) (string, err
 	call := []string{"remote", "get-url", "origin", workingDir}
 	f.calls = append(f.calls, call)
 	_, err := f.handler(output, call)
-	return "dummyUrl", err
+	return "https://github.com/dummyOrg/dummyRepo.git", err
 }
 
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {

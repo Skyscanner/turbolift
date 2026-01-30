@@ -180,7 +180,7 @@ func TestItReturnsNilErrorOnSuccessfulUpdatePrDescription(t *testing.T) {
 }
 
 func TestItReturnsTrueAndNilErrorWhenRepoIsFork(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsTrueFakeExecutor()
+	fakeExecutor := newIsForkFakeExecutor("true", nil)
 	execInstance = fakeExecutor
 
 	isFork, _, err := runIsForkAndCaptureOutput()
@@ -188,12 +188,13 @@ func TestItReturnsTrueAndNilErrorWhenRepoIsFork(t *testing.T) {
 	assert.True(t, isFork)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "repo", "view", "--json", "isFork"},
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
 	})
 }
 
 func TestItReturnsFalseAndNilErrorWhenRepoIsNotFork(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsFalseFakeExecutor()
+	fakeExecutor := newIsForkFakeExecutor("false", nil)
 	execInstance = fakeExecutor
 
 	isFork, _, err := runIsForkAndCaptureOutput()
@@ -201,19 +202,21 @@ func TestItReturnsFalseAndNilErrorWhenRepoIsNotFork(t *testing.T) {
 	assert.False(t, isFork)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "repo", "view", "--json", "isFork"},
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
 	})
 }
 
 func TestItReturnsErrorOnFailedIsFork(t *testing.T) {
-	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	fakeExecutor := newIsForkFakeExecutor("", errors.New("synthetic error"))
 	execInstance = fakeExecutor
 
 	_, _, err := runIsForkAndCaptureOutput()
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "repo", "view", "--json", "isFork"},
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
 	})
 }
 
@@ -269,7 +272,7 @@ func TestItReturnsErrorOnFailedGetOriginRepoName(t *testing.T) {
 	assert.Error(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "repo", "view", "dummyUrl", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
 	})
 }
 
@@ -281,7 +284,7 @@ func TestItReturnsNilErrorOnSuccessfulGetOriginRepoName(t *testing.T) {
 	assert.NoError(t, err)
 
 	fakeExecutor.AssertCalledWith(t, [][]string{
-		{"work/org/repo1", "gh", "repo", "view", "dummyUrl", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
 	})
 }
 
@@ -336,6 +339,12 @@ func runUpdatePrDescriptionAndCaptureOutput() (string, error) {
 
 func runIsForkAndCaptureOutput() (bool, string, error) {
 	sb := strings.Builder{}
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	originalGit := g
+	g = fakeGit
+	defer func() {
+		g = originalGit
+	}()
 	isFork, err := NewRealGitHub().IsFork(&sb, "work/org/repo1")
 	return isFork, sb.String(), err
 }
@@ -352,4 +361,31 @@ func runGetOriginRepoNameAndCaptureOutput() (string, string, error) {
 	g = fakeGit
 	_, err := NewRealGitHub().GetOriginRepoName(&sb, "work/org/repo1")
 	return "", sb.String(), err
+}
+
+func newIsForkFakeExecutor(response string, responseErr error) *executor.FakeExecutor {
+	return executor.NewFakeExecutor(
+		func(string, string, ...string) error { return nil },
+		func(_ string, _ string, args ...string) (string, error) {
+			switch {
+			case isOriginRepoLookup(args):
+				return "org/repo1", nil
+			case isIsForkLookup(args):
+				if responseErr != nil {
+					return "", responseErr
+				}
+				return response, nil
+			default:
+				return "", nil
+			}
+		},
+	)
+}
+
+func isOriginRepoLookup(args []string) bool {
+	return len(args) >= 7 && args[0] == "repo" && args[1] == "view" && args[3] == "--json" && args[4] == "nameWithOwner"
+}
+
+func isIsForkLookup(args []string) bool {
+	return len(args) >= 5 && args[0] == "repo" && args[1] == "view" && args[3] == "--json" && args[4] == "isFork"
 }

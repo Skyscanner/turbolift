@@ -214,7 +214,11 @@ func (r *RealGitHub) UserHasOpenUpstreamPRs(output io.Writer, fullRepoName strin
 }
 
 func (r *RealGitHub) IsFork(output io.Writer, workingDir string) (bool, error) {
-	response, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", "--json", "isFork")
+	originRepoName, err := r.GetOriginRepoName(output, workingDir)
+	if err != nil {
+		return false, err
+	}
+	response, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", "repo", "view", originRepoName, "--json", "isFork")
 	if err != nil {
 		return false, err
 	}
