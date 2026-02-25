@@ -17,6 +17,8 @@ package github
 
 import (
 	"errors"
+	"github.com/skyscanner/turbolift/internal/git"
+	"os"
 	"strings"
 	"testing"
 
@@ -177,6 +179,115 @@ func TestItReturnsNilErrorOnSuccessfulUpdatePrDescription(t *testing.T) {
 	})
 }
 
+func TestItReturnsTrueAndNilErrorWhenRepoIsFork(t *testing.T) {
+	fakeExecutor := newIsForkFakeExecutor("true", nil)
+	execInstance = fakeExecutor
+
+	isFork, _, err := runIsForkAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, isFork)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
+	})
+}
+
+func TestItReturnsFalseAndNilErrorWhenRepoIsNotFork(t *testing.T) {
+	fakeExecutor := newIsForkFakeExecutor("false", nil)
+	execInstance = fakeExecutor
+
+	isFork, _, err := runIsForkAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.False(t, isFork)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
+	})
+}
+
+func TestItReturnsErrorOnFailedIsFork(t *testing.T) {
+	fakeExecutor := newIsForkFakeExecutor("", errors.New("synthetic error"))
+	execInstance = fakeExecutor
+
+	_, _, err := runIsForkAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+		{"work/org/repo1", "gh", "repo", "view", "org/repo1", "--json", "isFork"},
+	})
+}
+
+func TestItReturnsTrueAndNilErrorWhenUserHasOpenUpstreamPRs(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsTrueFakeExecutor()
+	execInstance = fakeExecutor
+
+	hasOpenPRs, _, err := runUserHasOpenUpstreamPRsAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, hasOpenPRs)
+
+	currentDir, _ := os.Getwd()
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
+	})
+}
+
+func TestItReturnsFalseAndNilErrorWhenUserHasNoOpenUpstreamPRs(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsAndReturnsFalseFakeExecutor()
+	execInstance = fakeExecutor
+
+	hasOpenPRs, _, err := runUserHasOpenUpstreamPRsAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.False(t, hasOpenPRs)
+
+	currentDir, _ := os.Getwd()
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
+	})
+}
+
+func TestItReturnsErrorOnFailedUserHasOpenUpstreamPRs(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, _, err := runUserHasOpenUpstreamPRsAndCaptureOutput()
+	assert.Error(t, err)
+
+	currentDir, _ := os.Getwd()
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{currentDir, "gh", "pr", "list", "--repo", "org/repo1", "--author", "@me", "--state", "open", "--limit", "1", "--json", "number", "--jq", "length > 0"},
+	})
+}
+
+func TestItReturnsErrorOnFailedGetOriginRepoName(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, _, err := runGetOriginRepoNameAndCaptureOutput()
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+	})
+}
+
+func TestItReturnsNilErrorOnSuccessfulGetOriginRepoName(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	_, _, err := runGetOriginRepoNameAndCaptureOutput()
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "repo", "view", "https://github.com/dummyOrg/dummyRepo.git", "--json", "nameWithOwner", "--jq", ".nameWithOwner"},
+	})
+}
+
 func runForkAndCloneAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1")
@@ -224,4 +335,57 @@ func runUpdatePrDescriptionAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGitHub().UpdatePRDescription(&sb, "work/org/repo1", "new title", "new body")
 	return sb.String(), err
+}
+
+func runIsForkAndCaptureOutput() (bool, string, error) {
+	sb := strings.Builder{}
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	originalGit := g
+	g = fakeGit
+	defer func() {
+		g = originalGit
+	}()
+	isFork, err := NewRealGitHub().IsFork(&sb, "work/org/repo1")
+	return isFork, sb.String(), err
+}
+
+func runUserHasOpenUpstreamPRsAndCaptureOutput() (bool, string, error) {
+	sb := strings.Builder{}
+	hasOpenPRs, err := NewRealGitHub().UserHasOpenUpstreamPRs(&sb, "org/repo1")
+	return hasOpenPRs, sb.String(), err
+}
+
+func runGetOriginRepoNameAndCaptureOutput() (string, string, error) {
+	sb := strings.Builder{}
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+	_, err := NewRealGitHub().GetOriginRepoName(&sb, "work/org/repo1")
+	return "", sb.String(), err
+}
+
+func newIsForkFakeExecutor(response string, responseErr error) *executor.FakeExecutor {
+	return executor.NewFakeExecutor(
+		func(string, string, ...string) error { return nil },
+		func(_ string, _ string, args ...string) (string, error) {
+			switch {
+			case isOriginRepoLookup(args):
+				return "org/repo1", nil
+			case isIsForkLookup(args):
+				if responseErr != nil {
+					return "", responseErr
+				}
+				return response, nil
+			default:
+				return "", nil
+			}
+		},
+	)
+}
+
+func isOriginRepoLookup(args []string) bool {
+	return len(args) >= 7 && args[0] == "repo" && args[1] == "view" && args[3] == "--json" && args[4] == "nameWithOwner"
+}
+
+func isIsForkLookup(args []string) bool {
+	return len(args) >= 5 && args[0] == "repo" && args[1] == "view" && args[3] == "--json" && args[4] == "isFork"
 }
