@@ -44,7 +44,7 @@ var (
 	repoFile          string
 	prDescriptionFile string
 	sleep             time.Duration
-	noApplyLabels     bool
+	skipLabels        bool
 )
 
 func NewCreatePRsCmd() *cobra.Command {
@@ -56,7 +56,7 @@ func NewCreatePRsCmd() *cobra.Command {
 
 	cmd.Flags().DurationVar(&sleep, "sleep", 0, "Fixed sleep in between PR creations (to spread load on CI infrastructure)")
 	cmd.Flags().BoolVar(&isDraft, "draft", false, "Creates the Pull Request as Draft PR")
-	cmd.Flags().BoolVar(&noApplyLabels, "no-apply-labels", false, "Do not apply the default turbolift label to created PRs")
+	cmd.Flags().BoolVar(&skipLabels, "skip-labels", false, "Do not apply the default turbolift label to created PRs")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
 	cmd.Flags().StringVar(&prDescriptionFile, "description", "README.md", "A file containing the title and description for the PRs.")
 
@@ -123,7 +123,7 @@ func run(c *cobra.Command, _ []string) {
 			Body:         dir.PrBody,
 			UpstreamRepo: repo.FullRepoName,
 			IsDraft:      isDraft,
-			ApplyLabels:  !noApplyLabels,
+			ApplyLabels:  !skipLabels,
 		}
 
 		didCreate, err := gh.CreatePullRequest(createPrActivity.Writer(), repoDirPath, pullRequest)

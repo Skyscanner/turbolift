@@ -147,7 +147,7 @@ func TestItReturnsTrueAndNilErrorOnSuccessfulCreatePr(t *testing.T) {
 	})
 }
 
-func TestItCreatesPrWithoutLabelsWhenNoneProvided(t *testing.T) {
+func TestItCreatesPrWithoutLabelWhenSkipLabelsSet(t *testing.T) {
 	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
 	execInstance = fakeExecutor
 
@@ -180,6 +180,31 @@ func TestItIgnoresExistingLabelError(t *testing.T) {
 	fakeExecutor.AssertCalledWith(t, [][]string{
 		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
 		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1", "--label", "turbolift"},
+	})
+}
+
+func TestItCreatesPrWithoutLabelWhenLabelCreationFails(t *testing.T) {
+	calls := 0
+	fakeExecutor := executor.NewFakeExecutor(func(workingDir string, name string, args ...string) error {
+		return nil
+	}, func(workingDir string, name string, args ...string) (string, error) {
+		calls++
+		if calls == 1 {
+			// Label creation fails (e.g. insufficient permissions)
+			return "", errors.New("permission denied")
+		}
+		// PR create without label succeeds
+		return "", nil
+	})
+	execInstance = fakeExecutor
+
+	didCreatePr, _, err := runCreatePrAndCaptureOutput()
+	assert.NoError(t, err)
+	assert.True(t, didCreatePr)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org/repo1", "gh", "label", "create", "turbolift", "--repo", "org/repo1", "--color", turboliftLabelColor, "--description", turboliftLabelDescription},
+		{"work/org/repo1", "gh", "pr", "create", "--title", "some title", "--body", "some body", "--repo", "org/repo1"},
 	})
 }
 

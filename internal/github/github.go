@@ -54,9 +54,11 @@ type GitHub interface {
 type RealGitHub struct{}
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
-	if pr.ApplyLabels {
+	applyLabel := pr.ApplyLabels
+	if applyLabel {
 		if err := r.ensureTurboliftLabelExists(output, workingDir, pr.UpstreamRepo); err != nil {
-			return false, err
+			fmt.Fprintf(output, "Warning: could not create label: %v. Creating PR without label.\n", err)
+			applyLabel = false
 		}
 	}
 
@@ -71,7 +73,7 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		pr.UpstreamRepo,
 	}
 
-	if pr.ApplyLabels {
+	if applyLabel {
 		gh_args = append(gh_args, "--label", TurboliftLabel)
 	}
 
@@ -81,7 +83,6 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 
 	execOutput, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", gh_args...)
 	if strings.Contains(execOutput, "GraphQL error: No commits between") {
-		// no PR was created because there are no differences between remotes
 		return false, nil
 	} else if err != nil {
 		return false, err

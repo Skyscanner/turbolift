@@ -249,7 +249,7 @@ func runCommand() (string, error) {
 
 func runCommandNoLabels() (string, error) {
 	cmd := NewCreatePRsCmd()
-	cmd.SetArgs([]string{"--no-apply-labels"})
+	cmd.SetArgs([]string{"--skip-labels"})
 	outBuffer := bytes.NewBufferString("")
 	cmd.SetOut(outBuffer)
 	err := cmd.Execute()
