@@ -27,11 +27,16 @@ import (
 
 var execInstance executor.Executor = executor.NewRealExecutor()
 
+const TurboliftLabel = "turbolift"
+const turboliftLabelColor = "0366d6"
+const turboliftLabelDescription = "Created using turbolift (github.com/Skyscanner/turbolift)"
+
 type PullRequest struct {
 	Title          string
 	Body           string
 	UpstreamRepo   string
 	IsDraft        bool
+	ApplyLabels    bool
 	ReviewDecision string
 }
 
@@ -49,6 +54,14 @@ type GitHub interface {
 type RealGitHub struct{}
 
 func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr PullRequest) (didCreate bool, err error) {
+	applyLabel := pr.ApplyLabels
+	if applyLabel {
+		if err := r.ensureTurboliftLabelExists(output, workingDir, pr.UpstreamRepo); err != nil {
+			_, _ = fmt.Fprintf(output, "Warning: could not create label: %v. Creating PR without label.\n", err)
+			applyLabel = false
+		}
+	}
+
 	gh_args := []string{
 		"pr",
 		"create",
@@ -60,18 +73,45 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 		pr.UpstreamRepo,
 	}
 
+	if applyLabel {
+		gh_args = append(gh_args, "--label", TurboliftLabel)
+	}
+
 	if pr.IsDraft {
 		gh_args = append(gh_args, "--draft")
 	}
 
 	execOutput, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", gh_args...)
 	if strings.Contains(execOutput, "GraphQL error: No commits between") {
-		// no PR was created because there are no differences between remotes
 		return false, nil
 	} else if err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *RealGitHub) ensureTurboliftLabelExists(output io.Writer, workingDir string, repo string) error {
+	args := []string{
+		"label",
+		"create",
+		TurboliftLabel,
+		"--repo",
+		repo,
+		"--color",
+		turboliftLabelColor,
+		"--description",
+		turboliftLabelDescription,
+	}
+
+	stdErr, err := execInstance.ExecuteAndCapture(output, workingDir, "gh", args...)
+	if err != nil {
+		if strings.Contains(stdErr, "already exists") || strings.Contains(err.Error(), "already exists") {
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
