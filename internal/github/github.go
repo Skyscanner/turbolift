@@ -57,7 +57,7 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 	applyLabel := pr.ApplyLabels
 	if applyLabel {
 		if err := r.ensureTurboliftLabelExists(output, workingDir, pr.UpstreamRepo); err != nil {
-			fmt.Fprintf(output, "Warning: could not create label: %v. Creating PR without label.\n", err)
+			_, _ = fmt.Fprintf(output, "Warning: could not create label: %v. Creating PR without label.\n", err)
 			applyLabel = false
 		}
 	}
