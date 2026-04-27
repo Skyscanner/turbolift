@@ -308,11 +308,15 @@ func runFromPRs(c *cobra.Command, _ []string) {
 
 	// Single atomic write. If any repo has a conflicting annotation already,
 	// this errors without touching the file and we surface the failure so the
-	// user can resolve manually before re-running.
+	// user can resolve manually before re-running. Count it as an error so
+	// the final summary doesn't misleadingly claim success while repos.txt is
+	// stale — the PR branches aren't recorded and downstream commands would
+	// fall back to the campaign name, which is likely wrong.
 	upsertActivity := logger.StartActivity("Updating repos.txt with PR branch annotations")
 	if err := campaign.UpsertBranchAnnotations("repos.txt", collectedBranches); err != nil {
 		upsertActivity.EndWithFailure(err)
 		logger.Warnf("repos.txt was not modified. Resolve the conflict above and re-run.")
+		errorCount++
 	} else {
 		upsertActivity.EndWithSuccess()
 	}

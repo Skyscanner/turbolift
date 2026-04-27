@@ -623,6 +623,10 @@ func TestCloneFromPRsFailsOnConflictingExistingAnnotation(t *testing.T) {
 	out, err := runCloneCommandArgs([]string{"--from-prs", "prs.txt"})
 	assert.NoError(t, err)
 	assert.Contains(t, out, "conflicting")
+	// Summary must reflect the upsert failure — otherwise a user who only
+	// reads the final line thinks repos.txt was updated when it wasn't.
+	assert.Contains(t, out, "completed with")
+	assert.Contains(t, out, "errors")
 
 	// UpsertBranchAnnotations is atomic — file must be byte-identical.
 	afterRepos, _ := os.ReadFile("repos.txt")
