@@ -172,9 +172,13 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 		return prr.CurrentBranch, nil
 	}
 
-	// If not, then it's a forked PR. The headRefName is as such: `username:branchName`
+	// If not, then it's a forked PR. The headRefName is `username:branchName`.
+	// We require either an exact match (rare — usually the CurrentBranch path
+	// would have caught it) or the fork-style `:branchName` suffix, which
+	// avoids the foot-gun of a naive HasSuffix matching "foo-branchName"
+	// when we're actually looking for "branchName".
 	for _, pr := range prr.CreatedBy {
-		if strings.HasSuffix(pr.HeadRefName, branchName) {
+		if pr.HeadRefName == branchName || strings.HasSuffix(pr.HeadRefName, ":"+branchName) {
 			return pr, nil
 		}
 	}
