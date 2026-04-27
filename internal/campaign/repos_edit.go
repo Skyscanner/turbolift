@@ -21,6 +21,12 @@ import (
 	"strings"
 )
 
+// isSpace is a tiny helper to avoid pulling in unicode just to check the
+// first byte of a comment for a separator.
+func isSpace(b byte) bool {
+	return b == ' ' || b == '\t'
+}
+
 // UpsertBranchAnnotations rewrites repos.txt so that each repo in `branches`
 // ends up annotated with its PR branch. The write is atomic in the sense that
 // if any repo already has a conflicting `branch=<other>` annotation, the
@@ -98,12 +104,19 @@ func UpsertBranchAnnotations(path string, branches map[string]string) error {
 
 		// Inject `branch=<wantBranch>` into the line. If there's an existing
 		// comment without a branch annotation, prepend our annotation and
-		// keep the rest of the comment text.
+		// keep the rest of the comment text. Ensure a whitespace separator
+		// between the annotation and the preserved comment — otherwise a line
+		// like `org/repo#note` would round-trip to `branch=<x>note`, causing
+		// the parser to read the branch as `<x>note`.
 		var newLine string
 		if !hadComment {
 			newLine = fmt.Sprintf("%s # branch=%s", repoKey, wantBranch)
 		} else {
-			newLine = fmt.Sprintf("%s # branch=%s%s", repoKey, wantBranch, commentPart)
+			commentSuffix := commentPart
+			if commentSuffix != "" && !isSpace(commentSuffix[0]) {
+				commentSuffix = " " + commentSuffix
+			}
+			newLine = fmt.Sprintf("%s # branch=%s%s", repoKey, wantBranch, commentSuffix)
 		}
 		updates = append(updates, update{lineIdx: i, newContent: newLine})
 	}

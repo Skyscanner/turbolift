@@ -17,6 +17,7 @@ package campaign
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -80,6 +81,29 @@ func TestUpsertBranchAnnotations_PreservesFreeFormComment(t *testing.T) {
 	result := readFile(t, p)
 	assert.Contains(t, result, "branch=feature-x")
 	assert.Contains(t, result, "reviewer note")
+}
+
+func TestUpsertBranchAnnotations_InsertsSeparatorWhenCommentHasNone(t *testing.T) {
+	// Parser accepts `org/repo#note` (no space after '#'). If we inject
+	// `branch=X` without a separator we'd get `branch=Xnote` and the parser
+	// would later read the branch as `Xnote`. Confirm we insert a space.
+	initial := "org/repo1#reviewer note\n"
+	p := writeReposFile(t, initial)
+
+	err := UpsertBranchAnnotations(p, map[string]string{"org/repo1": "feat"})
+	assert.NoError(t, err)
+
+	result := readFile(t, p)
+	// The resulting comment must have whitespace between our branch= token
+	// and the original note — the round-trip parse must yield branch="feat".
+	assert.Contains(t, result, "branch=feat ")
+	assert.Contains(t, result, "reviewer note")
+
+	// Round-trip through the parser to confirm the branch is correctly read.
+	branch := branchAnnotationRegexp.FindStringSubmatch(strings.SplitN(result, "#", 2)[1])
+	if assert.NotNil(t, branch) {
+		assert.Equal(t, "feat", branch[1])
+	}
 }
 
 func TestUpsertBranchAnnotations_IdempotentOnMatchingBranch(t *testing.T) {
