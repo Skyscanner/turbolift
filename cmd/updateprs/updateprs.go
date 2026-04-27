@@ -134,7 +134,9 @@ func runClose(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		err = gh.ClosePullRequest(closeActivity.Writer(), repo.FullRepoPath(), dir.Name)
+		// Use repo.Branch so PRs on assimilated branches close cleanly; in
+		// the normal flow this equals dir.Name (set by OpenCampaign's default).
+		err = gh.ClosePullRequest(closeActivity.Writer(), repo.FullRepoPath(), repo.Branch)
 		if err != nil {
 			if _, ok := err.(*github.NoPRFoundError); ok {
 				closeActivity.EndWithWarning(err)
@@ -246,7 +248,9 @@ func runPush(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		err := g.Push(pushActivity.Writer(), repo.FullRepoPath(), "origin", dir.Name)
+		// Use repo.Branch so assimilated PRs push to the PR's head ref;
+		// in the normal flow this equals dir.Name.
+		err := g.Push(pushActivity.Writer(), repo.FullRepoPath(), "origin", repo.Branch)
 		if err != nil {
 			pushActivity.EndWithFailure(err)
 			errorCount++

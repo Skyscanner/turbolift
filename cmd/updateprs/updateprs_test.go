@@ -2,12 +2,13 @@ package updateprs
 
 import (
 	"bytes"
-	"github.com/skyscanner/turbolift/internal/git"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/skyscanner/turbolift/internal/git"
 	"github.com/skyscanner/turbolift/internal/github"
 	"github.com/skyscanner/turbolift/internal/prompt"
 	"github.com/skyscanner/turbolift/internal/testsupport"
@@ -222,6 +223,50 @@ func TestItLogsPushErrorsButContinuesToTryAll(t *testing.T) {
 	fakeGit.AssertCalledWith(t, [][]string{
 		{"push", "work/org/repo1", filepath.Base(tempDir)},
 		{"push", "work/org/repo2", filepath.Base(tempDir)},
+	})
+}
+
+func TestItPushesPerRepoBranchWhenAnnotated(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	// Rewrite repos.txt after setup so the annotation doesn't get mangled
+	// into directory names during PrepareTempCampaign's dir creation.
+	if err := os.WriteFile("repos.txt", []byte("org/repo1 # branch=pr-branch\norg/repo2\n"), 0o644); err != nil {
+		t.Fatalf("write repos.txt: %v", err)
+	}
+
+	_, err := runPushCommandAuto()
+	assert.NoError(t, err)
+
+	campaignBranch := filepath.Base(tempDir)
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"push", "work/org/repo1", "pr-branch"},
+		{"push", "work/org/repo2", campaignBranch},
+	})
+}
+
+func TestItClosesPerRepoBranchWhenAnnotated(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	if err := os.WriteFile("repos.txt", []byte("org/repo1 # branch=pr-branch\norg/repo2\n"), 0o644); err != nil {
+		t.Fatalf("write repos.txt: %v", err)
+	}
+
+	_, err := runCloseCommandAuto()
+	assert.NoError(t, err)
+
+	campaignBranch := filepath.Base(tempDir)
+	fakeGitHub.AssertCalledWith(t, [][]string{
+		{"close_pull_request", "work/org/repo1", "pr-branch"},
+		{"close_pull_request", "work/org/repo2", campaignBranch},
 	})
 }
 
