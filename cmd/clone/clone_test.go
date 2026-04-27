@@ -524,6 +524,48 @@ func TestCloneFromPRsKeysBranchesByHostOrgRepoForGHE(t *testing.T) {
 	assert.Contains(t, string(reposContent), "my-ghe.example/org/repo1 # branch=feat/fix")
 }
 
+func TestCloneFromPRsRerunsCheckoutWhenDirectoryExists(t *testing.T) {
+	// Guards against the "crashed between clone and checkout" case: if the
+	// work/ dir is there but we never successfully checked out the PR, we'd
+	// record the wrong branch (e.g. main) into repos.txt. The fix is to
+	// always run `gh pr checkout` — it's idempotent.
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable, github.Clone, github.CheckoutPR:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) { return nil, nil })
+	gh = fakeGitHub
+
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	fakeGit.SetCurrentBranchName("work/org/repo1", "feat/fix")
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false)
+	// Simulate an existing clone from a prior run.
+	assert.NoError(t, os.MkdirAll(path.Join("work", "org", "repo1"), os.ModeDir|0o755))
+	assert.NoError(t, os.WriteFile("prs.txt", []byte("org/repo1#1\n"), 0o644))
+
+	out, err := runCloneCommandArgs([]string{"--from-prs", "prs.txt"})
+	assert.NoError(t, err)
+	// Should have run checkout_pr even for the already-cloned repo.
+	assertContainsCall(t, fakeGitHub.Calls(), []string{"checkout_pr", "work/org/repo1", "1"})
+	// Should NOT have re-cloned.
+	for _, c := range fakeGitHub.Calls() {
+		if len(c) >= 1 && c[0] == "clone" {
+			t.Errorf("expected no clone call for already-present dir, got %v", c)
+		}
+	}
+	assert.Contains(t, out, "Directory already existed; re-ran PR checkout")
+
+	// Branch annotation should still be recorded.
+	reposContent, err := os.ReadFile("repos.txt")
+	assert.NoError(t, err)
+	assert.Contains(t, string(reposContent), "org/repo1 # branch=feat/fix")
+}
+
 func TestCloneFromPRsFailsOnDetachedHEAD(t *testing.T) {
 	// If `gh pr checkout` lands us on a detached HEAD somehow, GetCurrentBranchName
 	// returns the literal "HEAD". We must NOT write that into repos.txt — downstream

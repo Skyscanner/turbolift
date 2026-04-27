@@ -226,54 +226,51 @@ func runFromPRs(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		// Skip-if-present mirrors the normal clone flow. This makes retries
-		// safe: a user who hits a conflict, fixes repos.txt, and re-runs
-		// should not see clones redone or errors for already-done work.
+		// If the directory is already present we skip the clone step but
+		// still run `gh pr checkout` — this guards against the case where a
+		// previous run crashed between clone and checkout, leaving the repo
+		// on the default branch. `gh pr checkout` is idempotent: if we're
+		// already on the PR branch it's a no-op.
+		alreadyCloned := false
 		if _, err := os.Stat(repoDirPath); !os.IsNotExist(err) {
-			activity.EndWithWarningf("Directory already exists")
-			skippedCount++
-			// Still capture the current branch so UpsertBranchAnnotations
-			// can reconcile. Key by cloneTarget (not FullRepoName) so GHE
-			// repos.txt entries like `host/org/repo` match — FullRepoName
-			// deliberately strips the host. Skip if we're in detached HEAD
-			// ("HEAD") to avoid writing a literal "HEAD" into repos.txt.
-			if b, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath); bErr == nil && b != "HEAD" {
-				collectedBranches[cloneTarget] = b
-			}
-			continue
+			alreadyCloned = true
 		}
 
-		// Decide fork vs direct clone using the same permission check as
-		// the normal flow. In practice assimilation usually implies direct
-		// clone (the PR author has push access) but honouring --fork keeps
-		// behaviour consistent.
-		var fork bool
-		if forceFork {
-			fork = true
-		} else {
-			res, permErr := gh.IsPushable(logger.Writer(), cloneTarget)
-			if permErr != nil {
-				logger.Warnf("Unable to determine if we can push to %s: %s", cloneTarget, permErr)
+		if !alreadyCloned {
+			// Decide fork vs direct clone using the same permission check as
+			// the normal flow. In practice assimilation usually implies direct
+			// clone (the PR author has push access) but honouring --fork keeps
+			// behaviour consistent.
+			var fork bool
+			if forceFork {
 				fork = true
 			} else {
-				fork = !res
+				res, permErr := gh.IsPushable(logger.Writer(), cloneTarget)
+				if permErr != nil {
+					logger.Warnf("Unable to determine if we can push to %s: %s", cloneTarget, permErr)
+					fork = true
+				} else {
+					fork = !res
+				}
 			}
-		}
 
-		if fork {
-			err = gh.ForkAndClone(activity.Writer(), orgDirPath, cloneTarget)
-		} else {
-			err = gh.Clone(activity.Writer(), orgDirPath, cloneTarget)
-		}
-		if err != nil {
-			activity.EndWithFailure(err)
-			errorCount++
-			continue
+			if fork {
+				err = gh.ForkAndClone(activity.Writer(), orgDirPath, cloneTarget)
+			} else {
+				err = gh.Clone(activity.Writer(), orgDirPath, cloneTarget)
+			}
+			if err != nil {
+				activity.EndWithFailure(err)
+				errorCount++
+				continue
+			}
 		}
 
 		// `gh pr checkout` fetches the PR head and checks it out. For PRs
 		// from forks it also configures a remote and sets upstream tracking
 		// — that's why we use it instead of a hand-rolled git fetch+checkout.
+		// Always run this, even when skipping the clone step, so incomplete
+		// prior runs can recover.
 		if err := gh.CheckoutPR(activity.Writer(), repoDirPath, pr.Number); err != nil {
 			activity.EndWithFailure(err)
 			errorCount++
@@ -300,8 +297,13 @@ func runFromPRs(c *cobra.Command, _ []string) {
 		}
 		collectedBranches[cloneTarget] = branch
 
-		activity.EndWithSuccess()
-		doneCount++
+		if alreadyCloned {
+			activity.EndWithWarningf("Directory already existed; re-ran PR checkout")
+			skippedCount++
+		} else {
+			activity.EndWithSuccess()
+			doneCount++
+		}
 	}
 
 	// Single atomic write. If any repo has a conflicting annotation already,
