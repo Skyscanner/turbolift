@@ -493,6 +493,37 @@ func TestCloneFromPRsHappyPath(t *testing.T) {
 	assertContainsCall(t, calls, []string{"checkout_pr", "work/org/repo2", "2"})
 }
 
+func TestCloneFromPRsKeysBranchesByHostOrgRepoForGHE(t *testing.T) {
+	// For a GHE PR URL, repos.txt stores `host/org/repo` and the branch
+	// annotation must be keyed on that same full identifier — otherwise the
+	// upsert won't find the existing line and we'd either append a duplicate
+	// or lose the host prefix.
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable, github.Clone, github.CheckoutPR:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) { return nil, nil })
+	gh = fakeGitHub
+
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	fakeGit.SetCurrentBranchName("work/org/repo1", "feat/fix")
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false) // empty repos.txt
+	assert.NoError(t, os.WriteFile("prs.txt", []byte("https://my-ghe.example/org/repo1/pull/1\n"), 0o644))
+
+	_, err := runCloneCommandArgs([]string{"--from-prs", "prs.txt"})
+	assert.NoError(t, err)
+
+	// repos.txt must carry the host-qualified repo name, not `org/repo1`.
+	reposContent, err := os.ReadFile("repos.txt")
+	assert.NoError(t, err)
+	assert.Contains(t, string(reposContent), "my-ghe.example/org/repo1 # branch=feat/fix")
+}
+
 func TestCloneFromPRsFailsOnConflictingExistingAnnotation(t *testing.T) {
 	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
 		switch command {

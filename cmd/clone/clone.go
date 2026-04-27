@@ -233,10 +233,11 @@ func runFromPRs(c *cobra.Command, _ []string) {
 			activity.EndWithWarningf("Directory already exists")
 			skippedCount++
 			// Still capture the current branch so UpsertBranchAnnotations
-			// can reconcile. A missing branch here won't block success of
-			// other repos — the upsert treats it as "no update needed".
+			// can reconcile. Key by cloneTarget (not FullRepoName) so GHE
+			// repos.txt entries like `host/org/repo` match — FullRepoName
+			// deliberately strips the host.
 			if b, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath); bErr == nil {
-				collectedBranches[pr.FullRepoName()] = b
+				collectedBranches[cloneTarget] = b
 			}
 			continue
 		}
@@ -279,13 +280,16 @@ func runFromPRs(c *cobra.Command, _ []string) {
 		}
 
 		// Capture the checked-out branch so we can record it in repos.txt.
+		// Key by cloneTarget (not FullRepoName) so GHE repos.txt entries like
+		// `host/org/repo` match the right line when UpsertBranchAnnotations
+		// looks them up.
 		branch, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath)
 		if bErr != nil {
 			activity.EndWithFailure(bErr)
 			errorCount++
 			continue
 		}
-		collectedBranches[pr.FullRepoName()] = branch
+		collectedBranches[cloneTarget] = branch
 
 		activity.EndWithSuccess()
 		doneCount++
