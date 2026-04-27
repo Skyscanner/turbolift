@@ -235,8 +235,9 @@ func runFromPRs(c *cobra.Command, _ []string) {
 			// Still capture the current branch so UpsertBranchAnnotations
 			// can reconcile. Key by cloneTarget (not FullRepoName) so GHE
 			// repos.txt entries like `host/org/repo` match — FullRepoName
-			// deliberately strips the host.
-			if b, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath); bErr == nil {
+			// deliberately strips the host. Skip if we're in detached HEAD
+			// ("HEAD") to avoid writing a literal "HEAD" into repos.txt.
+			if b, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath); bErr == nil && b != "HEAD" {
 				collectedBranches[cloneTarget] = b
 			}
 			continue
@@ -286,6 +287,14 @@ func runFromPRs(c *cobra.Command, _ []string) {
 		branch, bErr := g.GetCurrentBranchName(activity.Writer(), repoDirPath)
 		if bErr != nil {
 			activity.EndWithFailure(bErr)
+			errorCount++
+			continue
+		}
+		// A literal "HEAD" means detached state — refuse to record that as a
+		// branch name, since downstream commands would then try to push to a
+		// branch called "HEAD" with confusing results.
+		if branch == "HEAD" {
+			activity.EndWithFailuref("detached HEAD after checkout of PR #%d — not recording branch", pr.Number)
 			errorCount++
 			continue
 		}

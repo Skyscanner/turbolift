@@ -524,6 +524,38 @@ func TestCloneFromPRsKeysBranchesByHostOrgRepoForGHE(t *testing.T) {
 	assert.Contains(t, string(reposContent), "my-ghe.example/org/repo1 # branch=feat/fix")
 }
 
+func TestCloneFromPRsFailsOnDetachedHEAD(t *testing.T) {
+	// If `gh pr checkout` lands us on a detached HEAD somehow, GetCurrentBranchName
+	// returns the literal "HEAD". We must NOT write that into repos.txt — downstream
+	// push/close/lookup would then act on a branch called "HEAD" with confusing
+	// results. Treat detached HEAD as a per-repo error and continue.
+	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
+		switch command {
+		case github.IsPushable, github.Clone, github.CheckoutPR:
+			return true, nil
+		default:
+			return false, errors.New("unexpected command")
+		}
+	}, func(workingDir string) (interface{}, error) { return nil, nil })
+	gh = fakeGitHub
+
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	fakeGit.SetCurrentBranchName("work/org/repo1", "HEAD") // simulate detached HEAD
+	g = fakeGit
+
+	testsupport.PrepareTempCampaign(false)
+	assert.NoError(t, os.WriteFile("prs.txt", []byte("org/repo1#1\n"), 0o644))
+
+	out, err := runCloneCommandArgs([]string{"--from-prs", "prs.txt"})
+	assert.NoError(t, err)
+	assert.Contains(t, out, "detached HEAD")
+
+	// repos.txt must NOT contain a `branch=HEAD` line.
+	reposContent, err := os.ReadFile("repos.txt")
+	assert.NoError(t, err)
+	assert.NotContains(t, string(reposContent), "branch=HEAD")
+}
+
 func TestCloneFromPRsFailsOnConflictingExistingAnnotation(t *testing.T) {
 	fakeGitHub := github.NewFakeGitHub(func(command github.Command, args []string) (bool, error) {
 		switch command {
