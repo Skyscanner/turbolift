@@ -51,7 +51,7 @@ func NewCloneCmd() *cobra.Command {
 	cmd.Flags().StringVar(&prsFile, "from-prs", "",
 		"A file containing PR URLs or org/repo#N shorthand to assimilate. "+
 			"Each PR's head branch is checked out locally and recorded as a "+
-			"`# branch=<name>` annotation in repos.txt. Mutually exclusive with --repos.")
+			"branch annotation in repos.txt. Mutually exclusive with --repos.")
 
 	return cmd
 }
