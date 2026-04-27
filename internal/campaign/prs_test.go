@@ -52,7 +52,7 @@ func TestParsePRRef_URLMissingNumber(t *testing.T) {
 func TestReadPRsFile_HappyPath(t *testing.T) {
 	tmp, err := os.CreateTemp("", "prs-*.txt")
 	assert.NoError(t, err)
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }()
 	_, _ = tmp.WriteString("# a full-line comment\n\nhttps://github.com/org/repo1/pull/1\norg/repo2#2\n")
 	_ = tmp.Close()
 
@@ -67,7 +67,7 @@ func TestReadPRsFile_HappyPath(t *testing.T) {
 func TestReadPRsFile_DuplicatePRDeduped(t *testing.T) {
 	tmp, err := os.CreateTemp("", "prs-*.txt")
 	assert.NoError(t, err)
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }()
 	_, _ = tmp.WriteString("org/repo1#1\norg/repo1#1\n")
 	_ = tmp.Close()
 
@@ -79,7 +79,7 @@ func TestReadPRsFile_DuplicatePRDeduped(t *testing.T) {
 func TestReadPRsFile_SameRepoDifferentPRsErrors(t *testing.T) {
 	tmp, err := os.CreateTemp("", "prs-*.txt")
 	assert.NoError(t, err)
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }()
 	_, _ = tmp.WriteString("org/repo1#1\norg/repo1#2\n")
 	_ = tmp.Close()
 
@@ -91,7 +91,7 @@ func TestReadPRsFile_SameRepoDifferentPRsErrors(t *testing.T) {
 func TestReadPRsFile_MalformedLine(t *testing.T) {
 	tmp, err := os.CreateTemp("", "prs-*.txt")
 	assert.NoError(t, err)
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }()
 	_, _ = tmp.WriteString("not a pr ref\n")
 	_ = tmp.Close()
 

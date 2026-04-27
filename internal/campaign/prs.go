@@ -96,7 +96,7 @@ func ReadPRsFile(path string) ([]PRRef, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to open PRs file %s: %w", path, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	seenKey := map[string]PRRef{} // key = "org/repo"

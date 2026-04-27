@@ -109,7 +109,7 @@ func UpsertBranchAnnotations(path string, branches map[string]string) error {
 	}
 
 	if len(conflicts) > 0 {
-		return fmt.Errorf("conflicting branch annotations in %s:\n  %s\nResolve manually and retry.", path, strings.Join(conflicts, "\n  "))
+		return fmt.Errorf("conflicting branch annotations in %s (resolve manually and retry):\n  %s", path, strings.Join(conflicts, "\n  "))
 	}
 
 	// Apply in-memory updates and append new lines for unmatched repos.
