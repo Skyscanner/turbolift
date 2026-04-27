@@ -23,8 +23,25 @@ import (
 )
 
 type FakeGit struct {
-	handler func(output io.Writer, call []string) (bool, error)
-	calls   [][]string
+	handler         func(output io.Writer, call []string) (bool, error)
+	calls           [][]string
+	branchNameByDir map[string]string
+}
+
+// Calls returns the accumulated call log — useful for tests that want to
+// inspect a subset of invocations rather than the whole sequence.
+func (f *FakeGit) Calls() [][]string {
+	return f.calls
+}
+
+// SetCurrentBranchName configures FakeGit to return the given branch name
+// when GetCurrentBranchName is called with the given workingDir. Used by
+// `cmd/clone` tests to simulate a specific PR head ref per repo.
+func (f *FakeGit) SetCurrentBranchName(workingDir, branch string) {
+	if f.branchNameByDir == nil {
+		f.branchNameByDir = map[string]string{}
+	}
+	f.branchNameByDir[workingDir] = branch
 }
 
 func (f *FakeGit) Checkout(output io.Writer, workingDir string, branch string) error {
@@ -60,6 +77,22 @@ func (f *FakeGit) Pull(output io.Writer, workingDir string, remote string, branc
 	f.calls = append(f.calls, call)
 	_, err := f.handler(output, call)
 	return err
+}
+
+func (f *FakeGit) GetCurrentBranchName(output io.Writer, workingDir string) (string, error) {
+	call := []string{"getCurrentBranchName", workingDir}
+	f.calls = append(f.calls, call)
+	// If the test has configured a specific branch for this dir, return it
+	// directly without consulting the generic handler — tests typically set
+	// branches explicitly and care only about that value.
+	if b, ok := f.branchNameByDir[workingDir]; ok {
+		return b, nil
+	}
+	_, err := f.handler(output, call)
+	if err != nil {
+		return "", err
+	}
+	return "fake-branch", nil
 }
 
 func (f *FakeGit) AssertCalledWith(t *testing.T, expected [][]string) {
