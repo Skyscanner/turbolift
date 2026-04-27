@@ -122,10 +122,39 @@ By default the cloning policy is to create a branch to the target repository. If
 
 If you do want to fork all the repositories instead of letting turbolift deciding for you, use the `--fork` flag.
 
+If you want to assimilate existing PRs (e.g. PRs raised by a cloud agent or a teammate), use `--from-prs` — see [Assimilating existing PRs](#assimilating-existing-prs) below.
+
 Usage:
 ```console
 turbolift clone
 ```
+
+### Assimilating existing PRs
+
+Sometimes you need turbolift to pick up where someone else left off — for example, tidying up PRs raised by a cloud agent or a colleague. Use `--from-prs` to clone each repo and check out its PR branch in one step:
+
+```console
+turbolift init --name assimilation
+cd turbolift-assimilation
+# populate prs.txt with PR URLs or org/repo#N shorthand, one per line
+cat > prs.txt <<'EOF'
+https://github.com/org/repo1/pull/42
+org/repo2#7
+EOF
+turbolift clone --from-prs prs.txt
+# make your changes in work/**
+turbolift commit --message "Fix follow-up review feedback"
+turbolift update-prs --push
+```
+
+The PR head branch names are recorded as `# branch=<name>` annotations next to each repo in `repos.txt`, so subsequent `commit`, `update-prs`, and `pr-status` commands act on the correct branch per repo. For example, after assimilation your `repos.txt` might look like:
+
+```
+org/repo1 # branch=feature-x
+org/repo2 # branch=agent-fix-42
+```
+
+`--from-prs` and `--repos` are mutually exclusive. If `repos.txt` already contains a conflicting branch annotation for a repo, turbolift will stop and ask you to resolve manually — it will not overwrite your existing annotations.
 
 ### Making changes
 
