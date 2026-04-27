@@ -35,12 +35,14 @@ func TestItReadsSimpleRepoNamesFromReposFile(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo2",
 			FullRepoName: "org/repo2",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 	assert.Equal(t, "PR title", campaign.PrTitle)
@@ -61,12 +63,14 @@ func TestItReadsRepoNamesWithOtherHostsFromReposFile(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 		{
 			Host:         "mygitserver.com",
 			OrgName:      "org",
 			RepoName:     "repo2",
 			FullRepoName: "mygitserver.com/org/repo2",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 	assert.Equal(t, "PR title", campaign.PrTitle)
@@ -87,6 +91,7 @@ func TestItIgnoresCommentedLines(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 	assert.Equal(t, "PR title", campaign.PrTitle)
@@ -107,6 +112,7 @@ func TestItIgnoresEmptyLines(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 	assert.Equal(t, "PR title", campaign.PrTitle)
@@ -127,6 +133,7 @@ func TestItIgnoresEmptyAndCommentedLines(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 	assert.Equal(t, "PR title", campaign.PrTitle)
@@ -146,6 +153,7 @@ func TestItIgnoresDuplicatedLines(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 }
@@ -163,12 +171,14 @@ func TestItIgnoresDuplicatedNonSequentialLines(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo2",
 			FullRepoName: "org/repo2",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 }
@@ -188,18 +198,21 @@ func TestItShouldAcceptADifferentRepoFileSuccess(t *testing.T) {
 			OrgName:      "org",
 			RepoName:     "repo1",
 			FullRepoName: "org/repo1",
+			Branch:       campaign.Name,
 		},
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo2",
 			FullRepoName: "org/repo2",
+			Branch:       campaign.Name,
 		},
 		{
 			Host:         "",
 			OrgName:      "org",
 			RepoName:     "repo3",
 			FullRepoName: "org/repo3",
+			Branch:       campaign.Name,
 		},
 	}, campaign.Repos)
 }
@@ -251,6 +264,33 @@ func TestItShouldErrorWhenPrDescriptionFileNameIsEmpty(t *testing.T) {
 	options.PrDescriptionFilename = ""
 	_, err := OpenCampaign(options)
 	assert.Error(t, err)
+}
+
+func TestItReadsBranchAnnotationsFromReposFile(t *testing.T) {
+	testsupport.PrepareTempCampaign(false,
+		"org/repo1 # branch=feature-x",
+		"org/repo2",
+		"org/repo3 # branch=agent-fix-42 reviewer note",
+	)
+
+	campaign, err := OpenCampaign(NewCampaignOptions())
+	assert.NoError(t, err)
+
+	assert.Equal(t, []Repo{
+		{OrgName: "org", RepoName: "repo1", FullRepoName: "org/repo1", Branch: "feature-x"},
+		{OrgName: "org", RepoName: "repo2", FullRepoName: "org/repo2", Branch: campaign.Name},
+		{OrgName: "org", RepoName: "repo3", FullRepoName: "org/repo3", Branch: "agent-fix-42"},
+	}, campaign.Repos)
+}
+
+func TestItErrorsOnDuplicateRepoWithDifferentBranches(t *testing.T) {
+	testsupport.PrepareTempCampaign(false,
+		"org/repo1 # branch=foo",
+		"org/repo1 # branch=bar",
+	)
+	_, err := OpenCampaign(NewCampaignOptions())
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "conflicting branch")
 }
 
 func TestBranchNamePrefixLogic(t *testing.T) {

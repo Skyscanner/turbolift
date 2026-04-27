@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -31,7 +32,18 @@ type Repo struct {
 	OrgName      string
 	RepoName     string
 	FullRepoName string
+	// Branch is the git branch to operate on for this repo. Defaults to the
+	// campaign name during OpenCampaign when no `# branch=...` annotation is
+	// present in repos.txt. Populated explicitly when `clone --from-prs`
+	// assimilates existing PRs with non-matching head refs.
+	Branch string
 }
+
+// branchAnnotationRegexp matches a whitespace-bounded `branch=<value>` token
+// within a trailing comment in repos.txt. Any other text in the comment is
+// free-form and ignored by the tool, so users can combine branch annotations
+// with arbitrary notes.
+var branchAnnotationRegexp = regexp.MustCompile(`\bbranch=(\S+)`)
 
 type Campaign struct {
 	Name    string
@@ -66,6 +78,7 @@ func ApplyCampaignNamePrefix(name string) string {
 func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 	dir, _ := os.Getwd()
 	dirBasename := filepath.Base(dir)
+	name := ApplyCampaignNamePrefix(dirBasename)
 
 	repos, err := readReposTxtFile(options.RepoFilename)
 	if err != nil {
@@ -77,8 +90,18 @@ func OpenCampaign(options *CampaignOptions) (*Campaign, error) {
 		return nil, err
 	}
 
+	// Ensure every repo has a non-empty Branch. Downstream commands can then
+	// use repo.Branch unconditionally without having to fall back to the
+	// campaign name — and `--from-prs` callers that populate Branch from PR
+	// head refs take precedence over this default.
+	for i := range repos {
+		if repos[i].Branch == "" {
+			repos[i].Branch = name
+		}
+	}
+
 	return &Campaign{
-		Name:    ApplyCampaignNamePrefix(dirBasename),
+		Name:    name,
 		Repos:   repos,
 		PrTitle: prTitle,
 		PrBody:  prBody,
@@ -101,39 +124,68 @@ func readReposTxtFile(filename string) ([]Repo, error) {
 	}()
 
 	scanner := bufio.NewScanner(file)
-	uniq := map[string]interface{}{}
+	// branchByRepo tracks the branch annotation we've seen for each repo.
+	// We dedupe identical-in-every-way entries silently, but we error loudly
+	// when the same repo appears with conflicting branch annotations — that
+	// almost certainly indicates a bug in whoever wrote the file.
+	branchByRepo := map[string]string{}
 	var repos []Repo
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.HasPrefix(line, "#") && len(line) > 0 {
-			if _, seen := uniq[line]; seen {
-				continue
-			}
-			uniq[line] = struct{}{}
-
-			splitLine := strings.Split(line, "/")
-			numParts := len(splitLine)
-
-			var repo Repo
-			switch numParts {
-			case 2:
-				repo = Repo{
-					OrgName:      splitLine[0],
-					RepoName:     splitLine[1],
-					FullRepoName: line,
-				}
-			case 3:
-				repo = Repo{
-					Host:         splitLine[0],
-					OrgName:      splitLine[1],
-					RepoName:     splitLine[2],
-					FullRepoName: line,
-				}
-			default:
-				return nil, fmt.Errorf("unable to parse entry in %s file: %s", filename, line)
-			}
-			repos = append(repos, repo)
+		// Full-line comments and blank lines are ignored as before.
+		if strings.HasPrefix(line, "#") || len(strings.TrimSpace(line)) == 0 {
+			continue
 		}
+
+		// Split on the first '#' to separate the repo name from any trailing
+		// comment. Repo names cannot contain '#', so this split is unambiguous.
+		var repoPart, commentPart string
+		if idx := strings.Index(line, "#"); idx >= 0 {
+			repoPart = line[:idx]
+			commentPart = line[idx+1:]
+		} else {
+			repoPart = line
+		}
+		repoPart = strings.TrimSpace(repoPart)
+		if repoPart == "" {
+			continue
+		}
+
+		splitLine := strings.Split(repoPart, "/")
+		numParts := len(splitLine)
+		var repo Repo
+		switch numParts {
+		case 2:
+			repo = Repo{
+				OrgName:      splitLine[0],
+				RepoName:     splitLine[1],
+				FullRepoName: repoPart,
+			}
+		case 3:
+			repo = Repo{
+				Host:         splitLine[0],
+				OrgName:      splitLine[1],
+				RepoName:     splitLine[2],
+				FullRepoName: repoPart,
+			}
+		default:
+			return nil, fmt.Errorf("unable to parse entry in %s file: %s", filename, line)
+		}
+
+		// Scan the trailing comment for a `branch=<value>` token. Other
+		// comment text is free-form and ignored so users can keep notes.
+		if m := branchAnnotationRegexp.FindStringSubmatch(commentPart); m != nil {
+			repo.Branch = m[1]
+		}
+
+		if existing, seen := branchByRepo[repo.FullRepoName]; seen {
+			if existing != repo.Branch {
+				return nil, fmt.Errorf("conflicting branch annotations for %s: %q vs %q", repo.FullRepoName, existing, repo.Branch)
+			}
+			continue
+		}
+		branchByRepo[repo.FullRepoName] = repo.Branch
+		repos = append(repos, repo)
 	}
 
 	if err := scanner.Err(); err != nil {
