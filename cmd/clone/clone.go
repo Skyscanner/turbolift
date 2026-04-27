@@ -56,7 +56,7 @@ func NewCloneCmd() *cobra.Command {
 	return cmd
 }
 
-func run(c *cobra.Command, args []string) {
+func run(c *cobra.Command, _ []string) {
 	logger := logging.NewLogger(c)
 
 	if prsFile != "" {
@@ -68,13 +68,13 @@ func run(c *cobra.Command, args []string) {
 			logger.Errorf("--from-prs and --repos are mutually exclusive")
 			return
 		}
-		runFromPRs(c, args)
+		runFromPRs(c)
 		return
 	}
-	runNormal(c, args)
+	runNormal(c)
 }
 
-func runNormal(c *cobra.Command, _ []string) {
+func runNormal(c *cobra.Command) {
 	logger := logging.NewLogger(c)
 
 	readCampaignActivity := logger.StartActivity("Reading campaign data (%s)", repoFile)
@@ -193,7 +193,7 @@ func runNormal(c *cobra.Command, _ []string) {
 // then records those branches as annotations in repos.txt. We do all clones
 // first and the repos.txt write last — this means a conflict detected by
 // UpsertBranchAnnotations leaves repos.txt untouched rather than half-written.
-func runFromPRs(c *cobra.Command, _ []string) {
+func runFromPRs(c *cobra.Command) {
 	logger := logging.NewLogger(c)
 
 	readActivity := logger.StartActivity("Reading PRs file (%s)", prsFile)
