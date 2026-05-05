@@ -1,8 +1,42 @@
+# Note: Dependabot security updates (driven by GitHub security advisories)
+# bypass the cooldown and other settings configured below.
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: gomod
+    directory: /
     schedule:
-      interval: "monthly"
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      skyscanner-internal:
+        patterns:
+          - "github.com/Skyscanner/*"
+      external-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "github.com/Skyscanner/*"
     cooldown:
-      default-days: 7
+      default-days: 30
+      exclude:
+        - "github.com/Skyscanner/*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+    open-pull-requests-limit: 5
+    groups:
+      skyscanner-internal:
+        patterns:
+          - "skyscanner/*"
+      external-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "skyscanner/*"
+    cooldown:
+      default-days: 30
+      exclude:
+        - "skyscanner/*"
