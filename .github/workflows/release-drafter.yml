@@ -4,22 +4,14 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, reopened, synchronize]
 
 permissions: {}
 
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
-    # Only run in base repo for push events, or PR events originating from base repo (not from forks)
-    if: >
-      (
-        github.event_name == 'push' && github.repository == 'Skyscanner/turbolift'
-      ) || (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      )
+    # Only run in base repo for push events (not from forks)
+    if: github.event_name == 'push' && github.repository == 'Skyscanner/turbolift'
     steps:
       - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
         id: app-token
