@@ -17,6 +17,7 @@ package github
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -33,12 +34,19 @@ const (
 	GetDefaultBranchName
 	UpdatePRDescription
 	IsPushable
+	CheckoutPR
 )
 
 type FakeGitHub struct {
 	handler          func(command Command, args []string) (bool, error)
 	returningHandler func(workingDir string) (interface{}, error)
 	calls            [][]string
+}
+
+// Calls returns the accumulated call log — useful for tests that want to
+// inspect a subset of invocations rather than the whole sequence.
+func (f *FakeGitHub) Calls() [][]string {
+	return f.calls
 }
 
 func (f *FakeGitHub) CreatePullRequest(_ io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error) {
@@ -61,6 +69,13 @@ func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) 
 	return err
 }
 
+func (f *FakeGitHub) CheckoutPR(_ io.Writer, workingDir string, prNumber int) error {
+	args := []string{"checkout_pr", workingDir, fmt.Sprintf("%d", prNumber)}
+	f.calls = append(f.calls, args)
+	_, err := f.handler(CheckoutPR, args)
+	return err
+}
+
 func (f *FakeGitHub) IsPushable(_ io.Writer, repo string) (bool, error) {
 	args := []string{"user_can_push", repo}
 	f.calls = append(f.calls, args)
@@ -74,8 +89,8 @@ func (f *FakeGitHub) ClosePullRequest(_ io.Writer, workingDir string, branchName
 	return err
 }
 
-func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, _ string) (*PrStatus, error) {
-	f.calls = append(f.calls, []string{"get_pr", workingDir})
+func (f *FakeGitHub) GetPR(_ io.Writer, workingDir string, branchName string) (*PrStatus, error) {
+	f.calls = append(f.calls, []string{"get_pr", workingDir, branchName})
 	result, err := f.returningHandler(workingDir)
 	if result == nil {
 		return nil, err

@@ -17,6 +17,7 @@ package create_prs
 
 import (
 	"bytes"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -217,6 +218,33 @@ func TestItCreatesPrsFromAlternativeDescriptionFile(t *testing.T) {
 	fakeGitHub.AssertCalledWith(t, [][]string{
 		{"create_pull_request", "work/org/repo1", "custom PR title"},
 		{"create_pull_request", "work/org/repo2", "custom PR title"},
+	})
+}
+
+func TestItPushesPerRepoBranchWhenAnnotated(t *testing.T) {
+	fakeGitHub := github.NewAlwaysSucceedsFakeGitHub()
+	gh = fakeGitHub
+	fakeGit := git.NewAlwaysSucceedsFakeGit()
+	g = fakeGit
+
+	// repo1 has an annotated branch; repo2 falls back to the campaign name.
+	// We rewrite repos.txt after PrepareTempCampaign so the annotation
+	// doesn't get mangled into directory names during setup.
+	testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	reposContent := "org/repo1 # branch=pr-branch\norg/repo2\n"
+	if err := os.WriteFile("repos.txt", []byte(reposContent), 0o644); err != nil {
+		t.Fatalf("write repos.txt: %v", err)
+	}
+
+	_, err := runCommand()
+	assert.NoError(t, err)
+
+	// Confirm push was called per-repo with the correct branch. The campaign
+	// name is the basename of the temp directory (starts with "turbolift-").
+	campaignBranch := testsupport.Pwd()
+	fakeGit.AssertCalledWith(t, [][]string{
+		{"push", "work/org/repo1", "pr-branch"},
+		{"push", "work/org/repo2", campaignBranch},
 	})
 }
 

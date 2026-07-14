@@ -44,6 +44,12 @@ type GitHub interface {
 	GetPR(output io.Writer, workingDir string, branchName string) (*PrStatus, error)
 	GetDefaultBranchName(output io.Writer, workingDir string, fullRepoName string) (string, error)
 	IsPushable(output io.Writer, repo string) (bool, error)
+	// CheckoutPR fetches the given PR's head and checks it out as a local
+	// branch. Uses `gh pr checkout` because it correctly handles PRs from
+	// forks (configures the remote, fetches the ref, sets upstream tracking)
+	// — none of which a hand-rolled git fetch+checkout would handle without
+	// reimplementing that logic.
+	CheckoutPR(output io.Writer, workingDir string, prNumber int) error
 }
 
 type RealGitHub struct{}
@@ -80,6 +86,10 @@ func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoN
 
 func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
 	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName)
+}
+
+func (r *RealGitHub) CheckoutPR(output io.Writer, workingDir string, prNumber int) error {
+	return execInstance.Execute(output, workingDir, "gh", "pr", "checkout", fmt.Sprintf("%d", prNumber))
 }
 
 func (r *RealGitHub) ClosePullRequest(output io.Writer, workingDir string, branchName string) error {
@@ -162,9 +172,13 @@ func (r *RealGitHub) GetPR(output io.Writer, workingDir string, branchName strin
 		return prr.CurrentBranch, nil
 	}
 
-	// If not, then it's a forked PR. The headRefName is as such: `username:branchName`
+	// If not, then it's a forked PR. The headRefName is `username:branchName`.
+	// We require either an exact match (rare — usually the CurrentBranch path
+	// would have caught it) or the fork-style `:branchName` suffix, which
+	// avoids the foot-gun of a naive HasSuffix matching "foo-branchName"
+	// when we're actually looking for "branchName".
 	for _, pr := range prr.CreatedBy {
-		if strings.HasSuffix(pr.HeadRefName, branchName) {
+		if pr.HeadRefName == branchName || strings.HasSuffix(pr.HeadRefName, ":"+branchName) {
 			return pr, nil
 		}
 	}

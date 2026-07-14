@@ -105,7 +105,9 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		prStatus, err := gh.GetPR(checkStatusActivity.Writer(), repoDirPath, dir.Name)
+		// Use repo.Branch so we can look up PRs on assimilated branches; in
+		// the normal flow this equals dir.Name (default populated in OpenCampaign).
+		prStatus, err := gh.GetPR(checkStatusActivity.Writer(), repoDirPath, repo.Branch)
 		if err != nil {
 			checkStatusActivity.EndWithFailuref("No PR found: %v", err)
 			statuses["NO_PR"]++

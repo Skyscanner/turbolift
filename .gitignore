@@ -5,3 +5,4 @@ coverage.txt
 .vscode
 .idea
 *.test
+/docs/superpowers/

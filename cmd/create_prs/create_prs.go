@@ -101,7 +101,10 @@ func run(c *cobra.Command, _ []string) {
 			continue
 		}
 
-		err := g.Push(pushActivity.Writer(), repoDirPath, "origin", dir.Name)
+		// Use repo.Branch: in normal flow this is the campaign name (populated
+		// by OpenCampaign) but for PR-assimilation campaigns it's the PR's
+		// head ref, so we push the right branch for assimilated PRs.
+		err := g.Push(pushActivity.Writer(), repoDirPath, "origin", repo.Branch)
 		if err != nil {
 			pushActivity.EndWithFailure(err)
 			errorCount++

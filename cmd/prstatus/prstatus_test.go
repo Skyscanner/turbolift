@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,6 +105,38 @@ func TestItNotesReposWhereNoPrCanBeFound(t *testing.T) {
 	assert.Regexp(t, "No PR Found\\s+1", out)
 
 	assert.Regexp(t, "org/repo1\\s+OPEN", out)
+}
+
+func TestItLooksUpPerRepoBranchWhenAnnotated(t *testing.T) {
+	// Customised fake that records which branch is asked for, then returns
+	// a generic PR status. We assert that the branch passed in is the one
+	// annotated in repos.txt, not the campaign name.
+	var seenBranches []string
+	fakeGitHub := github.NewFakeGitHub(nil, func(workingDir string) (interface{}, error) {
+		return &github.PrStatus{State: "OPEN"}, nil
+	})
+	gh = fakeGitHub
+
+	tempDir := testsupport.PrepareTempCampaign(true, "org/repo1", "org/repo2")
+	if err := os.WriteFile("repos.txt", []byte("org/repo1 # branch=pr-branch\norg/repo2\n"), 0o644); err != nil {
+		t.Fatalf("write repos.txt: %v", err)
+	}
+
+	_, err := runCommand(true)
+	assert.NoError(t, err)
+
+	// Harvest the branches from the recorded calls — each "get_pr" entry is
+	// {"get_pr", workingDir, branchName}.
+	for _, call := range fakeGitHub.Calls() {
+		if len(call) == 3 && call[0] == "get_pr" {
+			seenBranches = append(seenBranches, call[2])
+		}
+	}
+	// PrepareTempCampaign gives tempDir names already prefixed with
+	// "turbolift-", so ApplyCampaignNamePrefix is a no-op and the campaign
+	// name equals the basename.
+	campaignName := filepath.Base(tempDir)
+	assert.Equal(t, []string{"pr-branch", campaignName}, seenBranches)
 }
 
 func runCommand(showList bool) (string, error) {

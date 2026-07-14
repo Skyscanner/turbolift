@@ -225,3 +225,36 @@ func runUpdatePrDescriptionAndCaptureOutput() (string, error) {
 	err := NewRealGitHub().UpdatePRDescription(&sb, "work/org/repo1", "new title", "new body")
 	return sb.String(), err
 }
+
+// TestGetPR_ForkPRMatchesByExactBranch exercises the fork-PR lookup path
+// where `gh pr status` returns multiple PRs in createdBy. Under a naive
+// `strings.HasSuffix` match, a longer branch name ending with the one we're
+// looking for would match first (e.g. "foo-feat/x" contains suffix "feat/x").
+// The fix is to require either an exact match or a `user:branch` fork-style
+// suffix — i.e. the branch preceded by ':'.
+func TestGetPR_ForkPRMatchesByExactBranch(t *testing.T) {
+	// createdBy[0] has HeadRefName "someuser:foo-feat/x" — plain HasSuffix
+	// would wrongly match this for branchName "feat/x". createdBy[1] has
+	// "otheruser:feat/x" which is the correct fork-style match.
+	prStatusJSON := `{
+		"currentBranch": null,
+		"createdBy": [
+			{"number": 1, "headRefName": "someuser:foo-feat/x", "state": "OPEN"},
+			{"number": 2, "headRefName": "otheruser:feat/x", "state": "OPEN"}
+		],
+		"needsReview": []
+	}`
+	fakeExecutor := executor.NewFakeExecutor(
+		func(workingDir string, name string, args ...string) error { return nil },
+		func(workingDir string, name string, args ...string) (string, error) {
+			return prStatusJSON, nil
+		},
+	)
+	execInstance = fakeExecutor
+
+	sb := strings.Builder{}
+	pr, err := NewRealGitHub().GetPR(&sb, "work/org/repo1", "feat/x")
+	assert.NoError(t, err)
+	assert.NotNil(t, pr)
+	assert.Equal(t, 2, pr.Number, "should match the PR whose branch is exactly feat/x (preceded by ':'), not the one that merely ends in feat/x")
+}
