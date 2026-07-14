@@ -33,6 +33,8 @@ const (
 	GetDefaultBranchName
 	UpdatePRDescription
 	IsPushable
+	IsFork
+	UserHasOpenUpstreamPRs
 )
 
 type FakeGitHub struct {
@@ -95,6 +97,25 @@ func (f *FakeGitHub) UpdatePRDescription(_ io.Writer, workingDir string, title s
 	f.calls = append(f.calls, args)
 	_, err := f.handler(UpdatePRDescription, args)
 	return err
+}
+
+func (f *FakeGitHub) IsFork(_ io.Writer, workingDir string) (bool, error) {
+	args := []string{"is_fork", workingDir}
+	f.calls = append(f.calls, args)
+	return f.handler(IsFork, args)
+}
+
+func (f *FakeGitHub) UserHasOpenUpstreamPRs(_ io.Writer, fullRepoName string) (bool, error) {
+	args := []string{"user_has_open_upstream_prs", fullRepoName}
+	f.calls = append(f.calls, args)
+	return f.handler(UserHasOpenUpstreamPRs, args)
+}
+
+func (f *FakeGitHub) GetOriginRepoName(_ io.Writer, workingDir string) (string, error) {
+	args := []string{"get_origin_repo_name", workingDir}
+	f.calls = append(f.calls, args)
+	_, err := f.returningHandler(workingDir)
+	return "", err
 }
 
 func (f *FakeGitHub) AssertCalledWith(t *testing.T, expected [][]string) {

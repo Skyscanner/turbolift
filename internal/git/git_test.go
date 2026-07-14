@@ -70,6 +70,32 @@ func TestItReturnsNilErrorOnSuccessfulPull(t *testing.T) {
 	})
 }
 
+func TestItReturnsNilErrorOnSuccessfulCheckRemoteOriginUrl(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysSucceedsFakeExecutor()
+	execInstance = fakeExecutor
+
+	sb := strings.Builder{}
+	_, err := NewRealGit().GetOriginUrl(&sb, "work/org1/repo1")
+	assert.NoError(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org1/repo1", "git", "remote", "get-url", "origin"},
+	})
+}
+
+func TestItReturnsErrorOnFailedCheckRemoteOriginUrl(t *testing.T) {
+	fakeExecutor := executor.NewAlwaysFailsFakeExecutor()
+	execInstance = fakeExecutor
+
+	sb := strings.Builder{}
+	_, err := NewRealGit().GetOriginUrl(&sb, "work/org1/repo1")
+	assert.Error(t, err)
+
+	fakeExecutor.AssertCalledWith(t, [][]string{
+		{"work/org1/repo1", "git", "remote", "get-url", "origin"},
+	})
+}
+
 func runCheckoutAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
 	err := NewRealGit().Checkout(&sb, "work/org/repo1", "some_branch")

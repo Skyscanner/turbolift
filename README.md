@@ -277,6 +277,14 @@ Note that when updating PR descriptions, as when creating PRs, the `--descriptio
 alternative description file to the default `README.md`.
 The updated title is taken from the first line of the file, and the updated description is the remainder of the file contents.
 
+#### Cleaning up Forks
+
+Once PRs are merged, you may wish to clean up any forks that were created for the Turbolift campaign. Run `turbolift cleanup` to generate a
+`.cleanup.txt` file with a list of forks that are safe to delete, along with instructions on how to delete them.
+
+Note that "safe to delete" means that Turbolift has not detected any open upstream PRs from a given fork. However, it is your responsibility to ensure
+that this is actually the case and that the forks are in fact safe to delete.
+
 ## Status: Preview
 
 This tool is fully functional, but we have improvements that we'd like to make, and would appreciate feedback.
