@@ -36,6 +36,7 @@ var (
 var (
 	forceFork bool
 	repoFile  string
+	depth     int
 )
 
 func NewCloneCmd() *cobra.Command {
@@ -47,6 +48,7 @@ func NewCloneCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&forceFork, "fork", false, "Force forking, instead of turbolift choosing whether to fork/branch based on permissions")
 	cmd.Flags().StringVar(&repoFile, "repos", "repos.txt", "A file containing a list of repositories to clone.")
+	cmd.Flags().IntVar(&depth, "depth", 0, "The maximum depth to clone repositories for")
 
 	return cmd
 }
@@ -107,9 +109,9 @@ func run(c *cobra.Command, _ []string) {
 		}
 
 		if fork {
-			err = gh.ForkAndClone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+			err = gh.ForkAndClone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName, depth)
 		} else {
-			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName)
+			err = gh.Clone(cloneActivity.Writer(), orgDirPath, repo.FullRepoName, depth)
 		}
 
 		if err != nil {

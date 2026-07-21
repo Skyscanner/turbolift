@@ -18,6 +18,7 @@ package github
 import (
 	"errors"
 	"io"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,15 +48,21 @@ func (f *FakeGitHub) CreatePullRequest(_ io.Writer, workingDir string, metadata 
 	return f.handler(CreatePullRequest, args)
 }
 
-func (f *FakeGitHub) ForkAndClone(_ io.Writer, workingDir string, fullRepoName string) error {
+func (f *FakeGitHub) ForkAndClone(_ io.Writer, workingDir string, fullRepoName string, depth int) error {
 	args := []string{"fork_and_clone", workingDir, fullRepoName}
+	if depth > 0 {
+		args = []string{"fork_and_clone", workingDir, fullRepoName, "--", "--depth=" + strconv.Itoa(depth)}
+	}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(ForkAndClone, args)
 	return err
 }
 
-func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string) error {
+func (f *FakeGitHub) Clone(_ io.Writer, workingDir string, fullRepoName string, depth int) error {
 	args := []string{"clone", workingDir, fullRepoName}
+	if depth > 0 {
+		args = []string{"clone", workingDir, fullRepoName, "--", "--depth=" + strconv.Itoa(depth)}
+	}
 	f.calls = append(f.calls, args)
 	_, err := f.handler(Clone, args)
 	return err

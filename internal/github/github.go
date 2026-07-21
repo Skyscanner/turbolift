@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/skyscanner/turbolift/internal/executor"
@@ -36,8 +37,8 @@ type PullRequest struct {
 }
 
 type GitHub interface {
-	ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error
-	Clone(output io.Writer, workingDir string, fullRepoName string) error
+	ForkAndClone(output io.Writer, workingDir string, fullRepoName string, depth int) error
+	Clone(output io.Writer, workingDir string, fullRepoName string, depth int) error
 	CreatePullRequest(output io.Writer, workingDir string, metadata PullRequest) (didCreate bool, err error)
 	ClosePullRequest(output io.Writer, workingDir string, branchName string) error
 	UpdatePRDescription(output io.Writer, workingDir string, title string, body string) error
@@ -74,11 +75,17 @@ func (r *RealGitHub) CreatePullRequest(output io.Writer, workingDir string, pr P
 	return true, nil
 }
 
-func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string) error {
+func (r *RealGitHub) ForkAndClone(output io.Writer, workingDir string, fullRepoName string, depth int) error {
+	if depth > 0 {
+		return execInstance.Execute(output, workingDir, "gh", "repo", "fork", "--clone=true", fullRepoName, "--", "--depth="+strconv.Itoa(depth))
+	}
 	return execInstance.Execute(output, workingDir, "gh", "repo", "fork", "--clone=true", fullRepoName)
 }
 
-func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string) error {
+func (r *RealGitHub) Clone(output io.Writer, workingDir string, fullRepoName string, depth int) error {
+	if depth > 0 {
+		return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName, "--", "--depth="+strconv.Itoa(depth))
+	}
 	return execInstance.Execute(output, workingDir, "gh", "repo", "clone", fullRepoName)
 }
 

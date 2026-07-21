@@ -179,14 +179,14 @@ func TestItReturnsNilErrorOnSuccessfulUpdatePrDescription(t *testing.T) {
 
 func runForkAndCloneAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
-	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1")
+	err := NewRealGitHub().ForkAndClone(&sb, "work/org", "org/repo1", 0)
 
 	return sb.String(), err
 }
 
 func runCloneAndCaptureOutput() (string, error) {
 	sb := strings.Builder{}
-	err := NewRealGitHub().Clone(&sb, "work/org", "org/repo1")
+	err := NewRealGitHub().Clone(&sb, "work/org", "org/repo1", 0)
 
 	return sb.String(), err
 }
